@@ -1,0 +1,11 @@
+[package]
+name = "yslib"
+version = "1.0.0"
+edition = "2021"
+authors = ["GZTime <Time.GZ@outlook.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+syscall_def = { package = "ysos_syscall", path = "../syscall" }
+chrono = { version = "0.4", default-features = false }
