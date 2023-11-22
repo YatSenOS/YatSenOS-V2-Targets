@@ -1,9 +1,6 @@
-mod uefi;
-
 #[macro_use]
 mod macros;
 
-pub mod clock;
 pub mod logger;
 
 pub use macros::*;

@@ -1,5 +1,4 @@
 use crate::serial::get_serial;
-use alloc::string::ToString;
 use core::fmt::*;
 use x86_64::instructions::interrupts;
 
@@ -105,22 +104,7 @@ pub fn print_serial_internal(args: Arguments) {
 }
 
 #[cfg_attr(not(test), panic_handler)]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-    let location = if let Some(location) = info.location() {
-        alloc::format!(
-            "{}@{}:{}",
-            location.file(),
-            location.line(),
-            location.column()
-        )
-    } else {
-        "Unknown location".to_string()
-    };
-    let msg = if let Some(msg) = info.message() {
-        alloc::format!("{}", msg)
-    } else {
-        "No more message...".to_string()
-    };
-    error!("\n\n\rERROR: panicked at {}\n\n\r{}", location, msg);
+fn panic(_: &core::panic::PanicInfo) -> ! {
+    error!("ERROR: panick!");
     loop {}
 }
