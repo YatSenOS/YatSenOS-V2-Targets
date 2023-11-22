@@ -442,7 +442,7 @@ dependencies = [
 
 [[package]]
 name = "yslib"
-version = "1.0.0"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "ysos_syscall",
@@ -450,7 +450,7 @@ dependencies = [
 
 [[package]]
 name = "ysos_boot"
-version = "1.0.0"
+version = "0.6.0"
 dependencies = [
  "arrayvec",
  "log",
@@ -516,7 +516,7 @@ dependencies = [
 
 [[package]]
 name = "ysos_kernel"
-version = "1.0.0"
+version = "0.6.0"
 dependencies = [
  "bit_field",
  "bitflags 2.4.1",
@@ -564,7 +564,7 @@ dependencies = [
 
 [[package]]
 name = "ysos_syscall"
-version = "1.0.0"
+version = "0.6.0"
 dependencies = [
  "num_enum",
 ]
