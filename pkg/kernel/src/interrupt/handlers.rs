@@ -1,6 +1,4 @@
-use super::*;
 use crate::memory::*;
-use crate::utils::Registers;
 use x86_64::registers::control::Cr2;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
@@ -36,7 +34,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.simd_floating_point
         .set_handler_fn(simd_floating_point_handler);
 
-    idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Timer as u8) as usize]
+    idt[(super::consts::Interrupts::Irq0 as u8 + super::consts::Irq::Timer as u8) as usize]
         .set_handler_fn(clock_handler)
         .set_stack_index(gdt::CONTEXT_SWITCH_IST_INDEX);
 }
@@ -141,25 +139,19 @@ pub extern "x86-interrupt" fn simd_floating_point_handler(stack_frame: Interrupt
     panic!("EXCEPTION: SIMD FLOATING POINT\n\n{:#?}", stack_frame);
 }
 
-pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame) {
-    super::ack(consts::Interrupts::Irq0 as u8);
-    crate::process::switch(&mut regs, &mut sf);
+pub extern "x86-interrupt" fn clock_handler(_sf: InterruptStackFrame) {
+    super::ack(super::consts::Interrupts::Irq0 as u8);
+    super::inc_counter();
 }
-
-as_handler!(clock);
 
 pub extern "x86-interrupt" fn page_fault_handler(
     stack_frame: InterruptStackFrame,
     err_code: PageFaultErrorCode,
 ) {
-    if crate::process::handle_page_fault(Cr2::read(), err_code).is_err() {
-        warn!(
-            "EXCEPTION: PAGE FAULT, ERROR_CODE: {:?}\n\nTrying to access: {:#x}\n{:#?}",
-            err_code,
-            Cr2::read(),
-            stack_frame
-        );
-        crate::process::force_show_info();
-        panic!("Cannot handle page fault!");
-    }
+    panic!(
+        "EXCEPTION: PAGE FAULT, ERROR_CODE: {:?}\n\nTrying to access: {:#x}\n{:#?}",
+        err_code,
+        Cr2::read(),
+        stack_frame
+    );
 }

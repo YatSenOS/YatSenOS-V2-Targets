@@ -21,7 +21,6 @@ extern crate libm;
 
 #[macro_use]
 pub mod utils;
-use process::ProcessId;
 pub use utils::*;
 
 #[macro_use]
@@ -31,8 +30,6 @@ pub use drivers::*;
 pub mod memory;
 
 pub mod interrupt;
-
-pub mod process;
 
 pub use alloc::format;
 use boot::BootInfo;
@@ -45,32 +42,12 @@ pub fn init(boot_info: &'static BootInfo) {
     interrupt::init(); // init interrupts
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
-    process::init(); // init process manager
     input::init(); // init input
 
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
     info!("YatSenOS initialized.");
-}
-
-pub fn stack_thread_test() {
-    let pid = process::spawn_kernel_thread(
-        utils::func::stack_test,
-        alloc::string::String::from("stack"),
-        None,
-    );
-
-    loop {
-        let ret = process::wait_pid(pid);
-        if !ret.is_negative() {
-            break;
-        } else {
-            unsafe {
-                core::arch::asm!("hlt");
-            }
-        }
-    }
 }
 
 pub fn shutdown(boot_info: &'static BootInfo) -> ! {
@@ -82,12 +59,4 @@ pub fn shutdown(boot_info: &'static BootInfo) -> ! {
             None,
         );
     }
-}
-
-pub fn new_test_thread(id: &str) -> ProcessId {
-    process::spawn_kernel_thread(
-        utils::func::test,
-        format!("#{}_test", id),
-        Some(process::ProcessData::new().set_env("id", id)),
-    )
 }

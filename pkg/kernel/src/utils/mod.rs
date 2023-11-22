@@ -2,15 +2,11 @@ mod uefi;
 
 #[macro_use]
 mod macros;
-#[macro_use]
-mod regs;
 
 pub mod clock;
-pub mod func;
 pub mod logger;
 
 pub use macros::*;
-pub use regs::*;
 use x86_64::instructions::interrupts;
 
 pub const fn get_ascii_header() -> &'static str {

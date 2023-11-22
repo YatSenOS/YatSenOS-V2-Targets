@@ -11,24 +11,16 @@ boot::entry_point!(kernel_main);
 pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
     ysos::init(boot_info);
 
-    let mut test_num = 0;
-
     loop {
-        print!("[>] ");
-        let line = input::get_line();
-        match line.trim() {
+        print!("> ");
+        let input = input::get_line();
+
+        match input.trim() {
             "exit" => break,
-            "ps" => {
-                ysos::process::print_process_list();
+            _ => {
+                println!("You said: {}", input);
+                println!("The counter value is {}", interrupt::read_counter());
             }
-            "stack" => {
-                ysos::stack_thread_test();
-            }
-            "test" => {
-                ysos::new_test_thread(format!("{}", test_num).as_str());
-                test_num += 1;
-            }
-            _ => println!("[=] {}", line),
         }
     }
 

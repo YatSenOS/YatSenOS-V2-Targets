@@ -4,6 +4,7 @@ mod handlers;
 mod serial;
 
 use apic::*;
+use core::sync::atomic::{AtomicU64, Ordering};
 use x86_64::structures::idt::InterruptDescriptorTable;
 
 lazy_static! {
@@ -15,6 +16,18 @@ lazy_static! {
         }
         idt
     };
+}
+
+static COUNTER: AtomicU64 = AtomicU64::new(0);
+
+#[inline]
+pub fn read_counter() -> u64 {
+    COUNTER.load(Ordering::Acquire)
+}
+
+#[inline]
+pub fn inc_counter() {
+    COUNTER.fetch_add(1, Ordering::Release);
 }
 
 /// init interrupts system
