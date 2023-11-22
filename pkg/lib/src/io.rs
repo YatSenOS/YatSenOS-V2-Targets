@@ -99,21 +99,3 @@ pub fn stdout() -> Stdout {
 pub fn stderr() -> Stderr {
     Stderr::new()
 }
-
-/// The different ways we can open a file.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-#[repr(u8)]
-pub enum FileMode {
-    /// Open a file for reading, if it exists.
-    ReadOnly = 0,
-    /// Open a file for appending (writing to the end of the existing file), if it exists.
-    ReadWriteAppend = 1,
-    /// Open a file and remove all contents, before writing to the start of the existing file, if it exists.
-    ReadWriteTruncate = 2,
-    /// Create a new empty file. Fail if it exists.
-    ReadWriteCreate = 3,
-    /// Create a new empty file, or truncate an existing file.
-    ReadWriteCreateOrTruncate = 4,
-    /// Create a new empty file, or append to an existing file.
-    ReadWriteCreateOrAppend = 5,
-}

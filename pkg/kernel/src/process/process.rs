@@ -161,16 +161,6 @@ impl Process {
         trace!("Init stack frame: {:#?}", &self.stack_frame);
     }
 
-    pub fn open(&mut self, res: Resource) -> u8 {
-        let fd = self.proc_data.file_handles.len() as u8;
-        self.proc_data.file_handles.insert(fd, res);
-        fd
-    }
-
-    pub fn close(&mut self, fd: u8) -> bool {
-        self.proc_data.file_handles.remove(&fd).is_some()
-    }
-
     fn clone_page_table(
         page_table_source: PhysFrame,
         frame_alloc: &mut BootInfoFrameAllocator,
