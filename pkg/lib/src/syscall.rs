@@ -37,6 +37,11 @@ pub fn sys_allocate(layout: &core::alloc::Layout) -> *mut u8 {
 }
 
 #[inline(always)]
+pub fn sys_list_app() {
+    syscall!(Syscall::ListApp);
+}
+
+#[inline(always)]
 pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) -> usize {
     syscall!(Syscall::Deallocate, ptr, layout as *const _)
 }
@@ -65,11 +70,6 @@ pub fn sys_time() -> NaiveDateTime {
 }
 
 #[inline(always)]
-pub fn sys_list_dir(root: &str) {
-    syscall!(Syscall::ListDir, root.as_ptr() as u64, root.len() as u64);
-}
-
-#[inline(always)]
 pub fn sys_stat() {
     syscall!(Syscall::Stat);
 }
@@ -78,21 +78,6 @@ pub fn sys_stat() {
 pub fn sys_spawn(path: &str) -> u16 {
     let pid = syscall!(Syscall::Spawn, path.as_ptr() as u64, path.len() as u64) as u16;
     pid
-}
-
-#[inline(always)]
-pub fn sys_open(path: &str, mode: crate::FileMode) -> u8 {
-    syscall!(
-        Syscall::Open,
-        path.as_ptr() as u64,
-        path.len() as u64,
-        mode as u64
-    ) as u8
-}
-
-#[inline(always)]
-pub fn sys_close(fd: u8) -> bool {
-    syscall!(Syscall::Close, fd as u64) != 0
 }
 
 #[inline(always)]

@@ -6,18 +6,17 @@ extern crate alloc;
 mod consts;
 mod services;
 
-use alloc::string::{String, ToString};
+use alloc::string::ToString;
 use alloc::vec::Vec;
 use lib::*;
 
 extern crate lib;
 
 fn main() -> usize {
-    let mut root_dir = String::from("/APP/");
     println!("            <<< Welcome to YatSenOS shell >>>            ");
     println!("                                 type `help` for help");
     loop {
-        print!("[{}] $ ", root_dir);
+        print!("$ ");
         let input = stdin().read_line();
         let line: Vec<&str> = input.trim().split(' ').collect();
         match line[0] {
@@ -26,38 +25,14 @@ fn main() -> usize {
                 break;
             }
             "ps" => sys_stat(),
-            "ls" => sys_list_dir(root_dir.as_str()),
-            "cat" => {
-                if line.len() < 2 {
-                    println!("Usage: cat <file>");
-                    continue;
-                }
-
-                services::cat(line[1], root_dir.as_str());
-            }
-            "cd" => {
-                if line.len() < 2 {
-                    println!("Usage: cd <dir>");
-                    continue;
-                }
-
-                services::cd(line[1], &mut root_dir);
-            }
+            "ls" => sys_list_app(),
             "exec" => {
                 if line.len() < 2 {
                     println!("Usage: exec <file>");
                     continue;
                 }
 
-                services::exec(line[1], root_dir.as_str());
-            }
-            "nohup" => {
-                if line.len() < 2 {
-                    println!("Usage: nohup <file>");
-                    continue;
-                }
-
-                services::nohup(line[1], root_dir.as_str());
+                services::exec(line[1]);
             }
             "kill" => {
                 if line.len() < 2 {

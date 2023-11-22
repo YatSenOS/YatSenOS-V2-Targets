@@ -41,6 +41,8 @@ pub struct App<'a> {
     pub elf: ElfFile<'a>,
 }
 
+pub type AppListRef = Option<&'static ArrayVec<App<'static>, 16>>;
+
 pub type MemoryMap = ArrayVec<MemoryDescriptor, 256>;
 
 /// Graphic output information

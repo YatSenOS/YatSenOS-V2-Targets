@@ -1,4 +1,4 @@
-use crate::utils::*;
+use crate::{utils::*, process::list_app};
 use alloc::format;
 use core::convert::TryFrom;
 use syscall_def::Syscall;
@@ -28,10 +28,6 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::Read => regs.set_rax(sys_read(&args)),
         // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
         Syscall::Write => regs.set_rax(sys_write(&args)),
-        // path: &str (arg0 as *const u8, arg1 as len), mode: arg2 as u8 -> fd: u8
-        Syscall::Open => regs.set_rax(sys_open(&args)),
-        // fd: arg0 as u8 -> success: bool
-        Syscall::Close => regs.set_rax(sys_close(&args)),
 
         // None -> pid: u16
         Syscall::GetPid => regs.set_rax(sys_get_pid() as usize),
@@ -53,8 +49,8 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::Time => regs.set_rax(sys_clock() as usize),
         // None
         Syscall::Stat => list_process(),
-        // path: &str (arg0 as *const u8, arg1 as len)
-        Syscall::ListDir => list_dir(&args),
+        // None
+        Syscall::ListApp => list_app(),
 
         // layout: arg0 as *const Layout -> ptr: *mut u8
         Syscall::Allocate => regs.set_rax(sys_allocate(&args)),

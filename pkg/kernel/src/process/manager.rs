@@ -25,10 +25,11 @@ pub struct ProcessManager {
     cur_pid: ProcessId,
     processes: Vec<Process>,
     exit_code: BTreeMap<ProcessId, isize>,
+    app_list: boot::AppListRef
 }
 
 impl ProcessManager {
-    pub fn new(init: Process) -> Self {
+    pub fn new(init: Process, app_list: boot::AppListRef) -> Self {
         let mut processes = Vec::<Process>::new();
         let exit_code = BTreeMap::new();
         let cur_pid = init.pid();
@@ -37,7 +38,12 @@ impl ProcessManager {
             cur_pid,
             processes,
             exit_code,
+            app_list
         }
+    }
+
+    pub fn app_list(&self) -> boot::AppListRef {
+        self.app_list.clone()
     }
 
     fn current_mut(&mut self) -> &mut Process {
@@ -121,37 +127,6 @@ impl ProcessManager {
     fn get_kernel_page_table(&self) -> PhysFrame {
         let proc = self.processes.first().unwrap();
         proc.page_table_addr()
-    }
-
-    pub fn open(&mut self, path: &str, mode: u8) -> Option<u8> {
-        let res = match path {
-            "/dev/random" => Resource::Random(fs::Random::new(
-                crate::utils::clock::now().timestamp() as u64,
-            )),
-            path => {
-                let file = crate::filesystem::try_get_file(path, fs::Mode::try_from(mode).unwrap());
-
-                if file.is_err() {
-                    return None;
-                }
-
-                Resource::File(file.unwrap())
-            }
-        };
-
-        trace!("Opening {}...\n{:#?}", path, &res);
-
-        let fd = self.current_mut().open(res);
-
-        Some(fd)
-    }
-
-    pub fn close(&mut self, fd: u8) -> bool {
-        if fd < 3 {
-            false // stdin, stdout, stderr are reserved
-        } else {
-            self.current_mut().close(fd)
-        }
     }
 
     pub fn spawn(

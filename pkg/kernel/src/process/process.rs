@@ -1,6 +1,6 @@
 use super::ProcessId;
 use super::*;
-use crate::filesystem::StdIO;
+use crate::resource::StdIO;
 use crate::memory::gdt::get_user_selector;
 use crate::memory::{self, *};
 use crate::utils::{Registers, RegistersValue, Resource};
@@ -67,12 +67,6 @@ impl ProcessData {
             code_memory_usage: 0,
             stack_memory_usage: 0,
         }
-    }
-
-    pub fn add_file(mut self, file: &File) -> Self {
-        let fd = self.file_handles.len() as u8;
-        self.file_handles.insert(fd, Resource::File(file.clone()));
-        self
     }
 
     pub fn set_env(mut self, key: &str, val: &str) -> Self {

@@ -7,7 +7,9 @@ mod process;
 use core::sync::atomic::{AtomicU16, Ordering};
 
 use alloc::collections::btree_map::Entry;
-use fs::File;
+use alloc::format;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use manager::*;
 use process::*;
 use sync::*;
@@ -15,8 +17,8 @@ use sync::*;
 pub use process::ProcessData;
 use xmas_elf::ElfFile;
 
-use crate::{filesystem::get_volume, Registers, Resource};
-use alloc::{collections::BTreeMap, string::String, vec};
+use crate::{Registers, Resource};
+use alloc::{collections::BTreeMap, string::String};
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::{
     registers::control::{Cr2, Cr3},
@@ -95,7 +97,7 @@ impl From<ProcessId> for u16 {
 }
 
 /// init process manager
-pub fn init() {
+pub fn init(boot_info: &'static boot::BootInfo) {
     let mut alloc = crate::memory::get_frame_alloc_for_sure();
     let kproc_data = ProcessData::new();
     trace!("Init process data: {:#?}", kproc_data);
@@ -109,7 +111,10 @@ pub fn init() {
     );
     kproc.resume();
     kproc.set_page_table_with_cr3();
-    init_PROCESS_MANAGER(ProcessManager::new(kproc));
+
+    let app_list = boot_info.loaded_apps.as_ref();
+
+    init_PROCESS_MANAGER(ProcessManager::new(kproc, app_list));
     init_SEMAPHORES(BTreeMap::new());
     info!("Process Manager Initialized.");
 }
@@ -151,18 +156,6 @@ pub fn wait_pid(pid: ProcessId) -> isize {
 pub fn handle(fd: u8) -> Option<Resource> {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager_for_sure().current().handle(fd)
-    })
-}
-
-pub fn open(path: &str, mode: u8) -> Option<u8> {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager_for_sure().open(path, mode)
-    })
-}
-
-pub fn close(fd: u8) -> bool {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager_for_sure().close(fd)
     })
 }
 
@@ -269,32 +262,60 @@ pub fn try_resolve_page_fault(
     Err(())
 }
 
-pub fn spawn(file: &File) -> Result<ProcessId, String> {
-    let size = file.length();
-    let pages = (size as usize + 0x1000 - 1) / 0x1000;
-    let mut buf = vec![0u8; pages * 0x1000];
+pub fn list_app() {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager_for_sure();
+        let app_list = manager.app_list();
 
-    fs::read_to_buf(get_volume(), file, &mut buf).map_err(|_| "Failed to read file")?;
+        if app_list.is_none() {
+            println!(">>> No app found in list!");
+            return;
+        }
 
-    let elf = xmas_elf::ElfFile::new(&buf).map_err(|_| "Invalid ELF file")?;
+        let apps = manager
+            .app_list()
+            .unwrap()
+            .iter()
+            .map(|app| app.name.as_str())
+            .collect::<Vec<&str>>()
+            .join(", ");
 
-    let pid = elf_spawn(file.entry.filename(), &elf, Some(file))?;
-
-    Ok(pid)
+        println!(">>> App list: {}", apps);
+    });
 }
 
-pub fn elf_spawn(name: String, elf: &ElfFile, file: Option<&File>) -> Result<ProcessId, String> {
+pub fn spawn(name: &str) -> Result<ProcessId, String> {
+    let app = x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager_for_sure();
+        let app_list = manager.app_list();
+
+        if app_list.is_none() {
+            return None;
+        }
+
+        for app in manager.app_list().unwrap() {
+            if app.name.eq(name) {
+                return Some(app);
+            }
+        }
+
+        None
+    });
+
+    if app.is_none() {
+        return Err(format!("App not found: {}", name));
+    };
+
+    elf_spawn(name.to_string(), &app.unwrap().elf)
+}
+
+pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();
         let process_name = name.to_lowercase();
 
         let parent = manager.current().pid();
-        let pid = manager.spawn(
-            elf,
-            name,
-            parent,
-            file.map(|f| ProcessData::new().add_file(f)),
-        );
+        let pid = manager.spawn(elf, name, parent, Some(ProcessData::new()));
 
         debug!("Spawned process: {}#{}", process_name, pid);
         pid
