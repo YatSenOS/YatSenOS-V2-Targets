@@ -392,7 +392,7 @@ dependencies = [
 
 [[package]]
 name = "ysos_boot"
-version = "0.4.0"
+version = "0.3.0"
 dependencies = [
  "arrayvec",
  "log",
@@ -414,7 +414,7 @@ dependencies = [
 
 [[package]]
 name = "ysos_kernel"
-version = "0.4.0"
+version = "0.3.0"
 dependencies = [
  "bit_field",
  "bitflags 2.4.1",
