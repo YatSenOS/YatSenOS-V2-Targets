@@ -18,10 +18,14 @@ pub mod fs;
 #[macro_use]
 extern crate log;
 
+pub type MemoryMap = ArrayVec<MemoryDescriptor, 256>;
+
+pub type AppListRef = Option<&'static ArrayVec<App<'static>, 16>>;
+
 /// This structure represents the information that the bootloader passes to the kernel.
 pub struct BootInfo {
     /// The memory map
-    pub memory_map: ArrayVec<MemoryDescriptor, 256>,
+    pub memory_map: MemoryMap,
 
     /// The offset into the virtual address space where the physical memory is mapped.
     pub physical_memory_offset: u64,
@@ -39,22 +43,6 @@ pub struct App<'a> {
     pub name: ArrayString<16>,
     /// The ELF file
     pub elf: ElfFile<'a>,
-}
-
-pub type AppListRef = Option<&'static ArrayVec<App<'static>, 16>>;
-
-pub type MemoryMap = ArrayVec<MemoryDescriptor, 256>;
-
-/// Graphic output information
-#[derive(Debug, Copy, Clone)]
-#[repr(C)]
-pub struct GraphicInfo {
-    /// Graphic mode
-    pub mode: ModeInfo,
-    /// Framebuffer base physical address
-    pub fb_addr: u64,
-    /// Framebuffer size
-    pub fb_size: u64,
 }
 
 /// This is copied from https://docs.rs/bootloader/0.10.12/src/bootloader/lib.rs.html
