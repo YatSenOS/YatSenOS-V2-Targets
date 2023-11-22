@@ -19,7 +19,6 @@ use alloc::boxed::Box;
 use alloc::vec;
 use core::arch::asm;
 use uefi::prelude::*;
-use uefi::table::cfg::ACPI2_GUID;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
 use x86_64::structures::paging::page::PageRangeInclusive;
