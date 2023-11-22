@@ -1,24 +1,21 @@
 mod manager;
-mod sync;
 
 #[allow(clippy::module_inception)]
 mod process;
 
 use core::sync::atomic::{AtomicU16, Ordering};
 
-use alloc::collections::btree_map::Entry;
 use alloc::format;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 use manager::*;
 use process::*;
-use sync::*;
 
 pub use process::ProcessData;
 use xmas_elf::ElfFile;
 
 use crate::{Registers, Resource};
-use alloc::{collections::BTreeMap, string::String};
+use alloc::string::String;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::{
     registers::control::{Cr2, Cr3},
@@ -27,7 +24,6 @@ use x86_64::{
 };
 
 use self::manager::init_PROCESS_MANAGER;
-use self::sync::init_SEMAPHORES;
 
 // 0xffff_ff00_0000_0000 is the kernel's address space
 pub const STACK_MAX: u64 = 0x0000_4000_0000_0000;
@@ -115,7 +111,6 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let app_list = boot_info.loaded_apps.as_ref();
 
     init_PROCESS_MANAGER(ProcessManager::new(kproc, app_list));
-    init_SEMAPHORES(BTreeMap::new());
     info!("Process Manager Initialized.");
 }
 
@@ -183,70 +178,6 @@ pub fn kill(pid: ProcessId, regs: &mut Registers, sf: &mut InterruptStackFrame) 
     })
 }
 
-pub fn new_sem(key: u32, value: usize) -> isize {
-    if let Some(mut sems) = get_sem_manager() {
-        let sid = SemaphoreId::new(key);
-        if let Entry::Vacant(e) = sems.entry(sid) {
-            e.insert(Semaphore::new(value));
-            return 0;
-        }
-    }
-    1
-}
-
-pub fn sem_up(key: u32) -> isize {
-    if let Some(mut sems) = get_sem_manager() {
-        let sid = SemaphoreId::new(key);
-        if let Some(sem) = sems.get_mut(&sid) {
-            // debug!("<{:#x}>{}", key, sem);
-            if let Some(pid) = sem.up() {
-                trace!("Semaphore #{:#x} up -> unblock process: #{}", key, pid);
-                let mut manager = get_process_manager_for_sure();
-                manager.unblock(pid);
-            }
-            return 0;
-        }
-    }
-    1
-}
-
-pub fn sem_down(key: u32, regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    if let Some(mut sems) = get_sem_manager() {
-        let sid = SemaphoreId::new(key);
-        if let Some(sem) = sems.get_mut(&sid) {
-            // debug!("<{:#x}>{}", key, sem);
-            let mut manager = get_process_manager_for_sure();
-            let pid = manager.current_pid();
-            if let Err(()) = sem.down(pid) {
-                trace!("Semaphore #{:#x} down -> block process: #{}", key, pid);
-                regs.set_rax(0);
-                manager.save_current(regs, sf);
-                manager.block(pid);
-                manager.switch_next(regs, sf);
-            } else {
-                regs.set_rax(0);
-            }
-        } else {
-            regs.set_rax(1);
-        }
-    } else {
-        regs.set_rax(1);
-    }
-}
-
-pub fn remove_sem(key: u32) -> isize {
-    if let Some(mut sems) = get_sem_manager() {
-        let key = SemaphoreId::new(key);
-        if sems.remove(&key).is_some() {
-            0
-        } else {
-            1
-        }
-    } else {
-        1
-    }
-}
-
 pub fn try_resolve_page_fault(
     _err_code: PageFaultErrorCode,
     _sf: &mut InterruptStackFrame,
@@ -312,15 +243,6 @@ pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
     });
 
     Ok(pid)
-}
-
-pub fn fork(regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        let mut manager = get_process_manager_for_sure();
-        manager.save_current(regs, sf);
-        manager.fork();
-        manager.switch_next(regs, sf);
-    })
 }
 
 pub fn force_show_info() {

@@ -432,13 +432,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ysos_dining"
-version = "0.1.0"
-dependencies = [
- "yslib",
-]
-
-[[package]]
 name = "ysos_elf"
 version = "0.1.0"
 dependencies = [
@@ -450,13 +443,6 @@ dependencies = [
 [[package]]
 name = "ysos_fact"
 version = "0.1.0"
-dependencies = [
- "yslib",
-]
-
-[[package]]
-name = "ysos_fork"
-version = "0.2.0"
 dependencies = [
  "yslib",
 ]
@@ -492,20 +478,6 @@ dependencies = [
  "ysos_boot",
  "ysos_elf",
  "ysos_syscall",
-]
-
-[[package]]
-name = "ysos_mq"
-version = "0.2.0"
-dependencies = [
- "yslib",
-]
-
-[[package]]
-name = "ysos_mutex"
-version = "0.1.0"
-dependencies = [
- "yslib",
 ]
 
 [[package]]

@@ -94,10 +94,6 @@ pub fn sys_get_pid() -> u16 {
     u16::from(crate::process::current_pid())
 }
 
-pub fn sys_fork(regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    crate::process::fork(regs, sf)
-}
-
 pub fn exit_process(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     crate::process::process_exit(args.arg0 as isize, regs, sf);
 }
@@ -123,14 +119,4 @@ pub fn sys_kill(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStac
         return;
     }
     crate::process::kill(pid, regs, sf);
-}
-
-pub fn sys_sem(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    match args.arg0 {
-        0 => regs.set_rax(crate::process::new_sem(args.arg1 as u32, args.arg2) as usize),
-        1 => regs.set_rax(crate::process::sem_up(args.arg1 as u32) as usize),
-        2 => crate::process::sem_down(args.arg1 as u32, regs, sf),
-        3 => regs.set_rax(crate::process::remove_sem(args.arg1 as u32) as usize),
-        _ => regs.set_rax(usize::MAX),
-    }
 }

@@ -68,10 +68,6 @@ impl ProcessManager {
         self.cur_pid
     }
 
-    pub fn add_child(&mut self, child: ProcessId) {
-        self.current_mut().add_child(child);
-    }
-
     pub fn save_current(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
         let current = self.current_mut();
         if current.is_running() {
@@ -245,30 +241,8 @@ impl ProcessManager {
         print!("{}", output);
     }
 
-    pub fn fork(&mut self) {
-        let mut p = self.current_mut().fork();
-        p.pause();
-        self.processes.push(p);
-    }
-
     pub fn kill_self(&mut self, ret: isize) {
         self.kill(self.cur_pid, ret);
-    }
-
-    pub fn unblock(&mut self, pid: ProcessId) {
-        self.processes.iter_mut().for_each(|p| {
-            if p.pid() == pid {
-                p.pause()
-            }
-        });
-    }
-
-    pub fn block(&mut self, pid: ProcessId) {
-        self.processes.iter_mut().for_each(|p| {
-            if p.pid() == pid {
-                p.block()
-            }
-        });
     }
 
     pub fn handle_page_fault(

@@ -107,10 +107,6 @@ impl Process {
         self.status = ProgramStatus::Running;
     }
 
-    pub fn block(&mut self) {
-        self.status = ProgramStatus::Blocked;
-    }
-
     pub fn set_page_table_with_cr3(&mut self) {
         self.page_table_addr = Cr3::read();
     }
@@ -229,10 +225,6 @@ impl Process {
         }
     }
 
-    pub fn add_child(&mut self, child: ProcessId) {
-        self.children.push(child);
-    }
-
     pub fn remove_child(&mut self, child: ProcessId) {
         self.children.retain(|c| *c != child);
     }
@@ -304,86 +296,6 @@ impl Process {
                 VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET),
             )
         }
-    }
-
-    pub fn fork(&mut self) -> Process {
-        // deep clone page is not impl yet, so we put the thread stack to a new mem
-        let frame_alloc = &mut *get_frame_alloc_for_sure();
-
-        // use the same page table with the parent, but remap stack with new offset
-        let stack_info = self.proc_data.stack_segment.unwrap();
-
-        let mut new_stack_base = stack_info.start.start_address().as_u64()
-            - (self.children.len() as u64 + 1) * STACK_MAX_SIZE;
-
-        while elf::map_range(
-            new_stack_base,
-            stack_info.count() as u64,
-            self.page_table.as_mut().unwrap(),
-            frame_alloc,
-            true,
-        )
-        .is_err()
-        {
-            trace!("Map thread stack to {:#x} failed.", new_stack_base);
-            new_stack_base -= STACK_MAX_SIZE; // stack grow down
-        }
-
-        debug!("Map thread stack to {:#x} succeed.", new_stack_base);
-
-        let cur_stack_base = stack_info.start.start_address().as_u64();
-        // make new stack frame
-        let mut new_stack_frame = self.stack_frame;
-        // cal new stack pointer
-        new_stack_frame.stack_pointer += new_stack_base - cur_stack_base;
-        // clone new stack content
-        self.clone_range(cur_stack_base, new_stack_base, stack_info.count());
-
-        // create owned page table (same as parent)
-        let owned_page_table = Self::page_table_from_phyframe(self.page_table_addr.0);
-        // clone proc data
-        let mut owned_proc_data = self.proc_data.clone();
-        // record new stack range
-        let stack = Page::range(
-            Page::containing_address(VirtAddr::new_truncate(new_stack_base)),
-            Page::containing_address(VirtAddr::new_truncate(
-                new_stack_base + stack_info.count() as u64 * Size4KiB::SIZE,
-            )),
-        );
-        // use shared code segment, only record the new stack usage
-        owned_proc_data.stack_memory_usage = stack.count();
-        owned_proc_data.code_memory_usage = 0;
-        owned_proc_data.stack_segment = Some(stack);
-
-        // create new process
-        let mut child = Self {
-            pid: ProcessId::new(),
-            name: self.name.clone(),
-            parent: self.pid,
-            status: ProgramStatus::Created,
-            ticks_passed: 0,
-            stack_frame: new_stack_frame,
-            regs: self.regs,
-            page_table_addr: (self.page_table_addr.0, Cr3::read().1),
-            page_table: Some(owned_page_table),
-            children: Vec::new(),
-            proc_data: owned_proc_data,
-        };
-
-        // record child pid
-        self.add_child(child.pid);
-
-        // fork ret value
-        self.regs.rax = u16::from(child.pid) as usize;
-        child.regs.rax = 0;
-
-        debug!(
-            "Thread {}#{} forked to {}#{}.",
-            self.name, self.pid, child.name, child.pid
-        );
-        trace!("{:#?}", &child);
-
-        child
     }
 
     pub fn set_parent(&mut self, pid: ProcessId) {

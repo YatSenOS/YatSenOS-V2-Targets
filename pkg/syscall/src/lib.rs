@@ -12,13 +12,11 @@ pub enum Syscall {
 
     GetPid = 39,
 
-    VFork = 58,
     Spawn = 59,
     Exit = 60,
     WaitPid = 61,
     Kill = 62,
 
-    Sem = 66,
     Time = 201,
 
     ListApp = 65529,

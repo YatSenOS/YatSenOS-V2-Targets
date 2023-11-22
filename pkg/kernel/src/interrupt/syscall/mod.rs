@@ -32,8 +32,6 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         // None -> pid: u16
         Syscall::GetPid => regs.set_rax(sys_get_pid() as usize),
 
-        // None -> pid: u16 (diff from parent and child)
-        Syscall::VFork => sys_fork(regs, sf),
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
         Syscall::Spawn => regs.set_rax(spawn_process(&args)),
         // pid: arg0 as u16
@@ -43,8 +41,6 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         // pid: arg0 as u16
         Syscall::Kill => sys_kill(&args, regs, sf),
 
-        // op: u8, key: u32, val: usize -> ret: any
-        Syscall::Sem => sys_sem(&args, regs, sf),
         // None -> time: usize
         Syscall::Time => regs.set_rax(sys_clock() as usize),
         // None
