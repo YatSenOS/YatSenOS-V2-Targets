@@ -50,14 +50,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     info!("config: {:#x?}", config);
 
-    let acpi2_addr = system_table
-        .config_table()
-        .iter()
-        .find(|entry| entry.guid == ACPI2_GUID)
-        .expect("failed to find ACPI 2 RSDP")
-        .address;
-    info!("ACPI2: {:?}", acpi2_addr);
-
     let elf = {
         let mut file = open_file(bs, config.kernel_path);
         let buf = load_file(bs, &mut file);
