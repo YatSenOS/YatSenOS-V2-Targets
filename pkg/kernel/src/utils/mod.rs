@@ -2,9 +2,7 @@
 mod macros;
 
 pub mod logger;
-
 pub use macros::*;
-use x86_64::instructions::interrupts;
 
 pub const fn get_ascii_header() -> &'static str {
     concat!(
@@ -22,12 +20,4 @@ __  __      __  _____            ____  _____
 
 pub const fn get_header() -> &'static str {
     concat!(">>> YatSenOS v", env!("CARGO_PKG_VERSION"))
-}
-
-pub fn halt() {
-    let disabled = !interrupts::are_enabled();
-    interrupts::enable_and_hlt();
-    if disabled {
-        interrupts::disable();
-    }
 }
