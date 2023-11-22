@@ -25,7 +25,7 @@ pub struct ProcessManager {
     cur_pid: ProcessId,
     processes: Vec<Process>,
     exit_code: BTreeMap<ProcessId, isize>,
-    app_list: boot::AppListRef
+    app_list: boot::AppListRef,
 }
 
 impl ProcessManager {
@@ -38,12 +38,12 @@ impl ProcessManager {
             cur_pid,
             processes,
             exit_code,
-            app_list
+            app_list,
         }
     }
 
     pub fn app_list(&self) -> boot::AppListRef {
-        self.app_list.clone()
+        self.app_list
     }
 
     fn current_mut(&mut self) -> &mut Process {
@@ -227,8 +227,7 @@ impl ProcessManager {
         .as_str();
 
         // put used/total frames in MiB
-        let (used_size, used_unit) =
-            memory::humanized_size(frames_used as u64 * PAGE_SIZE);
+        let (used_size, used_unit) = memory::humanized_size(frames_used as u64 * PAGE_SIZE);
         let (tot_size, tot_unit) = memory::humanized_size(frames_total as u64 * PAGE_SIZE);
 
         output += format!(

@@ -30,11 +30,12 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let (size, unit) = humanized_size(usable_mem_size * PAGE_SIZE);
     info!("Free Usable Memory : {:>7.*} {}", 3, size, unit);
 
-    let size =usable_mem_size as usize;
-
     unsafe {
         init_PAGE_TABLE(paging::init(physical_memory_offset));
-        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, size));
+        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(
+            memory_map,
+            usable_mem_size as usize,
+        ));
     }
 
     info!("Frame Allocator initialized.");

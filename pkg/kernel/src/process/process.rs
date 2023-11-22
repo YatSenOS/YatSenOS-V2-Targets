@@ -1,8 +1,8 @@
 use super::ProcessId;
 use super::*;
-use crate::resource::StdIO;
 use crate::memory::gdt::get_user_selector;
 use crate::memory::{self, *};
+use crate::resource::StdIO;
 use crate::utils::{Registers, RegistersValue, Resource};
 use alloc::collections::btree_map::BTreeMap;
 use alloc::string::String;

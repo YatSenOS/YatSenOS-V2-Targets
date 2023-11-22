@@ -20,5 +20,5 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
 
 pub fn spawn_init() -> process::ProcessId {
     print_serial!("\x1b[1;1H\x1b[2J");
-    process::spawn(&"sh").unwrap()
+    process::spawn("sh").unwrap()
 }

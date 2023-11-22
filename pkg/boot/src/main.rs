@@ -27,8 +27,8 @@ use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
 use ysos_boot::allocator::*;
 use ysos_boot::fs::*;
-use ysos_boot::MemoryType;
 use ysos_boot::BootInfo;
+use ysos_boot::MemoryType;
 
 mod config;
 

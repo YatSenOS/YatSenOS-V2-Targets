@@ -1,4 +1,4 @@
-use crate::{utils::*, process::list_app};
+use crate::{process::list_app, utils::*};
 use alloc::format;
 use core::convert::TryFrom;
 use syscall_def::Syscall;

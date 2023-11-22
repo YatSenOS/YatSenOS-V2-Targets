@@ -17,7 +17,7 @@ type BootInfoFrameIter = impl Iterator<Item = PhysFrame>;
 pub struct BootInfoFrameAllocator {
     size: usize,
     used: usize,
-    frames: BootInfoFrameIter
+    frames: BootInfoFrameIter,
 }
 
 impl BootInfoFrameAllocator {
@@ -30,7 +30,7 @@ impl BootInfoFrameAllocator {
         BootInfoFrameAllocator {
             size,
             frames: create_frame_iter(memory_map),
-            used: 0
+            used: 0,
         }
     }
 

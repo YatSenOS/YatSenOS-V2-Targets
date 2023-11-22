@@ -287,19 +287,9 @@ pub fn list_app() {
 pub fn spawn(name: &str) -> Result<ProcessId, String> {
     let app = x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager_for_sure();
-        let app_list = manager.app_list();
+        let app_list = manager.app_list()?;
 
-        if app_list.is_none() {
-            return None;
-        }
-
-        for app in manager.app_list().unwrap() {
-            if app.name.eq(name) {
-                return Some(app);
-            }
-        }
-
-        None
+        app_list.iter().find(|&app| app.name.eq(name))
     });
 
     if app.is_none() {
