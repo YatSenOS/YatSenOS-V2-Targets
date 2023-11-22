@@ -2,9 +2,7 @@ use super::*;
 use crate::memory::{
     self,
     allocator::{ALLOCATOR, HEAP_SIZE},
-    get_frame_alloc_for_sure,
-    user::{USER_ALLOCATOR, USER_HEAP_SIZE},
-    PAGE_SIZE,
+    get_frame_alloc_for_sure, PAGE_SIZE,
 };
 use crate::utils::Registers;
 use alloc::collections::BTreeMap;
@@ -150,9 +148,6 @@ impl ProcessManager {
         let heap_used = ALLOCATOR.lock().used();
         let heap_size = HEAP_SIZE;
 
-        let user_heap_used = USER_ALLOCATOR.lock().used();
-        let user_heap_size = USER_HEAP_SIZE;
-
         let alloc = get_frame_alloc_for_sure();
         let frames_used = alloc.frames_used();
         let frames_total = alloc.frames_total();
@@ -169,21 +164,6 @@ impl ProcessManager {
             sys_size,
             sys_size_unit,
             heap_used as f64 / heap_size as f64 * 100.0
-        )
-        .as_str();
-
-        let (user_used, user_used_unit) = memory::humanized_size(user_heap_used as u64);
-        let (user_size, user_size_unit) = memory::humanized_size(user_heap_size as u64);
-
-        output += format!(
-            "User   : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
-            2,
-            user_used,
-            user_used_unit,
-            2,
-            user_size,
-            user_size_unit,
-            user_heap_used as f64 / user_heap_size as f64 * 100.0
         )
         .as_str();
 
