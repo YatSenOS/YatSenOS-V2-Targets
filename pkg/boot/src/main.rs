@@ -67,14 +67,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         ENTRY = elf.header.pt2.entry_point() as usize;
     }
 
-    let apps = if config.load_apps {
-        info!("Loading apps...");
-        Some(load_apps(system_table.boot_services()))
-    } else {
-        info!("Skip loading apps");
-        None
-    };
-
     let max_mmap_size = system_table.boot_services().memory_map_size();
     let mmap_storage = Box::leak(
         vec![0; max_mmap_size.map_size + 10 * max_mmap_size.entry_size].into_boxed_slice(),
@@ -146,7 +138,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         memory_map: mmap.entries().copied().collect(),
         physical_memory_offset: config.physical_memory_offset,
         system_table: runtime,
-        loaded_apps: apps,
     };
 
     // align stack to 8 bytes

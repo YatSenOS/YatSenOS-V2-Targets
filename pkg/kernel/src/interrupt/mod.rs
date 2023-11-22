@@ -2,9 +2,6 @@ mod apic;
 mod consts;
 mod handlers;
 mod serial;
-mod syscall;
-
-pub use syscall::SyscallArgs;
 
 use apic::*;
 use x86_64::structures::idt::InterruptDescriptorTable;

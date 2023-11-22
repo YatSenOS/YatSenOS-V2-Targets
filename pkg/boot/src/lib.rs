@@ -8,8 +8,7 @@ pub use uefi::table::runtime::*;
 pub use uefi::table::Runtime;
 pub use uefi::Status as UefiStatus;
 
-use arrayvec::{ArrayString, ArrayVec};
-use xmas_elf::ElfFile;
+use arrayvec::ArrayVec;
 
 pub mod allocator;
 pub mod config;
@@ -28,20 +27,7 @@ pub struct BootInfo {
 
     /// UEFI SystemTable
     pub system_table: SystemTable<Runtime>,
-
-    // Loaded apps
-    pub loaded_apps: Option<ArrayVec<App<'static>, 16>>,
 }
-
-/// App information
-pub struct App<'a> {
-    /// The name of app
-    pub name: ArrayString<16>,
-    /// The ELF file
-    pub elf: ElfFile<'a>,
-}
-
-pub type AppListRef = Option<&'static ArrayVec<App<'static>, 16>>;
 
 pub type MemoryMap = ArrayVec<MemoryDescriptor, 256>;
 

@@ -10,12 +10,14 @@ macro_rules! guard_access_fn {
         paste::item! {
 
             $(#[$meta])*
+            #[inline(never)]
             #[allow(non_snake_case, dead_code)]
             $v fn $fn<'a>() -> Option<spin::MutexGuard<'a, $ty>> {
                 $mutex.get().and_then(spin::Mutex::try_lock)
             }
 
             $(#[$meta])*
+            #[inline(never)]
             #[allow(non_snake_case, dead_code)]
             $v fn [< $fn _for_sure >]<'a>() -> spin::MutexGuard<'a, $ty> {
                 $mutex.get().and_then(spin::Mutex::try_lock).expect(

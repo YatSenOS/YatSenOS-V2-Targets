@@ -8,11 +8,9 @@ mod regs;
 pub mod clock;
 pub mod func;
 pub mod logger;
-pub mod resource;
 
 pub use macros::*;
 pub use regs::*;
-pub use resource::Resource;
 use x86_64::instructions::interrupts;
 
 pub const fn get_ascii_header() -> &'static str {

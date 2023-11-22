@@ -13,7 +13,6 @@ use alloc::vec::Vec;
 use x86_64::structures::idt::InterruptStackFrame;
 use x86_64::structures::paging::PhysFrame;
 use x86_64::VirtAddr;
-use xmas_elf::ElfFile;
 
 once_mutex!(pub PROCESS_MANAGER: ProcessManager);
 guard_access_fn! {
@@ -25,11 +24,10 @@ pub struct ProcessManager {
     cur_pid: ProcessId,
     processes: Vec<Process>,
     exit_code: BTreeMap<ProcessId, isize>,
-    app_list: boot::AppListRef,
 }
 
 impl ProcessManager {
-    pub fn new(init: Process, app_list: boot::AppListRef) -> Self {
+    pub fn new(init: Process) -> Self {
         let mut processes = Vec::<Process>::new();
         let exit_code = BTreeMap::new();
         let cur_pid = init.pid();
@@ -38,12 +36,7 @@ impl ProcessManager {
             cur_pid,
             processes,
             exit_code,
-            app_list,
         }
-    }
-
-    pub fn app_list(&self) -> boot::AppListRef {
-        self.app_list
     }
 
     fn current_mut(&mut self) -> &mut Process {
@@ -125,55 +118,27 @@ impl ProcessManager {
         proc.page_table_addr()
     }
 
-    pub fn spawn(
+    pub fn spawn_kernel_thread(
         &mut self,
-        elf: &ElfFile,
+        entry: VirtAddr,
         name: String,
-        parent: ProcessId,
         proc_data: Option<ProcessData>,
     ) -> ProcessId {
         let mut p = Process::new(
-            &mut crate::memory::get_frame_alloc_for_sure(),
+            &mut get_frame_alloc_for_sure(),
             name,
-            parent,
+            ProcessId(0),
             self.get_kernel_page_table(),
             proc_data,
         );
+        let stack_top = p.alloc_init_stack();
         p.pause();
-        p.init_elf(elf);
-        p.init_stack_frame(
-            VirtAddr::new_truncate(elf.header.pt2.entry_point()),
-            VirtAddr::new_truncate(STACK_INIT_TOP),
-        );
-        trace!("New {:#?}", &p);
+        p.init_stack_frame(entry, stack_top);
+        info!("Spawn process: {}#{}", p.name(), p.pid());
         let pid = p.pid();
         self.processes.push(p);
         pid
     }
-
-    // DEPRECATED: do not spawn kernel thread
-    // pub fn spawn_kernel_thread(
-    //     &mut self,
-    //     entry: VirtAddr,
-    //     stack_top: VirtAddr,
-    //     name: String,
-    //     parent: ProcessId,
-    //     proc_data: Option<ProcessData>,
-    // ) -> ProcessId {
-    //     let mut p = Process::new(
-    //         &mut crate::memory::get_frame_alloc_for_sure(),
-    //         name,
-    //         parent,
-    //         self.get_kernel_page_table(),
-    //         proc_data,
-    //     );
-    //     p.pause();
-    //     p.init_stack_frame(entry, stack_top);
-    //     info!("Spawn process: {}#{}", p.name(), p.pid());
-    //     let pid = p.pid();
-    //     self.processes.push(p);
-    //     pid
-    // }
 
     pub fn print_process_list(&self) {
         let mut output =
@@ -242,7 +207,18 @@ impl ProcessManager {
     }
 
     pub fn kill_self(&mut self, ret: isize) {
-        self.kill(self.cur_pid, ret);
+        // we dont remove the process from the list
+        // as we have no interrupt frame and regs to restore
+        // so we only need to ensure the process will not be scheduled again
+        let pid = self.cur_pid;
+        if self.exit_code.try_insert(pid, ret).is_err() {
+            error!("Process #{} already exited", pid);
+        }
+
+        trace!("Process #{} exited (blocked) with code {}", pid, ret);
+
+        let p = self.current_mut();
+        p.block();
     }
 
     pub fn handle_page_fault(
@@ -264,64 +240,6 @@ impl ProcessManager {
             }
         } else {
             Err(())
-        }
-    }
-
-    pub fn kill(&mut self, pid: ProcessId, ret: isize) {
-        let p = self.processes.iter().find(|x| x.pid() == pid);
-
-        if p.is_none() {
-            warn!("Process #{} not found", pid);
-            return;
-        }
-
-        let p = p.unwrap();
-
-        debug!(
-            "Killing process {}#{} with ret code: {}",
-            p.name(),
-            pid,
-            ret
-        );
-
-        trace!("Kill {:#?}", &p);
-
-        let parent = p.parent();
-        let children = p.children();
-        let cur_page_table_addr = p.page_table_addr().start_address().as_u64();
-
-        // set parent of children to parent of current process
-        self.processes.iter_mut().for_each(|x| {
-            if children.contains(&x.pid()) {
-                x.set_parent(parent);
-            }
-        });
-
-        // any process using the same page table as current process?
-        let not_drop_page_table = self.processes.iter().any(|x| {
-            x.page_table_addr().start_address().as_u64() == cur_page_table_addr && pid != x.pid()
-        });
-
-        // mark thr page table as not to be dropped
-        if not_drop_page_table {
-            self.pid_mut(pid).not_drop_page_table();
-        }
-
-        // remove process from process list
-        self.processes.retain(|p| p.pid() != pid);
-
-        // remove self from parent's children list
-        if let Some(proc) = self.processes.iter_mut().find(|x| x.pid() == parent) {
-            proc.remove_child(pid);
-        }
-
-        if ret == !0xdeadbeef {
-            // killed by other process
-            return;
-        }
-
-        if self.exit_code.try_insert(pid, ret).is_err() {
-            error!("Process #{} already exited", pid);
         }
     }
 }

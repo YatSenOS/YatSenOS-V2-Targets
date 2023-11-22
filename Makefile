@@ -8,19 +8,13 @@ CUR_PATH := $(shell pwd)
 APP_PATH := $(CUR_PATH)/pkg/app
 DBG_INFO := false
 
-APPS := $(shell find $(APP_PATH) -maxdepth 1 -type d)
-APPS := $(filter-out $(APP_PATH),$(patsubst $(APP_PATH)/%, %, $(APPS)))
-APPS := $(filter-out config,$(APPS))
-APPS := $(filter-out .cargo,$(APPS))
-
 ifeq (${MODE}, release)
 	BUILD_ARGS := --release
 endif
 
 .PHONY: build run debug clean launch intdbg \
 	target/x86_64-unknown-uefi/$(MODE)/ysos_boot.efi \
-	target/x86_64-unknown-none/$(MODE)/ysos_kernel \
-	target/x86_64-unknown-ysos/$(MODE)
+	target/x86_64-unknown-none/$(MODE)/ysos_kernel
 
 run: build launch
 
@@ -53,9 +47,6 @@ debug:
 clean:
 	@cargo clean
 
-list:
-	@for dir in $(APPS); do echo $$dir || exit; done
-
 build: $(ESP)
 
 $(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF $(ESP)/EFI/BOOT/boot.conf $(ESP)/APP
@@ -69,18 +60,8 @@ $(ESP)/EFI/BOOT/boot.conf: pkg/kernel/config/boot.conf
 $(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/ysos_kernel
 	@mkdir -p $(@D)
 	cp $< $@
-$(ESP)/APP: target/x86_64-unknown-ysos/$(MODE)
-	@for app in $(APPS); do \
-		mkdir -p $(ESP)/APP; \
-		cp $</ysos_$$app $(ESP)/APP/$$app; \
-	done
 
 target/x86_64-unknown-uefi/$(MODE)/ysos_boot.efi: pkg/boot
 	cd pkg/boot && cargo build $(BUILD_ARGS)
 target/x86_64-unknown-none/$(MODE)/ysos_kernel: pkg/kernel
 	cd pkg/kernel && cargo build $(if $(ifeq($(DBG_INFO), true)), --profile=release-with-debug, $(BUILD_ARGS))
-target/x86_64-unknown-ysos/$(MODE):
-	@for app in $(APPS); do \
-		echo "Building $$app"; \
-		cd $(APP_PATH)/$$app && cargo build $(BUILD_ARGS) || exit; \
-	done

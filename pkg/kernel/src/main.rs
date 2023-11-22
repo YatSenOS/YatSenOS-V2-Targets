@@ -11,14 +11,26 @@ boot::entry_point!(kernel_main);
 pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
     ysos::init(boot_info);
 
-    let mut executor = Executor::new();
+    let mut test_num = 0;
 
-    // use executor.spawn() to spawn kernel tasks
-    executor.run(spawn_init());
+    loop {
+        print!("[>] ");
+        let line = input::get_line();
+        match line.trim() {
+            "exit" => break,
+            "ps" => {
+                ysos::process::print_process_list();
+            }
+            "stack" => {
+                ysos::stack_thread_test();
+            }
+            "test" => {
+                ysos::new_test_thread(format!("{}", test_num).as_str());
+                test_num += 1;
+            }
+            _ => println!("[=] {}", line),
+        }
+    }
+
     ysos::shutdown(boot_info);
-}
-
-pub fn spawn_init() -> process::ProcessId {
-    print_serial!("\x1b[1;1H\x1b[2J");
-    process::spawn("sh").unwrap()
 }

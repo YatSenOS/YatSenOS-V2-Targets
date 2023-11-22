@@ -5,16 +5,12 @@ mod process;
 
 use core::sync::atomic::{AtomicU16, Ordering};
 
-use alloc::format;
-use alloc::string::ToString;
-use alloc::vec::Vec;
 use manager::*;
 use process::*;
 
 pub use process::ProcessData;
-use xmas_elf::ElfFile;
 
-use crate::{Registers, Resource};
+use crate::Registers;
 use alloc::string::String;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::{
@@ -93,7 +89,7 @@ impl From<ProcessId> for u16 {
 }
 
 /// init process manager
-pub fn init(boot_info: &'static boot::BootInfo) {
+pub fn init() {
     let mut alloc = crate::memory::get_frame_alloc_for_sure();
     let kproc_data = ProcessData::new();
     trace!("Init process data: {:#?}", kproc_data);
@@ -108,9 +104,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     kproc.resume();
     kproc.set_page_table_with_cr3();
 
-    let app_list = boot_info.loaded_apps.as_ref();
-
-    init_PROCESS_MANAGER(ProcessManager::new(kproc, app_list));
+    init_PROCESS_MANAGER(ProcessManager::new(kproc));
     info!("Process Manager Initialized.");
 }
 
@@ -120,6 +114,13 @@ pub fn switch(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         manager.save_current(regs, sf);
         manager.switch_next(regs, sf);
     });
+}
+
+pub fn spawn_kernel_thread(entry: fn() -> !, name: String, data: Option<ProcessData>) -> ProcessId {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let entry = VirtAddr::new(entry as usize as u64);
+        get_process_manager_for_sure().spawn_kernel_thread(entry, name, data)
+    })
 }
 
 pub fn print_process_list() {
@@ -134,23 +135,15 @@ pub fn env(key: &str) -> Option<String> {
     })
 }
 
-pub fn process_exit(ret: isize, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+pub fn process_exit(ret: isize) {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        let mut manager = get_process_manager_for_sure();
-        manager.kill_self(ret);
-        manager.switch_next(regs, sf);
-    })
+        get_process_manager_for_sure().kill_self(ret);
+    });
 }
 
 pub fn wait_pid(pid: ProcessId) -> isize {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager_for_sure().wait_pid(pid)
-    })
-}
-
-pub fn handle(fd: u8) -> Option<Resource> {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager_for_sure().current().handle(fd)
     })
 }
 
@@ -163,18 +156,6 @@ pub fn still_alive(pid: ProcessId) -> bool {
 pub fn current_pid() -> ProcessId {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager_for_sure().current_pid()
-    })
-}
-
-pub fn kill(pid: ProcessId, regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        let mut manager = get_process_manager_for_sure();
-        if pid == manager.current_pid() {
-            manager.kill_self(0xdead);
-            manager.switch_next(regs, sf);
-        } else {
-            manager.kill(pid, 0xdead);
-        }
     })
 }
 
@@ -191,58 +172,6 @@ pub fn try_resolve_page_fault(
     });
 
     Err(())
-}
-
-pub fn list_app() {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        let manager = get_process_manager_for_sure();
-        let app_list = manager.app_list();
-
-        if app_list.is_none() {
-            println!(">>> No app found in list!");
-            return;
-        }
-
-        let apps = manager
-            .app_list()
-            .unwrap()
-            .iter()
-            .map(|app| app.name.as_str())
-            .collect::<Vec<&str>>()
-            .join(", ");
-
-        println!(">>> App list: {}", apps);
-    });
-}
-
-pub fn spawn(name: &str) -> Result<ProcessId, String> {
-    let app = x86_64::instructions::interrupts::without_interrupts(|| {
-        let manager = get_process_manager_for_sure();
-        let app_list = manager.app_list()?;
-
-        app_list.iter().find(|&app| app.name.eq(name))
-    });
-
-    if app.is_none() {
-        return Err(format!("App not found: {}", name));
-    };
-
-    elf_spawn(name.to_string(), &app.unwrap().elf)
-}
-
-pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
-    let pid = x86_64::instructions::interrupts::without_interrupts(|| {
-        let mut manager = get_process_manager_for_sure();
-        let process_name = name.to_lowercase();
-
-        let parent = manager.current().pid();
-        let pid = manager.spawn(elf, name, parent, Some(ProcessData::new()));
-
-        debug!("Spawned process: {}#{}", process_name, pid);
-        pid
-    });
-
-    Ok(pid)
 }
 
 pub fn force_show_info() {
