@@ -9,7 +9,6 @@ pub use uefi::table::Runtime;
 pub use uefi::Status as UefiStatus;
 
 use arrayvec::{ArrayString, ArrayVec};
-use x86_64::structures::paging::page::PageRangeInclusive;
 use xmas_elf::ElfFile;
 
 pub mod allocator;
@@ -29,9 +28,6 @@ pub struct BootInfo {
 
     /// UEFI SystemTable
     pub system_table: SystemTable<Runtime>,
-
-    // Kernel pages
-    pub kernel_pages: KernelPages,
 
     // Loaded apps
     pub loaded_apps: Option<ArrayVec<App<'static>, 16>>,
@@ -58,8 +54,6 @@ pub struct GraphicInfo {
     /// Framebuffer size
     pub fb_size: u64,
 }
-
-pub type KernelPages = ArrayVec<PageRangeInclusive, 8>;
 
 /// This is copied from https://docs.rs/bootloader/0.10.12/src/bootloader/lib.rs.html
 /// Defines the entry point function.

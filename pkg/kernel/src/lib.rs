@@ -48,7 +48,7 @@ pub fn init(boot_info: &'static BootInfo) {
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
     memory::user::init(); // init user heap allocator
-    process::init(boot_info); // init process manager
+    process::init(); // init process manager
     input::init(); // init input
     ata::init(); // init ata
     filesystem::init(); // init filesystem

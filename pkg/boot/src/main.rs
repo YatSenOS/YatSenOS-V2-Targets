@@ -22,15 +22,13 @@ use uefi::prelude::*;
 use uefi::table::cfg::ACPI2_GUID;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
-use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
-use xmas_elf::program::ProgramHeader;
 use xmas_elf::ElfFile;
 use ysos_boot::allocator::*;
 use ysos_boot::fs::*;
 use ysos_boot::MemoryType;
-use ysos_boot::{BootInfo, KernelPages};
+use ysos_boot::BootInfo;
 
 mod config;
 
@@ -146,7 +144,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     // construct BootInfo
     let bootinfo = BootInfo {
         memory_map: mmap.entries().copied().collect(),
-        kernel_pages: get_page_usage(&elf),
         physical_memory_offset: config.physical_memory_offset,
         system_table: runtime,
         loaded_apps: apps,
@@ -165,21 +162,6 @@ fn current_page_table() -> OffsetPageTable<'static> {
     let p4_table_addr = Cr3::read().0.start_address().as_u64();
     let p4_table = unsafe { &mut *(p4_table_addr as *mut PageTable) };
     unsafe { OffsetPageTable::new(p4_table, VirtAddr::new(0)) }
-}
-
-pub fn get_page_usage(elf: &ElfFile) -> KernelPages {
-    elf.program_iter()
-        .filter(|segment| segment.get_type().unwrap() == xmas_elf::program::Type::Load)
-        .map(|segment| get_page_range(segment))
-        .collect()
-}
-
-fn get_page_range(header: ProgramHeader) -> PageRangeInclusive {
-    let virt_start_addr = VirtAddr::new(header.virtual_addr());
-    let mem_size = header.mem_size();
-    let start_page = Page::containing_address(virt_start_addr);
-    let end_page = Page::containing_address(virt_start_addr + mem_size - 1u64);
-    Page::range_inclusive(start_page, end_page)
 }
 
 /// The entry point of kernel, set by BSP.

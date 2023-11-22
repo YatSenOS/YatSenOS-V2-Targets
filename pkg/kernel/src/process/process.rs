@@ -7,7 +7,6 @@ use crate::utils::{Registers, RegistersValue, Resource};
 use alloc::collections::btree_map::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
-use boot::KernelPages;
 use core::intrinsics::copy_nonoverlapping;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
@@ -85,20 +84,6 @@ impl ProcessData {
         let start = Page::containing_address(VirtAddr::new(start));
         self.stack_segment = Some(Page::range(start, start + size));
         self.stack_memory_usage = size as usize;
-        self
-    }
-
-    pub fn set_kernel_code(mut self, pages: &KernelPages) -> Self {
-        let mut size = 0;
-        let owned_pages = pages
-            .iter()
-            .map(|page| {
-                size += page.count();
-                *page
-            })
-            .collect();
-        self.code_segments = Some(owned_pages);
-        self.code_memory_usage = size;
         self
     }
 }
@@ -464,7 +449,6 @@ impl Drop for Process {
     fn drop(&mut self) {
         let page_table = self.page_table.as_mut().unwrap();
         let frame_deallocator = &mut *get_frame_alloc_for_sure();
-        let start_count = frame_deallocator.recycled_count();
 
         let stack = self.proc_data.stack_segment.unwrap();
 
@@ -506,16 +490,6 @@ impl Drop for Process {
                 frame_deallocator.deallocate_frame(self.page_table_addr.0);
             }
         }
-
-        let end_count = frame_deallocator.recycled_count();
-
-        debug!(
-            "Recycled {}({:.3}MiB) frames, {}({:.3}MiB) frames in total.",
-            end_count - start_count,
-            ((end_count - start_count) * 4) as f32 / 1024.0,
-            end_count,
-            (end_count * 4) as f32 / 1024.0
-        );
     }
 }
 
