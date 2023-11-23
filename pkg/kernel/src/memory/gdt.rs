@@ -124,10 +124,8 @@ pub fn init() {
         size += s;
     }
 
-    info!("Kernel IST Size  : {} KiB", size / 1024);
-
-    // trace!("{:#?}", &GDT.1);
-    // trace!("{:#?}", &GDT.2);
+    let (size, unit) = super::humanized_size(size as u64);
+    info!("Kernel IST Size  : {:>7.*} {}", 3, size, unit);
 
     info!("GDT Initialized.");
 }
