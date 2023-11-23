@@ -1,7 +1,7 @@
 OVMF := assets/OVMF.fd
 ESP := esp
 BUILD_ARGS :=
-QEMU_ARGS := -m 256M
+QEMU_ARGS := -m 128M
 QEMU_OUTPUT := -nographic
 MODE ?= release
 CUR_PATH := $(shell pwd)
