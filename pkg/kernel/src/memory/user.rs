@@ -7,7 +7,7 @@ use x86_64::structures::paging::{
 use x86_64::VirtAddr;
 
 pub const USER_HEAP_START: usize = 0x4000_0000_0000;
-pub const USER_HEAP_SIZE: usize = 512 * 1024; // 512 KiB
+pub const USER_HEAP_SIZE: usize = 1024 * 1024; // 1 MiB
 const USER_HEAP_PAGE: usize = USER_HEAP_SIZE / crate::memory::PAGE_SIZE as usize;
 
 pub static USER_ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -33,6 +33,9 @@ pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
         page_range.start.start_address().as_u64(),
         page_range.end.start_address().as_u64()
     );
+
+    let (size, unit) = super::humanized_size(USER_HEAP_SIZE as u64);
+    info!("User Heap Size   : {:>7.*} {}", 3, size, unit);
 
     for page in page_range {
         let frame = frame_allocator
