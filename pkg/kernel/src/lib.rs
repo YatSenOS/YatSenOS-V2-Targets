@@ -1,5 +1,4 @@
 #![no_std]
-#![allow(dead_code)]
 #![feature(core_intrinsics)]
 #![feature(naked_functions)]
 #![feature(abi_x86_interrupt)]
@@ -20,14 +19,11 @@ pub use utils::*;
 pub mod drivers;
 pub use drivers::*;
 
-pub mod memory;
-
 use boot::BootInfo;
 
 pub fn init(_boot_info: &'static BootInfo) {
     serial::init(); // init serial output
     logger::init(); // init logger system
-    memory::gdt::init(); // init gdt
 
     info!("YatSenOS initialized.");
 }

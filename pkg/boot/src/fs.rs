@@ -52,5 +52,6 @@ pub fn load_file(bs: &BootServices, file: &mut RegularFile) -> &'static mut [u8]
         info.file_name(),
         len
     );
+
     &mut buf[..len]
 }

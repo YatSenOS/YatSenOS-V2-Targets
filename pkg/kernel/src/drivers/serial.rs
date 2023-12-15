@@ -14,7 +14,3 @@ pub fn init() {
 }
 
 guard_access_fn!(pub get_serial(SERIAL: SerialPort));
-
-pub fn backspace() {
-    get_serial_for_sure().send(8);
-}
