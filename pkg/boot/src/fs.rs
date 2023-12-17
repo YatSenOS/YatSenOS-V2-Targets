@@ -1,6 +1,7 @@
 use uefi::proto::media::file::*;
 use uefi::proto::media::fs::SimpleFileSystem;
 use uefi::table::boot::*;
+use xmas_elf::ElfFile;
 
 /// Open root directory
 pub fn open_root(bs: &BootServices) -> Directory {
@@ -54,4 +55,15 @@ pub fn load_file(bs: &BootServices, file: &mut RegularFile) -> &'static mut [u8]
     );
 
     &mut buf[..len]
+}
+
+/// Free ELF files for which the buffer was created using 'load_file'
+pub fn free_elf(bs: &BootServices, elf: ElfFile) {
+    let buffer = elf.input;
+    let pages = buffer.len() / 0x1000 + 1;
+    let mem_start = buffer.as_ptr() as u64;
+
+    unsafe {
+        bs.free_pages(mem_start, pages).expect("Failed to free pages");
+    }
 }

@@ -8,17 +8,11 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::vec;
-use core::arch::asm;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
-use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
-use ysos_boot::allocator::*;
-use ysos_boot::fs::*;
-use ysos_boot::BootInfo;
-use ysos_boot::MemoryType;
+use ysos_boot::*;
 
 mod config;
 
@@ -48,7 +42,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         ElfFile::new(buf).expect("failed to parse ELF")
     };
     unsafe {
-        ENTRY = elf.header.pt2.entry_point() as usize;
+        set_entry(elf.header.pt2.entry_point() as usize);
     }
 
     // 3. Load MemoryMap
@@ -70,13 +64,27 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     // 4. Map ELF segments, kernel stack and physical memory to virtual memory
     let mut page_table = current_page_table();
+
     // root page table is readonly, disable write protect
     unsafe {
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
         Efer::update(|f| f.insert(EferFlags::NO_EXECUTE_ENABLE));
     }
 
-    elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs)).expect("Failed to map ELF");
+    elf::map_physical_memory(
+        config.physical_memory_offset,
+        max_phys_addr,
+        &mut page_table,
+        &mut UEFIFrameAllocator(bs),
+    );
+
+    elf::load_elf(
+        &elf,
+        config.physical_memory_offset,
+        &mut page_table,
+        &mut UEFIFrameAllocator(bs),
+    )
+    .expect("Failed to load ELF");
 
     let (stack_start, stack_size) = if config.kernel_stack_auto_grow > 0 {
         let stack_start = config.kernel_stack_address
@@ -97,21 +105,15 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         stack_size,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
-        false,
     )
     .expect("Failed to map stack");
-
-    elf::map_physical_memory(
-        config.physical_memory_offset,
-        max_phys_addr,
-        &mut page_table,
-        &mut UEFIFrameAllocator(bs),
-    );
 
     // recover write protect
     unsafe {
         Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));
     }
+
+    free_elf(bs, elf);
 
     // 5. Exit boot and jump to ELF entry
     info!("Exiting boot services...");
@@ -132,21 +134,4 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     unsafe {
         jump_to_entry(&bootinfo, stacktop);
     }
-}
-
-/// Get current page table from CR3
-fn current_page_table() -> OffsetPageTable<'static> {
-    let p4_table_addr = Cr3::read().0.start_address().as_u64();
-    let p4_table = unsafe { &mut *(p4_table_addr as *mut PageTable) };
-    unsafe { OffsetPageTable::new(p4_table, VirtAddr::new(0)) }
-}
-
-/// The entry point of kernel, set by BSP.
-static mut ENTRY: usize = 0;
-
-/// Jump to ELF entry according to global variable `ENTRY`
-#[allow(clippy::empty_loop)]
-unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
-    asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
-    loop {}
 }
