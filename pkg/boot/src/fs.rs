@@ -1,11 +1,10 @@
+use crate::App;
 use arrayvec::{ArrayString, ArrayVec};
 use uefi::proto::media::file::*;
 use uefi::proto::media::fs::SimpleFileSystem;
 use uefi::table::boot::*;
 use uefi::Char16;
 use xmas_elf::ElfFile;
-
-use crate::App;
 
 /// Open root directory
 pub fn open_root(bs: &BootServices) -> Directory {
@@ -116,4 +115,16 @@ pub fn load_apps(bs: &BootServices) -> ArrayVec<App<'static>, 16> {
     info!("Loaded {} apps", apps.len());
 
     apps
+}
+
+/// Free ELF files for which the buffer was created using 'load_file'
+pub fn free_elf(bs: &BootServices, elf: ElfFile) {
+    let buffer = elf.input;
+    let pages = buffer.len() / 0x1000 + 1;
+    let mem_start = buffer.as_ptr() as u64;
+
+    unsafe {
+        bs.free_pages(mem_start, pages)
+            .expect("Failed to free pages");
+    }
 }
