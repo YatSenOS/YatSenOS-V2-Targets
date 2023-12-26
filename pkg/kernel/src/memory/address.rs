@@ -11,5 +11,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
 
 #[inline(always)]
 pub fn physical_to_virtual(addr: u64) -> u64 {
-    addr + PHYSICAL_OFFSET.get().expect("PHYSICAL_OFFSET not initialized")
+    addr + PHYSICAL_OFFSET
+        .get()
+        .expect("PHYSICAL_OFFSET not initialized")
 }
