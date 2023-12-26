@@ -70,13 +70,27 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     // 4. Map ELF segments, kernel stack and physical memory to virtual memory
     let mut page_table = current_page_table();
+
     // root page table is readonly, disable write protect
     unsafe {
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
         Efer::update(|f| f.insert(EferFlags::NO_EXECUTE_ENABLE));
     }
 
-    elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs)).expect("Failed to map ELF");
+    elf::map_physical_memory(
+        config.physical_memory_offset,
+        max_phys_addr,
+        &mut page_table,
+        &mut UEFIFrameAllocator(bs),
+    );
+
+    elf::load_elf(
+        &elf,
+        config.physical_memory_offset,
+        &mut page_table,
+        &mut UEFIFrameAllocator(bs),
+    )
+    .expect("Failed to load ELF");
 
     let (stack_start, stack_size) = if config.kernel_stack_auto_grow > 0 {
         let stack_start = config.kernel_stack_address
@@ -101,17 +115,12 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     )
     .expect("Failed to map stack");
 
-    elf::map_physical_memory(
-        config.physical_memory_offset,
-        max_phys_addr,
-        &mut page_table,
-        &mut UEFIFrameAllocator(bs),
-    );
-
     // recover write protect
     unsafe {
         Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));
     }
+
+    free_elf(bs, elf);
 
     // 5. Exit boot and jump to ELF entry
     info!("Exiting boot services...");
