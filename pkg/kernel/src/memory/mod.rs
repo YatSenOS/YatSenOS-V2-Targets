@@ -1,4 +1,4 @@
-mod address;
+pub mod address;
 pub mod allocator;
 mod frames;
 mod paging;
@@ -11,7 +11,6 @@ pub use frames::*;
 pub use paging::*;
 
 pub fn init(boot_info: &'static boot::BootInfo) {
-    let physical_memory_offset = x86_64::VirtAddr::new_truncate(PHYSICAL_OFFSET);
     let memory_map = &boot_info.memory_map;
 
     let mut mem_size = 0;
@@ -31,7 +30,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     info!("Free Usable Memory : {:>7.*} {}", 3, size, unit);
 
     unsafe {
-        init_PAGE_TABLE(paging::init(physical_memory_offset));
+        init_PAGE_TABLE(paging::init(boot_info.physical_memory_offset));
         init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(
             memory_map,
             usable_mem_size as usize,
