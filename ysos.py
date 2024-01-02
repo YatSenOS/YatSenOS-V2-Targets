@@ -21,7 +21,7 @@ parser.add_argument('-v', '--verbose', action='store_true',
                     help='Enable verbose output')
 parser.add_argument('--dry-run', action='store_true', help='Enable dry run')
 parser.add_argument('--bios', type=str,
-                    default='assets/OVMF.fd', help='Set BIOS path')
+                    default=os.path.join('assets', 'OVMF.fd'), help='Set BIOS path')
 parser.add_argument('--boot', type=str, default='esp', help='Set boot path')
 
 parser.add_argument('task', type=str, choices=[
