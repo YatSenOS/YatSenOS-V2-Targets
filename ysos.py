@@ -120,13 +120,13 @@ def build():
     execute_command([cargo_exe, 'build', '--release'], bootloader)
     compile_output = os.path.join(os.getcwd(),
                                   'target', 'x86_64-unknown-uefi', 'release', 'ysos_boot.efi')
-    copy_to_esp(compile_output, 'EFI/BOOT/BOOTX64.EFI')
+    copy_to_esp(compile_output, os.path.join('EFI', 'BOOT', 'BOOTX64.EFI'))
 
     # copy kernel config
     config_path = os.path.join(
         os.getcwd(), 'pkg', 'kernel', 'config', 'boot.conf')
     if os.path.exists(config_path):
-        copy_to_esp(config_path, 'EFI/BOOT/boot.conf')
+        copy_to_esp(config_path, os.path.join('EFI', 'BOOT', 'boot.conf'))
 
     # build kernel
     kernel = os.path.join(os.getcwd(), 'pkg', 'kernel')
@@ -154,7 +154,7 @@ def build():
         execute_command([cargo_exe, 'build', profile], app_path)
         compile_output = os.path.join(
             'target', 'x86_64-unknown-ysos', profile_dir, app_name)
-        copy_to_esp(compile_output, f'APP/{app}')
+        copy_to_esp(compile_output, os.path.join('APP', app))
 
 
 def clean():
