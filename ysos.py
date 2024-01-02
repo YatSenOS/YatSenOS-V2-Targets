@@ -57,7 +57,7 @@ def get_apps():
 
 
 def execute_command(cmd: list, workdir: str | None = None, shell: bool = False) -> int:
-    debug('Executing', " ".join(cmd) + (f'in {workdir}' if workdir else ''))
+    debug('Executing', " ".join(cmd) + (f' in {workdir}' if workdir else ''))
 
     if args.dry_run:
         return 0
