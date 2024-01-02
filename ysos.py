@@ -74,6 +74,10 @@ def execute_command(cmd: list, workdir: str | None = None, shell: bool = False) 
 def qemu(output: str = '-nographic', memory: str = '96M', debug: bool = False, intdbg: bool = False):
     qemu_exe = shutil.which('qemu-system-x86_64')
 
+    # add optional path C:\Program Files\qemu for Windows
+    if qemu_exe is None and os.name == 'nt':
+        qemu_exe = shutil.which('qemu-system-x86_64', path='C:\\Program Files\\qemu')
+        
     if qemu_exe is None:
         raise Exception('qemu-system-x86_64 not found in PATH')
 
