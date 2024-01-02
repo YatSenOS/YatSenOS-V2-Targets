@@ -57,7 +57,7 @@ def get_apps():
 
 
 def execute_command(cmd: list, workdir: str | None = None, shell: bool = False) -> int:
-    debug('Executing', ' '.join(cmd))
+    debug('Executing', " ".join(cmd) + (f'in {workdir}' if workdir else ''))
 
     if args.dry_run:
         return 0
@@ -77,7 +77,7 @@ def qemu(output: str = '-nographic', memory: str = '96M', debug: bool = False, i
     # add optional path C:\Program Files\qemu for Windows
     if qemu_exe is None and os.name == 'nt':
         qemu_exe = shutil.which('qemu-system-x86_64', path='C:\\Program Files\\qemu')
-        
+
     if qemu_exe is None:
         raise Exception('qemu-system-x86_64 not found in PATH')
 
