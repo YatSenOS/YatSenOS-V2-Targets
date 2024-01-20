@@ -5,12 +5,12 @@ use pc_keyboard::DecodedKey;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
-    idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Serial0 as u8) as usize]
+    idt[consts::Interrupts::IrqBase as usize + consts::Irq::Serial0 as usize]
         .set_handler_fn(interrupt_handler);
 }
 
 pub fn init() {
-    super::enable_irq(consts::Irq::Serial0 as u8);
+    super::enable_irq(consts::Irq::Serial0 as u8, 0);
     debug!("Serial0(COM1) IRQ enabled.");
 }
 
