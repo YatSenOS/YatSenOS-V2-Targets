@@ -292,7 +292,7 @@ impl Process {
                 (physical_to_virtual(frame.start_address().as_u64()) as *mut PageTable)
                     .as_mut()
                     .unwrap(),
-                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET),
+                VirtAddr::new_truncate(*PHYSICAL_OFFSET.get().unwrap()),
             )
         }
     }
