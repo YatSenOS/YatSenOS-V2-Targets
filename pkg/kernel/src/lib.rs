@@ -20,6 +20,7 @@ extern crate libm;
 
 #[macro_use]
 pub mod utils;
+use task::ProcessId;
 pub use utils::*;
 
 #[macro_use]
@@ -27,13 +28,10 @@ pub mod drivers;
 pub use drivers::*;
 
 pub mod memory;
-pub mod tasks;
-
-pub use tasks::*;
 
 pub mod interrupt;
 
-pub mod process;
+pub mod task;
 
 pub use alloc::format;
 use boot::BootInfo;
@@ -48,7 +46,7 @@ pub fn init(boot_info: &'static BootInfo) {
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
     memory::user::init(); // init user heap allocator
-    process::init(boot_info); // init process manager
+    task::init(boot_info); // init task manager
     input::init(); // init input
     ata::init(); // init ata
     filesystem::init(); // init filesystem
@@ -57,6 +55,16 @@ pub fn init(boot_info: &'static BootInfo) {
     info!("Interrupts Enabled.");
 
     info!("YatSenOS initialized.");
+}
+
+pub fn wait(init: ProcessId) {
+    loop {
+        if task::still_alive(init) {
+            x86_64::instructions::hlt();
+        } else {
+            break;
+        }
+    }
 }
 
 pub fn shutdown(boot_info: &'static BootInfo) -> ! {

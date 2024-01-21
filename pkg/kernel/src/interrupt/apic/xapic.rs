@@ -39,7 +39,7 @@ impl LocalApic for XApic {
             // from lapic[TICR] and then issues an interrupt.
             // If xv6 cared more about precise timekeeping,
             // TICR would be calibrated using an external time source.
-            self.write(TDCR, X1);
+            self.write(TDCR, 0b1011);
             self.write(TIMER, PERIODIC | (T_IRQ0 + IRQ_TIMER));
             self.write(TICR, 0x20000);
 

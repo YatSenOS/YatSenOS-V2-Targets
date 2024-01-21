@@ -1,11 +1,5 @@
 use super::ProcessId;
-use alloc::{collections::BTreeMap, vec::Vec};
-
-once_mutex!(pub SEMAPHORES: BTreeMap<SemaphoreId, Semaphore>);
-
-guard_access_fn! {
-    pub get_sem_manager(SEMAPHORES: BTreeMap<SemaphoreId, Semaphore>)
-}
+use alloc::vec::Vec;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct SemaphoreId(u32);
@@ -18,6 +12,7 @@ impl SemaphoreId {
 
 /// Mutex is provided by the sem manager,
 /// We need not to protect the count again
+#[derive(Debug)]
 pub struct Semaphore {
     count: usize,
     wait_queue: Vec<ProcessId>,
@@ -31,9 +26,9 @@ impl Semaphore {
         }
     }
 
-    pub fn down(&mut self, pid: ProcessId) -> Result<(), ()> {
+    pub fn down(&mut self, proc: ProcessId) -> Result<(), ()> {
         if self.count == 0 {
-            self.wait_queue.push(pid);
+            self.wait_queue.push(proc);
             Err(())
         } else {
             self.count -= 1;

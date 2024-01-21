@@ -1,7 +1,7 @@
 pub fn test() -> ! {
     let mut count = 0;
     let id;
-    if let Some(id_env) = crate::process::env("id") {
+    if let Some(id_env) = crate::task::env("id") {
         id = id_env
     } else {
         id = "unknown".into()
