@@ -116,16 +116,16 @@ pub fn sys_new_sem(key: u32, value: usize) -> isize {
 }
 
 #[inline(always)]
-pub fn sys_sem_up(key: u32) -> isize {
+pub fn sys_rm_sem(key: u32) -> isize {
     syscall!(Syscall::Sem, 1, key as usize) as isize
 }
 
 #[inline(always)]
-pub fn sys_sem_down(key: u32) -> isize {
+pub fn sys_sem_up(key: u32) -> isize {
     syscall!(Syscall::Sem, 2, key as usize) as isize
 }
 
 #[inline(always)]
-pub fn sys_rm_sem(key: u32) -> isize {
+pub fn sys_sem_down(key: u32) -> isize {
     syscall!(Syscall::Sem, 3, key as usize) as isize
 }

@@ -58,7 +58,8 @@ impl ProcessManager {
     }
 
     pub fn current(&self) -> Arc<Process> {
-        self.get_proc(&current_pid()).expect("No current process")
+        self.get_proc(&processor::current_pid())
+            .expect("No current process")
     }
 
     pub fn wait_pid(&self, pid: ProcessId) -> isize {
@@ -81,13 +82,14 @@ impl ProcessManager {
     }
 
     pub fn switch_next(&self, context: &mut ProcessContext) -> ProcessId {
-        let mut pid = current_pid();
+        let mut pid = processor::current_pid();
 
         while let Some(next) = self.ready_queue.lock().pop_front() {
             let map = self.processes.read();
             let proc = map.get(&next).expect("Process not found");
 
             if !proc.read().is_ready() {
+                debug!("Process #{} is {:?}", next, proc.read().status());
                 continue;
             }
 
@@ -160,8 +162,6 @@ impl ProcessManager {
         self.add_proc(pid, proc);
         self.push_ready(pid);
 
-        self.print_process_list();
-
         pid
     }
 
@@ -200,19 +200,19 @@ impl ProcessManager {
     }
 
     pub fn kill_self(&self, ret: isize) {
-        self.kill(current_pid(), ret);
+        self.kill(processor::current_pid(), ret);
     }
 
-    pub fn unblock(&self, pid: ProcessId) {
+    pub fn wake_up(&self, pid: ProcessId) {
         if let Some(proc) = self.get_proc(&pid) {
-            proc.write().resume();
+            proc.write().pause();
             self.push_ready(pid);
         }
     }
 
     pub fn block(&self, pid: ProcessId) {
         if let Some(proc) = self.get_proc(&pid) {
-            proc.write().pause();
+            proc.write().block();
         }
     }
 

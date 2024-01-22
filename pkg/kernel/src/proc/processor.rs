@@ -5,9 +5,11 @@ use alloc::{string::String, vec::Vec};
 use x86::cpuid::CpuId;
 
 const MAX_CPU_COUNT: usize = 8;
-const ZERO: Processor = Processor::new(); // means no process
 
-static PROCESSORS: [Processor; MAX_CPU_COUNT] = [ZERO; MAX_CPU_COUNT];
+#[allow(clippy::declare_interior_mutable_const)]
+const EMPTY: Processor = Processor::new(); // means no process
+
+static PROCESSORS: [Processor; MAX_CPU_COUNT] = [EMPTY; MAX_CPU_COUNT];
 
 fn current() -> &'static Processor {
     let cpuid = CpuId::new()

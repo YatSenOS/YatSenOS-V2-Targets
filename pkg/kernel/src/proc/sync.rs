@@ -1,5 +1,6 @@
 use super::ProcessId;
-use alloc::vec::Vec;
+use alloc::{collections::BTreeMap, vec::Vec};
+use spin::Mutex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct SemaphoreId(u32);
@@ -10,15 +11,24 @@ impl SemaphoreId {
     }
 }
 
-/// Mutex is provided by the sem manager,
-/// We need not to protect the count again
-#[derive(Debug)]
+/// Mutex is required for Semaphore
+#[derive(Debug, Clone)]
 pub struct Semaphore {
     count: usize,
     wait_queue: Vec<ProcessId>,
 }
 
+/// Semaphore result
+#[derive(Debug)]
+pub enum SemaphoreResult {
+    Ok,
+    NoExist,
+    Block(ProcessId),
+    WakeUp(ProcessId),
+}
+
 impl Semaphore {
+    /// Create a new semaphore
     pub fn new(value: usize) -> Self {
         Self {
             count: value,
@@ -26,24 +36,71 @@ impl Semaphore {
         }
     }
 
-    pub fn down(&mut self, proc: ProcessId) -> Result<(), ()> {
+    /// Down the semaphore (acquire)
+    ///
+    /// if the count is 0, then push the process into the wait queue
+    /// else decrease the count and return Ok
+    pub fn down(&mut self, pid: ProcessId) -> SemaphoreResult {
         if self.count == 0 {
-            self.wait_queue.push(proc);
-            Err(())
+            self.wait_queue.push(pid);
+            SemaphoreResult::Block(pid)
         } else {
             self.count -= 1;
-            // trace!("Semaphore down: {}", count);
-            Ok(())
+            SemaphoreResult::Ok
         }
     }
 
-    pub fn up(&mut self) -> Option<ProcessId> {
-        // trace!("Semaphore up: {}", count);
+    /// Up the semaphore (release)
+    ///
+    /// if the wait queue is not empty, then pop a process from the wait queue
+    /// else increase the count
+    pub fn up(&mut self) -> SemaphoreResult {
         if !self.wait_queue.is_empty() {
-            Some(self.wait_queue.pop().unwrap())
+            SemaphoreResult::WakeUp(self.wait_queue.pop().unwrap())
         } else {
             self.count += 1;
-            None
+            SemaphoreResult::Ok
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct SemaphoreSet {
+    sems: BTreeMap<SemaphoreId, Mutex<Semaphore>>,
+}
+
+impl SemaphoreSet {
+    pub fn insert(&mut self, key: u32, value: usize) -> bool {
+        trace!("Sem Ins : <{:#x}>{}", key, value);
+        self.sems
+            .insert(SemaphoreId::new(key), Mutex::new(Semaphore::new(value)))
+            .is_none()
+    }
+
+    pub fn remove(&mut self, key: u32) -> bool {
+        trace!("Sem Rem : <{:#x}>", key);
+        self.sems.remove(&SemaphoreId::new(key)).is_some()
+    }
+
+    pub fn up(&self, key: u32) -> SemaphoreResult {
+        let sid = SemaphoreId::new(key);
+        if let Some(sem) = self.sems.get(&sid) {
+            let mut locked = sem.lock();
+            trace!("Sem Up  : <{:#x}>{}", key, locked);
+            locked.up()
+        } else {
+            SemaphoreResult::NoExist
+        }
+    }
+
+    pub fn down(&self, key: u32, pid: ProcessId) -> SemaphoreResult {
+        let sid = SemaphoreId::new(key);
+        if let Some(sem) = self.sems.get(&sid) {
+            let mut locked = sem.lock();
+            trace!("Sem Down: <{:#x}>{}", key, locked);
+            locked.down(pid)
+        } else {
+            SemaphoreResult::NoExist
         }
     }
 }

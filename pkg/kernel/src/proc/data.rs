@@ -1,6 +1,6 @@
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
 use boot::KernelPages;
-use spin::{Mutex, RwLock};
+use spin::RwLock;
 use x86_64::{
     structures::paging::{
         page::{PageRange, PageRangeInclusive},
@@ -18,7 +18,7 @@ pub struct ProcessData {
     // shared data
     pub(super) env: Arc<RwLock<BTreeMap<String, String>>>,
     pub(super) file_handles: Arc<RwLock<BTreeMap<u8, Resource>>>,
-    pub(super) semaphores: Arc<Mutex<BTreeMap<SemaphoreId, Semaphore>>>,
+    pub(super) semaphores: Arc<RwLock<SemaphoreSet>>,
 
     // process specific data
     pub(super) code_segments: Option<Vec<PageRangeInclusive>>,
@@ -38,7 +38,7 @@ impl Default for ProcessData {
 
         Self {
             env: Arc::new(RwLock::new(BTreeMap::new())),
-            semaphores: Arc::new(Mutex::new(BTreeMap::new())),
+            semaphores: Arc::new(RwLock::new(SemaphoreSet::default())),
             code_segments: None,
             stack_segment: None,
             file_handles: Arc::new(RwLock::new(file_handles)),
@@ -113,53 +113,23 @@ impl ProcessData {
         }
     }
 
-    pub fn new_sem(&mut self, key: u32, value: usize) -> isize {
-        let sid = SemaphoreId::new(key);
-        if let Entry::Vacant(e) = self.semaphores.lock().entry(sid) {
-            e.insert(Semaphore::new(value));
-            return 0;
-        }
-        1
+    #[inline]
+    pub fn new_sem(&mut self, key: u32, value: usize) -> bool {
+        self.semaphores.write().insert(key, value)
     }
 
-    pub fn sem_up(&mut self, key: u32) -> isize {
-        let sid = SemaphoreId::new(key);
-        if let Some(sem) = self.semaphores.lock().get_mut(&sid) {
-            // debug!("<{:#x}>{}", key, sem);
-            if let Some(pid) = sem.up() {
-                trace!("Semaphore #{:#x} up -> unblock process: #{}", key, pid);
-                get_process_manager().unblock(pid);
-            }
-            return 0;
-        }
-        1
+    #[inline]
+    pub fn remove_sem(&mut self, key: u32) -> bool {
+        self.semaphores.write().remove(key)
     }
 
-    pub fn sem_down(&mut self, key: u32, context: &mut ProcessContext) {
-        let sid = SemaphoreId::new(key);
-        if let Some(sem) = self.semaphores.lock().get_mut(&sid) {
-            // debug!("<{:#x}>{}", key, sem);
-            let pid = processor::current_pid();
-            if let Err(()) = sem.down(pid) {
-                trace!("Semaphore #{:#x} down -> block process: #{}", key, pid);
-                context.set_rax(0);
-                let manager = get_process_manager();
-                manager.save_current(context);
-                manager.block(pid);
-                manager.switch_next(context);
-            } else {
-                context.set_rax(0);
-            }
-        } else {
-            context.set_rax(1);
-        }
+    #[inline]
+    pub fn sem_up(&mut self, key: u32) -> SemaphoreResult {
+        self.semaphores.read().up(key)
     }
 
-    pub fn remove_sem(&mut self, key: u32) -> isize {
-        let sid = SemaphoreId::new(key);
-        if self.semaphores.lock().remove(&sid).is_some() {
-            return 0;
-        }
-        1
+    #[inline]
+    pub fn sem_down(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
+        self.semaphores.read().down(key, pid)
     }
 }
