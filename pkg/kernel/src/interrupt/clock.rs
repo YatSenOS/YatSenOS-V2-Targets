@@ -1,5 +1,5 @@
 use super::consts;
-use crate::{memory::gdt, task::ProcessContext};
+use crate::{memory::gdt, proc::ProcessContext};
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
@@ -9,7 +9,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
 }
 
 pub extern "C" fn clock(mut context: ProcessContext) {
-    crate::task::switch(&mut context);
+    crate::proc::switch(&mut context);
     super::ack(consts::Interrupts::IrqBase as u8);
 }
 

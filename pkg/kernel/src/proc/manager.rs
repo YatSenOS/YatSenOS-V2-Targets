@@ -15,6 +15,7 @@ use xmas_elf::ElfFile;
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
 
 pub fn init(init: Arc<Process>) {
+    processor::set_pid(init.pid());
     PROCESS_MANAGER.call_once(|| ProcessManager::new(init));
 }
 
@@ -33,36 +34,37 @@ impl ProcessManager {
     pub fn new(init: Arc<Process>) -> Self {
         let mut processes = BTreeMap::new();
         let ready_queue = VecDeque::new();
-        processor::current().put_pid(init.pid());
-        processes.insert(init.pid(), init);
+        let pid = init.pid();
+        processes.insert(pid, init);
         Self {
             processes: RwLock::new(processes),
             ready_queue: Mutex::new(ready_queue),
         }
     }
 
-    fn get_proc(&self, pid: ProcessId) -> Option<Arc<Process>> {
-        self.processes.read().get(&pid).cloned()
+    #[inline]
+    pub fn push_ready(&self, pid: ProcessId) {
+        self.ready_queue.lock().push_back(pid);
+    }
+
+    #[inline]
+    fn add_proc(&self, pid: ProcessId, proc: Arc<Process>) {
+        self.processes.write().insert(pid, proc);
+    }
+
+    #[inline]
+    fn get_proc(&self, pid: &ProcessId) -> Option<Arc<Process>> {
+        self.processes.read().get(pid).cloned()
     }
 
     pub fn current(&self) -> Arc<Process> {
-        self.get_proc(current_pid()).expect("No current process")
+        self.get_proc(&current_pid()).expect("No current process")
     }
 
     pub fn wait_pid(&self, pid: ProcessId) -> isize {
-        let proc_map = self.processes.read();
-        proc_map
-            .get(&pid)
+        self.get_proc(&pid)
             .and_then(|p| p.read().exit_code())
             .unwrap_or(-1)
-    }
-
-    pub fn still_alive(&self, pid: ProcessId) -> bool {
-        self.processes
-            .read()
-            .get(&pid)
-            .map(|p| p.read().status() != ProgramStatus::Dead)
-            .unwrap_or(false)
     }
 
     pub fn save_current(&self, context: &mut ProcessContext) -> ProcessId {
@@ -72,35 +74,31 @@ impl ProcessManager {
         let mut current = current.write();
         current.tick();
         current.save(context);
-        current.pause();
+
+        // debug!("Save process {} #{}", current.name(), pid);
 
         pid
     }
 
-    pub fn push_ready(&self, pid: ProcessId) {
-        self.ready_queue.lock().push_back(pid);
-    }
-
     pub fn switch_next(&self, context: &mut ProcessContext) -> ProcessId {
-        let next = self.ready_queue.lock().pop_front();
+        let mut pid = current_pid();
 
-        // This should never happen
-        if next.is_none() {
-            error!("No process in ready queue");
-            return current_pid();
+        while let Some(next) = self.ready_queue.lock().pop_front() {
+            let map = self.processes.read();
+            let proc = map.get(&next).expect("Process not found");
+
+            if !proc.read().is_ready() {
+                continue;
+            }
+
+            if pid != next {
+                proc.write().restore(context);
+                processor::set_pid(next);
+                pid = next;
+            }
+
+            break;
         }
-
-        let pid = next.unwrap();
-        let map = self.processes.read();
-        let proc = map.get(&pid).expect("Process not found");
-
-        // trace!("Next process {} #{}", proc.read().name(), pid);
-        // switch to next process
-        let mut proc = proc.write();
-        proc.resume();
-        proc.restore(context);
-
-        processor::current().put_pid(pid);
 
         pid
     }
@@ -143,11 +141,11 @@ impl ProcessManager {
         parent: Option<Weak<Process>>,
         proc_data: Option<ProcessData>,
     ) -> ProcessId {
-        let kproc = self.get_proc(KERNEL_PID).unwrap();
+        let kproc = self.get_proc(&KERNEL_PID).unwrap();
         let page_table = kproc.read().clont_page_table();
-        let p = Process::new(name, parent, page_table, proc_data);
+        let proc = Process::new(name, parent, page_table, proc_data);
 
-        let mut inner = p.write();
+        let mut inner = proc.write();
         inner.pause();
         inner.load_elf(elf);
         inner.init_stack_frame(
@@ -156,12 +154,10 @@ impl ProcessManager {
         );
         drop(inner);
 
-        trace!("New {:#?}", &p);
-        let pid = p.pid();
+        trace!("New {:#?}", &proc);
 
-        // add to process map
-        self.processes.write().insert(pid, p);
-        // add to ready queue
+        let pid = proc.pid();
+        self.add_proc(pid, proc);
         self.push_ready(pid);
 
         self.print_process_list();
@@ -194,6 +190,68 @@ impl ProcessManager {
     //     self.processes.push(p);
     //     pid
     // }
+
+    pub fn fork(&self) {
+        let proc = self.current().fork();
+        let pid = proc.pid();
+        self.add_proc(pid, proc);
+        self.push_ready(pid);
+        debug!("Current queue: {:?}", self.ready_queue.lock());
+    }
+
+    pub fn kill_self(&self, ret: isize) {
+        self.kill(current_pid(), ret);
+    }
+
+    pub fn unblock(&self, pid: ProcessId) {
+        if let Some(proc) = self.get_proc(&pid) {
+            proc.write().resume();
+            self.push_ready(pid);
+        }
+    }
+
+    pub fn block(&self, pid: ProcessId) {
+        if let Some(proc) = self.get_proc(&pid) {
+            proc.write().pause();
+        }
+    }
+
+    pub fn handle_page_fault(
+        &self,
+        addr: VirtAddr,
+        err_code: PageFaultErrorCode,
+    ) -> Result<(), ()> {
+        if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION) {
+            let cur_proc = self.current();
+            trace!(
+                "Page Fault! Checking if {:#x} is on current process's stack",
+                addr
+            );
+            if cur_proc.read().is_on_stack(addr) {
+                cur_proc.write().try_alloc_new_stack_page(addr).unwrap();
+                Ok(())
+            } else {
+                Err(())
+            }
+        } else {
+            Err(())
+        }
+    }
+
+    pub fn kill(&self, pid: ProcessId, ret: isize) {
+        let proc = self.get_proc(&pid);
+
+        if proc.is_none() {
+            warn!("Process #{} not found.", pid);
+            return;
+        }
+
+        let proc = proc.unwrap();
+
+        trace!("Kill {:#?}", &proc);
+
+        proc.kill(ret);
+    }
 
     pub fn print_process_list(&self) {
         let mut output =
@@ -263,67 +321,10 @@ impl ProcessManager {
         )
         .as_str();
 
+        output += format!("Queue  : {:?}\n", self.ready_queue.lock()).as_str();
+
+        output += &processor::print_processors();
+
         print!("{}", output);
-    }
-
-    pub fn fork(&self) {
-        let p = self.current().fork();
-        let pid = p.pid();
-        self.processes.write().insert(pid, p);
-        self.push_ready(pid);
-    }
-
-    pub fn kill_self(&self, ret: isize) {
-        self.kill(current_pid(), ret);
-    }
-
-    pub fn unblock(&self, pid: ProcessId) {
-        if let Some(proc) = self.get_proc(pid) {
-            proc.write().resume();
-            self.push_ready(pid);
-        }
-    }
-
-    pub fn block(&self, pid: ProcessId) {
-        if let Some(proc) = self.get_proc(pid) {
-            proc.write().pause();
-        }
-    }
-
-    pub fn handle_page_fault(
-        &self,
-        addr: VirtAddr,
-        err_code: PageFaultErrorCode,
-    ) -> Result<(), ()> {
-        if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION) {
-            let cur_proc = self.current();
-            trace!(
-                "Page Fault! Checking if {:#x} is on current process's stack",
-                addr
-            );
-            if cur_proc.read().is_on_stack(addr) {
-                cur_proc.write().try_alloc_new_stack_page(addr).unwrap();
-                Ok(())
-            } else {
-                Err(())
-            }
-        } else {
-            Err(())
-        }
-    }
-
-    pub fn kill(&self, pid: ProcessId, ret: isize) {
-        let proc = self.get_proc(pid);
-
-        if proc.is_none() {
-            warn!("Process #{} not found.", pid);
-            return;
-        }
-
-        let proc = proc.unwrap();
-
-        trace!("Kill {:#?}", &proc);
-
-        proc.kill(ret);
     }
 }

@@ -1,4 +1,4 @@
-use crate::{memory::gdt, task::ProcessContext};
+use crate::{memory::gdt, proc::ProcessContext};
 use alloc::format;
 use core::convert::TryFrom;
 use syscall_def::Syscall;

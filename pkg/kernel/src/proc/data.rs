@@ -1,6 +1,6 @@
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
 use boot::KernelPages;
-use spin::RwLock;
+use spin::{Mutex, RwLock};
 use x86_64::{
     structures::paging::{
         page::{PageRange, PageRangeInclusive},
@@ -17,8 +17,9 @@ use super::*;
 pub struct ProcessData {
     // shared data
     pub(super) env: Arc<RwLock<BTreeMap<String, String>>>,
-    pub(super) semaphores: Arc<RwLock<BTreeMap<SemaphoreId, Semaphore>>>,
     pub(super) file_handles: Arc<RwLock<BTreeMap<u8, Resource>>>,
+    pub(super) semaphores: Arc<Mutex<BTreeMap<SemaphoreId, Semaphore>>>,
+
     // process specific data
     pub(super) code_segments: Option<Vec<PageRangeInclusive>>,
     pub(super) stack_segment: Option<PageRange>,
@@ -37,7 +38,7 @@ impl Default for ProcessData {
 
         Self {
             env: Arc::new(RwLock::new(BTreeMap::new())),
-            semaphores: Arc::new(RwLock::new(BTreeMap::new())),
+            semaphores: Arc::new(Mutex::new(BTreeMap::new())),
             code_segments: None,
             stack_segment: None,
             file_handles: Arc::new(RwLock::new(file_handles)),
@@ -114,7 +115,7 @@ impl ProcessData {
 
     pub fn new_sem(&mut self, key: u32, value: usize) -> isize {
         let sid = SemaphoreId::new(key);
-        if let Entry::Vacant(e) = self.semaphores.write().entry(sid) {
+        if let Entry::Vacant(e) = self.semaphores.lock().entry(sid) {
             e.insert(Semaphore::new(value));
             return 0;
         }
@@ -123,7 +124,7 @@ impl ProcessData {
 
     pub fn sem_up(&mut self, key: u32) -> isize {
         let sid = SemaphoreId::new(key);
-        if let Some(sem) = self.semaphores.write().get_mut(&sid) {
+        if let Some(sem) = self.semaphores.lock().get_mut(&sid) {
             // debug!("<{:#x}>{}", key, sem);
             if let Some(pid) = sem.up() {
                 trace!("Semaphore #{:#x} up -> unblock process: #{}", key, pid);
@@ -136,7 +137,7 @@ impl ProcessData {
 
     pub fn sem_down(&mut self, key: u32, context: &mut ProcessContext) {
         let sid = SemaphoreId::new(key);
-        if let Some(sem) = self.semaphores.write().get_mut(&sid) {
+        if let Some(sem) = self.semaphores.lock().get_mut(&sid) {
             // debug!("<{:#x}>{}", key, sem);
             let pid = processor::current_pid();
             if let Err(()) = sem.down(pid) {
@@ -156,7 +157,7 @@ impl ProcessData {
 
     pub fn remove_sem(&mut self, key: u32) -> isize {
         let sid = SemaphoreId::new(key);
-        if self.semaphores.write().remove(&sid).is_some() {
+        if self.semaphores.lock().remove(&sid).is_some() {
             return 0;
         }
         1

@@ -20,7 +20,7 @@ extern crate libm;
 
 #[macro_use]
 pub mod utils;
-use task::ProcessId;
+use proc::ProcessId;
 pub use utils::*;
 
 #[macro_use]
@@ -31,14 +31,14 @@ pub mod memory;
 
 pub mod interrupt;
 
-pub mod task;
+pub mod proc;
 
 pub use alloc::format;
 use boot::BootInfo;
 
 pub fn init(boot_info: &'static BootInfo) {
     serial::init(); // init serial output
-    logger::init(); // init logger system
+    logger::init(boot_info); // init logger system
     memory::address::init(boot_info);
     memory::gdt::init(); // init gdt
     memory::allocator::init(); // init kernel heap allocator
@@ -46,7 +46,7 @@ pub fn init(boot_info: &'static BootInfo) {
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
     memory::user::init(); // init user heap allocator
-    task::init(boot_info); // init task manager
+    proc::init(boot_info); // init task manager
     input::init(); // init input
     ata::init(); // init ata
     filesystem::init(); // init filesystem
@@ -59,7 +59,7 @@ pub fn init(boot_info: &'static BootInfo) {
 
 pub fn wait(init: ProcessId) {
     loop {
-        if task::still_alive(init) {
+        if proc::still_alive(init) {
             x86_64::instructions::hlt();
         } else {
             break;

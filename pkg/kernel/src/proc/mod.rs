@@ -54,11 +54,10 @@ pub const KSTACK_DEF_SIZE: u64 = KSTACK_DEF_PAGE * crate::memory::PAGE_SIZE;
 pub const KSTACK_INIT_BOT: u64 = KSTACK_MAX - KSTACK_DEF_SIZE;
 pub const KSTACK_INIT_TOP: u64 = KSTACK_MAX - 8;
 
-pub const KERNEL_PID: ProcessId = ProcessId(0);
+pub const KERNEL_PID: ProcessId = ProcessId(1);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ProgramStatus {
-    Created,
     Running,
     Ready,
     Blocked,
@@ -70,6 +69,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let kproc_data = ProcessData::new()
         .set_stack(KSTACK_INIT_BOT, KSTACK_DEF_PAGE)
         .set_kernel_code(&boot_info.kernel_pages);
+
     trace!("Init process data: {:#?}", kproc_data);
 
     // kernel process
@@ -89,7 +89,8 @@ pub fn init(boot_info: &'static boot::BootInfo) {
 pub fn switch(context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
-        manager.push_ready(manager.save_current(context));
+        let pid = manager.save_current(context);
+        manager.push_ready(pid);
         manager.switch_next(context);
     });
 }
@@ -133,7 +134,7 @@ pub fn close(fd: u8) -> bool {
 }
 
 pub fn still_alive(pid: ProcessId) -> bool {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().still_alive(pid))
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid) < 0)
 }
 
 pub fn current_pid() -> ProcessId {

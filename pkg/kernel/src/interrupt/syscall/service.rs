@@ -1,6 +1,6 @@
 use core::alloc::Layout;
 
-use crate::task::*;
+use crate::proc::*;
 use crate::utils::*;
 
 use super::SyscallArgs;

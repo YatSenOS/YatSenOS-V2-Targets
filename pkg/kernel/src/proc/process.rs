@@ -56,17 +56,14 @@ impl Process {
         let name = name.to_ascii_lowercase();
 
         // create context
-        let status = ProgramStatus::Created;
-        let context = ProcessContext::default();
-        let ticks_passed = 0;
         let pid = ProcessId::new();
 
         let inner = ProcessInner {
             name,
             parent,
-            status,
-            context,
-            ticks_passed,
+            status: ProgramStatus::Ready,
+            context: ProcessContext::default(),
+            ticks_passed: 0,
             exit_code: None,
             children: Vec::new(),
             page_table: Some(page_table),
@@ -156,6 +153,14 @@ impl ProcessInner {
         self.status == ProgramStatus::Running
     }
 
+    pub fn is_dead(&self) -> bool {
+        self.status == ProgramStatus::Dead
+    }
+
+    pub fn is_ready(&self) -> bool {
+        self.status == ProgramStatus::Ready
+    }
+
     pub fn exit_code(&self) -> Option<isize> {
         self.exit_code
     }
@@ -168,14 +173,18 @@ impl ProcessInner {
         self.page_table = Some(PageTableContext::new());
     }
 
-    pub fn save(&mut self, context: &mut ProcessContext) {
+    /// Save the process's context
+    /// mark the process as ready
+    pub(super) fn save(&mut self, context: &mut ProcessContext) {
         unsafe {
             self.context.save(context);
         }
         self.status = ProgramStatus::Ready;
     }
 
-    pub fn restore(&mut self, context: &mut ProcessContext) {
+    /// Restore the process's context
+    /// mark the process as running
+    pub(super) fn restore(&mut self, context: &mut ProcessContext) {
         unsafe {
             self.context.restore(context);
             self.page_table.as_ref().unwrap().load();
@@ -335,7 +344,7 @@ impl ProcessInner {
             name: self.name.clone(),
             exit_code: None,
             parent: Some(parent),
-            status: ProgramStatus::Created,
+            status: ProgramStatus::Ready,
             ticks_passed: 0,
             context: new_context,
             page_table: Some(owned_page_table),
