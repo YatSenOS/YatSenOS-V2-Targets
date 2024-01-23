@@ -104,10 +104,6 @@ pub fn list_process() {
     print_process_list();
 }
 
-pub fn get_handle(fd: u8) -> Option<Resource> {
-    crate::proc::handle(fd)
-}
-
 pub fn sys_wait_pid(args: &SyscallArgs) -> usize {
     let pid = ProcessId(args.arg0 as u16);
     let ret = wait_pid(pid);

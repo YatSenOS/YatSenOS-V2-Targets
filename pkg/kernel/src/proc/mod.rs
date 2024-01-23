@@ -211,7 +211,7 @@ pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
         let process_name = name.to_lowercase();
 
         let parent = Arc::downgrade(&manager.current());
-        let mut proc_data = ProcessData::new();
+        let proc_data = ProcessData::new();
 
         let pid = manager.spawn(elf, name, Some(parent), Some(proc_data));
 
