@@ -15,7 +15,6 @@ use super::*;
 pub struct ProcessData {
     // shared data
     pub(super) env: Arc<RwLock<BTreeMap<String, String>>>,
-    pub(super) semaphores: Arc<RwLock<SemaphoreSet>>,
 
     // process specific data
     pub(super) stack_segment: Option<PageRange>,
@@ -26,7 +25,6 @@ impl Default for ProcessData {
     fn default() -> Self {
         Self {
             env: Arc::new(RwLock::new(BTreeMap::new())),
-            semaphores: Arc::new(RwLock::new(SemaphoreSet::default())),
             stack_segment: None,
             stack_memory_usage: 0,
         }
@@ -64,25 +62,5 @@ impl ProcessData {
         } else {
             false
         }
-    }
-
-    #[inline]
-    pub fn new_sem(&mut self, key: u32, value: usize) -> bool {
-        self.semaphores.write().insert(key, value)
-    }
-
-    #[inline]
-    pub fn remove_sem(&mut self, key: u32) -> bool {
-        self.semaphores.write().remove(key)
-    }
-
-    #[inline]
-    pub fn sem_up(&mut self, key: u32) -> SemaphoreResult {
-        self.semaphores.read().up(key)
-    }
-
-    #[inline]
-    pub fn sem_down(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
-        self.semaphores.read().down(key, pid)
     }
 }

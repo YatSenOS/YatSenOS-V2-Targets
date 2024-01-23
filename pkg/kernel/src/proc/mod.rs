@@ -5,12 +5,10 @@ mod paging;
 mod pid;
 mod process;
 mod processor;
-mod sync;
 
 use manager::*;
 use paging::*;
 use process::*;
-use sync::*;
 
 use alloc::string::String;
 pub use context::ProcessContext;
