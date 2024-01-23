@@ -19,7 +19,7 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
         match line.trim() {
             "exit" => break,
             "ps" => {
-                ysos::process::print_process_list();
+                ysos::proc::print_process_list();
             }
             "stack" => {
                 ysos::stack_thread_test();

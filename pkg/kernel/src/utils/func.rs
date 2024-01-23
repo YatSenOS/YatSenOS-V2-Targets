@@ -1,7 +1,7 @@
 pub fn test() -> ! {
     let mut count = 0;
     let id;
-    if let Some(id_env) = crate::process::env("id") {
+    if let Some(id_env) = crate::proc::env("id") {
         id = id_env
     } else {
         id = "unknown".into()
@@ -35,15 +35,5 @@ fn huge_stack() {
 
 pub fn stack_test() -> ! {
     huge_stack();
-    kill_self();
-}
-
-pub fn kill_self() -> ! {
-    crate::process::process_exit(0);
-
-    loop {
-        unsafe {
-            core::arch::asm!("hlt");
-        }
-    }
+    crate::proc::process_exit(0)
 }

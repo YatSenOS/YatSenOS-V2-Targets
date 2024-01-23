@@ -14,8 +14,6 @@ pub use xapic::{XApic, LAPIC_ADDR};
 mod ioapic;
 mod xapic;
 
-type Tid = u8;
-
 pub trait LocalApic {
     /// If this type APIC is supported
     fn support() -> bool;

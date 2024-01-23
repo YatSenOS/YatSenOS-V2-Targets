@@ -70,7 +70,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     // 4. Map ELF segments, kernel stack and physical memory to virtual memory
     let mut page_table = current_page_table();
-
     // root page table is readonly, disable write protect
     unsafe {
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
@@ -110,8 +109,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         stack_start,
         stack_size,
         &mut page_table,
-        &mut UEFIFrameAllocator(bs),
-        false,
+        &mut UEFIFrameAllocator(bs)
     )
     .expect("Failed to map stack");
 
@@ -133,6 +131,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         memory_map: mmap.entries().copied().collect(),
         physical_memory_offset: config.physical_memory_offset,
         system_table: runtime,
+        log_level: config.log_level
     };
 
     // align stack to 8 bytes

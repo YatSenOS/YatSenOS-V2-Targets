@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use bit_field::BitField;
 
 /// The I/O APIC manages hardware interrupts for an SMP system.

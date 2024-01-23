@@ -1,14 +1,14 @@
 use log::{LevelFilter, Metadata, Record};
 
-pub fn init() {
+pub fn init(boot_info: &'static boot::BootInfo) {
     static LOGGER: Logger = Logger;
     log::set_logger(&LOGGER).unwrap();
-    log::set_max_level(match option_env!("LOG_LEVEL") {
-        Some("error") => LevelFilter::Error,
-        Some("warn") => LevelFilter::Warn,
-        Some("info") => LevelFilter::Info,
-        Some("debug") => LevelFilter::Debug,
-        Some("trace") => LevelFilter::Trace,
+    log::set_max_level(match boot_info.log_level {
+        "error" => LevelFilter::Error,
+        "warn" => LevelFilter::Warn,
+        "info" => LevelFilter::Info,
+        "debug" => LevelFilter::Debug,
+        "trace" => LevelFilter::Trace,
         _ => LevelFilter::Info,
     });
 
@@ -28,7 +28,7 @@ impl log::Log for Logger {
         if self.enabled(record.metadata()) {
             match record.level() {
                 log::Level::Error => println_warn!(
-                    "[E] {}@{}: {}",
+                    "[E] {} @{} {}",
                     record.file_static().unwrap_or(""),
                     record.line().unwrap_or(0),
                     record.args()
