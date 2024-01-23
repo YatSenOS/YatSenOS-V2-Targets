@@ -163,20 +163,16 @@ impl ProcessInner {
 
     /// Save the process's context
     /// mark the process as ready
-    pub(super) fn save(&mut self, context: &mut ProcessContext) {
-        unsafe {
-            self.context.save(context);
-        }
+    pub(super) fn save(&mut self, context: &ProcessContext) {
+        self.context.save(context);
         self.status = ProgramStatus::Ready;
     }
 
     /// Restore the process's context
     /// mark the process as running
     pub(super) fn restore(&mut self, context: &mut ProcessContext) {
-        unsafe {
-            self.context.restore(context);
-            self.page_table.as_ref().unwrap().load();
-        }
+        self.context.restore(context);
+        self.page_table.as_ref().unwrap().load();
         self.status = ProgramStatus::Running;
     }
 

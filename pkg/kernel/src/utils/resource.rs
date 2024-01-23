@@ -16,46 +16,46 @@ pub enum Resource {
 }
 
 impl Resource {
-    pub fn read(&self, buf: &mut [u8]) -> Result<usize, ()> {
+    pub fn read(&self, buf: &mut [u8]) -> Option<usize> {
         match self {
-            Resource::File(file) => fs::read_to_buf(get_volume(), file, buf).map_err(|_| ()),
+            Resource::File(file) => fs::read_to_buf(get_volume(), file, buf).ok(),
             Resource::Console(stdio) => match stdio {
                 &StdIO::Stdin => {
                     return if buf.len() < 4 {
-                        Ok(0)
+                        Some(0)
                     } else {
                         // TODO: get key async
                         if let Some(DecodedKey::Unicode(k)) = try_get_key() {
                             let s = k.encode_utf8(buf);
-                            Ok(s.len())
+                            Some(s.len())
                         } else {
-                            Ok(0)
+                            Some(0)
                         }
                     };
                 }
-                _ => Err(()),
+                _ => None,
             },
-            Resource::Random(random) => Ok(random.read(buf, 0, buf.len()).unwrap()),
-            Resource::Null => Ok(0),
+            Resource::Random(random) => Some(random.read(buf, 0, buf.len()).unwrap()),
+            Resource::Null => Some(0),
         }
     }
 
-    pub fn write(&self, buf: &[u8]) -> Result<usize, ()> {
+    pub fn write(&self, buf: &[u8]) -> Option<usize> {
         match self {
             Resource::File(_) => unimplemented!(),
             Resource::Console(stdio) => match *stdio {
-                StdIO::Stdin => Err(()),
+                StdIO::Stdin => None,
                 StdIO::Stdout => {
                     print!("{}", String::from_utf8_lossy(buf));
-                    Ok(buf.len())
+                    Some(buf.len())
                 }
                 StdIO::Stderr => {
                     warn!("{}", String::from_utf8_lossy(buf));
-                    Ok(buf.len())
+                    Some(buf.len())
                 }
             },
-            Resource::Random(_) => Ok(0),
-            Resource::Null => Ok(0),
+            Resource::Random(_) => Some(0),
+            Resource::Null => Some(buf.len()),
         }
     }
 }

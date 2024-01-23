@@ -22,7 +22,7 @@ use xmas_elf::ElfFile;
 use crate::{filesystem::get_volume, Resource};
 use alloc::{string::String, vec};
 use x86_64::structures::idt::PageFaultErrorCode;
-use x86_64::{registers::control::Cr2, structures::idt::InterruptStackFrame, VirtAddr};
+use x86_64::VirtAddr;
 
 // 0xffff_ff00_0000_0000 is the kernel's address space
 pub const STACK_MAX: u64 = 0x0000_4000_0000_0000;
@@ -195,21 +195,6 @@ pub fn sem_down(key: u32, context: &mut ProcessContext) {
     })
 }
 
-pub fn try_resolve_page_fault(
-    _err_code: PageFaultErrorCode,
-    _sf: &mut InterruptStackFrame,
-) -> Result<(), ()> {
-    let addr = Cr2::read();
-    debug!("Trying to access address: {:?}", addr);
-
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        let manager = get_process_manager();
-        debug!("Current process: {:#?}", manager.current());
-    });
-
-    Err(())
-}
-
 pub fn spawn(file: &File) -> Result<ProcessId, String> {
     let size = file.length();
     let pages = (size as usize + 0x1000 - 1) / 0x1000;
@@ -259,7 +244,7 @@ pub fn current_proc_info() {
     debug!("{:#?}", get_process_manager().current())
 }
 
-pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> Result<(), ()> {
+pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager().handle_page_fault(addr, err_code)
     })

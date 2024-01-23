@@ -25,6 +25,8 @@ pub struct BootInfoFrameAllocator {
 impl BootInfoFrameAllocator {
     /// Create a FrameAllocator from the passed memory map.
     ///
+    /// # Safety
+    ///
     /// This function is unsafe because the caller must guarantee that the passed
     /// memory map is valid. The main requirement is that all frames that are marked
     /// as `USABLE` in it are really unused.

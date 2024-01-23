@@ -4,9 +4,6 @@
 #![feature(alloc_error_handler)]
 #![feature(type_alias_impl_trait)]
 #![feature(panic_info_message)]
-#![feature(map_try_insert)]
-#![allow(clippy::missing_safety_doc)]
-#![allow(clippy::result_unit_err)]
 
 extern crate alloc;
 #[macro_use]
@@ -19,17 +16,14 @@ extern crate libm;
 
 #[macro_use]
 pub mod utils;
-use proc::ProcessId;
 pub use utils::*;
 
 #[macro_use]
 pub mod drivers;
 pub use drivers::*;
 
-pub mod memory;
-
 pub mod interrupt;
-
+pub mod memory;
 pub mod proc;
 
 pub use alloc::format;
@@ -56,7 +50,7 @@ pub fn init(boot_info: &'static BootInfo) {
     info!("YatSenOS initialized.");
 }
 
-pub fn wait(init: ProcessId) {
+pub fn wait(init: proc::ProcessId) {
     loop {
         if proc::still_alive(init) {
             x86_64::instructions::hlt();

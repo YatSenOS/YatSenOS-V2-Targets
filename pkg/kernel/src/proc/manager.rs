@@ -68,7 +68,7 @@ impl ProcessManager {
             .unwrap_or(-1)
     }
 
-    pub fn save_current(&self, context: &mut ProcessContext) -> ProcessId {
+    pub fn save_current(&self, context: &ProcessContext) -> ProcessId {
         let current = self.current();
         let pid = current.pid();
 
@@ -216,11 +216,7 @@ impl ProcessManager {
         }
     }
 
-    pub fn handle_page_fault(
-        &self,
-        addr: VirtAddr,
-        err_code: PageFaultErrorCode,
-    ) -> Result<(), ()> {
+    pub fn handle_page_fault(&self, addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
         if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION) {
             let cur_proc = self.current();
             trace!(
@@ -229,12 +225,12 @@ impl ProcessManager {
             );
             if cur_proc.read().is_on_stack(addr) {
                 cur_proc.write().try_alloc_new_stack_page(addr).unwrap();
-                Ok(())
+                true
             } else {
-                Err(())
+                false
             }
         } else {
-            Err(())
+            false
         }
     }
 

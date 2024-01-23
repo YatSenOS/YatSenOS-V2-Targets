@@ -73,7 +73,7 @@ pub fn sys_read(args: &SyscallArgs) -> usize {
     let fd = handle(args.arg0 as u8);
     if let Some(res) = fd {
         let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
-        if let Ok(size) = res.read(buf) {
+        if let Some(size) = res.read(buf) {
             size
         } else {
             0
@@ -87,7 +87,7 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
     let fd = handle(args.arg0 as u8);
     if let Some(res) = fd {
         let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
-        if let Ok(size) = res.write(buf) {
+        if let Some(size) = res.write(buf) {
             size
         } else {
             0

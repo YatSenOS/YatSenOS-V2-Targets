@@ -57,8 +57,8 @@ impl PageTableContext {
         Arc::strong_count(&self.reg)
     }
 
-    pub unsafe fn load(&self) {
-        Cr3::write(self.reg.addr, self.reg.flags)
+    pub fn load(&self) {
+        unsafe { Cr3::write(self.reg.addr, self.reg.flags) }
     }
 
     pub fn fork(&self) -> Self {
