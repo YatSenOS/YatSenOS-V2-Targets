@@ -132,10 +132,6 @@ pub fn close(fd: u8) -> bool {
     x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().close(fd))
 }
 
-pub fn still_alive(pid: ProcessId) -> bool {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid) < 0)
-}
-
 pub fn current_pid() -> ProcessId {
     x86_64::instructions::interrupts::without_interrupts(processor::current_pid)
 }

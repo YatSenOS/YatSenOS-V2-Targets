@@ -52,7 +52,7 @@ pub fn init(boot_info: &'static BootInfo) {
 
 pub fn wait(init: proc::ProcessId) {
     loop {
-        if proc::still_alive(init) {
+        if proc::wait_pid(init) < 0 {
             x86_64::instructions::hlt();
         } else {
             break;

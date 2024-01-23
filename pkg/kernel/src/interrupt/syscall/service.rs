@@ -59,14 +59,13 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
 
     let file = file.unwrap();
 
-    let pid = spawn(&file);
-
-    if pid.is_err() {
-        warn!("spawn_process: failed to spawn process: {}", path);
-        return 0;
+    match spawn(&file) {
+        Ok(pid) => pid.0 as usize,
+        Err(_) => {
+            warn!("spawn_process: failed to spawn process: {}", path);
+            0
+        }
     }
-
-    u16::from(pid.unwrap()) as usize
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
@@ -98,7 +97,7 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_get_pid() -> u16 {
-    u16::from(current_pid())
+    current_pid().0
 }
 
 pub fn sys_fork(context: &mut ProcessContext) {

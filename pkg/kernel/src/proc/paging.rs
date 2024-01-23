@@ -62,6 +62,7 @@ impl PageTableContext {
     }
 
     pub fn fork(&self) -> Self {
+        // forked process shares the page table
         Self {
             reg: self.reg.clone(),
         }
@@ -82,6 +83,7 @@ impl PageTableContext {
 impl core::fmt::Debug for PageTableContext {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("PageTable")
+            .field("refs", &self.using_count())
             .field("addr", &self.reg.addr)
             .field("flags", &self.reg.flags)
             .finish()
