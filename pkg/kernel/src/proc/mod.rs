@@ -64,10 +64,9 @@ pub enum ProgramStatus {
 }
 
 /// init process manager
-pub fn init(boot_info: &'static boot::BootInfo) {
+pub fn init() {
     let kproc_data = ProcessData::new()
-        .set_stack(KSTACK_INIT_BOT, KSTACK_DEF_PAGE)
-        .set_kernel_code(&boot_info.kernel_pages);
+        .set_stack(KSTACK_INIT_BOT, KSTACK_DEF_PAGE);
 
     trace!("Init process data: {:#?}", kproc_data);
 

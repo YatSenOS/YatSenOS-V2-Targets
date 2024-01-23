@@ -365,7 +365,6 @@ impl ProcessInner {
         let mut mapper = page_table.mapper();
 
         let frame_deallocator = &mut *get_frame_alloc_for_sure();
-        let start_count = frame_deallocator.recycled_count();
 
         let proc_data = self.proc_data.as_mut().unwrap();
         let stack = proc_data.stack_segment.unwrap();
@@ -410,16 +409,6 @@ impl ProcessInner {
         }
 
         drop(page_table);
-
-        let end_count = frame_deallocator.recycled_count();
-
-        debug!(
-            "Recycled {}({:.3}MiB) frames, {}({:.3}MiB) frames in total.",
-            end_count - start_count,
-            ((end_count - start_count) * 4) as f32 / 1024.0,
-            end_count,
-            (end_count * 4) as f32 / 1024.0
-        );
     }
 }
 

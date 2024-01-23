@@ -1,5 +1,4 @@
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
-use boot::KernelPages;
 use spin::RwLock;
 use x86_64::{
     structures::paging::{
@@ -86,21 +85,7 @@ impl ProcessData {
         self.stack_memory_usage = size as usize;
         self
     }
-
-    pub fn set_kernel_code(mut self, pages: &KernelPages) -> Self {
-        let mut size = 0;
-        let owned_pages = pages
-            .iter()
-            .map(|page| {
-                size += page.count();
-                *page
-            })
-            .collect();
-        self.code_segments = Some(owned_pages);
-        self.code_memory_usage = size;
-        self
-    }
-
+    
     pub fn is_on_stack(&self, addr: VirtAddr) -> bool {
         if let Some(stack_range) = self.stack_segment {
             let addr = addr.as_u64();

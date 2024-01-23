@@ -266,7 +266,6 @@ impl ProcessManager {
 
         let alloc = get_frame_alloc_for_sure();
         let frames_used = alloc.frames_used();
-        let frames_recycled = alloc.recycled_count();
         let frames_total = alloc.frames_total();
 
         let (sys_used, sys_used_unit) = memory::humanized_size(heap_used as u64);
@@ -300,20 +299,18 @@ impl ProcessManager {
         .as_str();
 
         // put used/total frames in MiB
-        let (used_size, used_unit) =
-            memory::humanized_size((frames_used - frames_recycled) as u64 * PAGE_SIZE);
+        let (used_size, used_unit) = memory::humanized_size(frames_used as u64 * PAGE_SIZE);
         let (tot_size, tot_unit) = memory::humanized_size(frames_total as u64 * PAGE_SIZE);
 
         output += format!(
-            "Memory : {:>6.*} {} / {:>6.*} {} ({:>5.2}%) [{} recycled]\n",
+            "Memory : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
             2,
             used_size,
             used_unit,
             2,
             tot_size,
             tot_unit,
-            (frames_used - frames_recycled) as f64 / frames_total as f64 * 100.0,
-            frames_recycled
+            frames_used as f64 / frames_total as f64 * 100.0
         )
         .as_str();
 
