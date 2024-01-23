@@ -76,8 +76,7 @@ pub fn sys_stat() {
 
 #[inline(always)]
 pub fn sys_spawn(path: &str) -> u16 {
-    let pid = syscall!(Syscall::Spawn, path.as_ptr() as u64, path.len() as u64) as u16;
-    pid
+    syscall!(Syscall::Spawn, path.as_ptr() as u64, path.len() as u64) as u16
 }
 
 #[inline(always)]
