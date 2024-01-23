@@ -106,8 +106,6 @@ pub fn process_exit(ret: isize) -> ! {
         manager.kill_current(ret);
     });
 
-    debug!("Killed {}", processor::current_pid());
-
     loop {
         unsafe {
             core::arch::asm!("hlt");

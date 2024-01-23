@@ -109,7 +109,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         stack_start,
         stack_size,
         &mut page_table,
-        &mut UEFIFrameAllocator(bs)
+        &mut UEFIFrameAllocator(bs),
     )
     .expect("Failed to map stack");
 
@@ -131,7 +131,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         memory_map: mmap.entries().copied().collect(),
         physical_memory_offset: config.physical_memory_offset,
         system_table: runtime,
-        log_level: config.log_level
+        log_level: config.log_level,
     };
 
     // align stack to 8 bytes

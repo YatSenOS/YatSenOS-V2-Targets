@@ -2,8 +2,7 @@ use super::*;
 use crate::memory::{
     self,
     allocator::{ALLOCATOR, HEAP_SIZE},
-    get_frame_alloc_for_sure,
-    PAGE_SIZE,
+    get_frame_alloc_for_sure, PAGE_SIZE,
 };
 use alloc::collections::BTreeMap;
 use alloc::{collections::VecDeque, format, sync::Arc};
@@ -122,12 +121,7 @@ impl ProcessManager {
     ) -> ProcessId {
         let kproc = self.get_proc(&KERNEL_PID).unwrap();
         let page_table = kproc.read().clone_page_table();
-        let proc = Process::new(
-            name,
-            Some(Arc::downgrade(&kproc)),
-            page_table,
-            proc_data,
-        );
+        let proc = Process::new(name, Some(Arc::downgrade(&kproc)), page_table, proc_data);
 
         let stack_top = proc.alloc_init_stack();
         let mut inner = proc.write();
@@ -183,8 +177,7 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
-        let mut output =
-            String::from("  PID | PPID | Process Name |  Ticks  | Status\n");
+        let mut output = String::from("  PID | PPID | Process Name |  Ticks  | Status\n");
         for (_, p) in self.processes.read().iter() {
             if p.read().status() != ProgramStatus::Dead {
                 output += format!("{}\n", p).as_str();

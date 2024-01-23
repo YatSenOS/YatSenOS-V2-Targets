@@ -1,13 +1,9 @@
 use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use spin::RwLock;
 use x86_64::{
-    structures::paging::{
-        page::PageRange,
-        Page,
-    },
+    structures::paging::{page::PageRange, Page},
     VirtAddr,
 };
-
 
 use super::*;
 
@@ -35,7 +31,6 @@ impl ProcessData {
     pub fn new() -> Self {
         Self::default()
     }
-
 
     pub fn env(&self, key: &str) -> Option<String> {
         self.env.read().get(key).cloned()

@@ -130,10 +130,6 @@ impl ProcessInner {
         self.status = ProgramStatus::Running;
     }
 
-    pub fn is_ready(&self) -> bool {
-        self.status == ProgramStatus::Ready
-    }
-
     pub fn exit_code(&self) -> Option<isize> {
         self.exit_code
     }
@@ -142,20 +138,25 @@ impl ProcessInner {
         self.page_table.as_ref().unwrap().clone()
     }
 
+    pub fn is_ready(&self) -> bool {
+        self.status == ProgramStatus::Ready
+    }
+
     /// Save the process's context
     /// mark the process as ready
     pub(super) fn save(&mut self, context: &ProcessContext) {
         self.context.save(context);
-        self.status = ProgramStatus::Ready;
+
+        // dead process should not be ready
+        // (kernel thread exit without syscall)
+        if self.status == ProgramStatus::Running {
+            self.status = ProgramStatus::Ready;
+        }
     }
 
     /// Restore the process's context
     /// mark the process as running
     pub(super) fn restore(&mut self, context: &mut ProcessContext) {
-        if self.page_table.is_none() {
-            panic!("PageTable gone. The process may dead.");
-        }
-
         self.context.restore(context);
         self.page_table.as_ref().unwrap().load();
         self.status = ProgramStatus::Running;
