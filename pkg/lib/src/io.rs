@@ -32,7 +32,7 @@ impl Stdin {
 
     pub fn read_line(&self) -> String {
         let mut string = String::new();
-        let mut buf = vec![0; 4];
+        let mut buf = [0; 4];
         loop {
             if let Some(k) = self.read_char_with_buf(&mut buf[..4]) {
                 match k {

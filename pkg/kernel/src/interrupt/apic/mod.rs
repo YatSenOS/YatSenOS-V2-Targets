@@ -14,8 +14,6 @@ pub use xapic::{XApic, LAPIC_ADDR};
 mod ioapic;
 mod xapic;
 
-type Tid = u8;
-
 pub trait LocalApic {
     /// If this type APIC is supported
     fn support() -> bool;
@@ -40,7 +38,4 @@ pub trait LocalApic {
     fn send_ipi(&mut self, apic_id: u8, int_id: u8) {
         self.set_icr((apic_id as u64) << 56 | int_id as u64);
     }
-
-    // Start an AP
-    // unsafe fn start_ap(&mut self, apic_id: Tid, addr: u32);
 }

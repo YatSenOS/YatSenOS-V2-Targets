@@ -10,12 +10,10 @@ pub struct SpinLock {
 }
 
 impl SpinLock {
-    pub const INIT: Self = Self {
-        bolt: AtomicBool::new(false),
-    };
-
     pub const fn new() -> Self {
-        Self::INIT
+        Self {
+            bolt: AtomicBool::new(false),
+        }
     }
 
     pub fn lock(&mut self) {

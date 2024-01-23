@@ -78,7 +78,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     // 4. Map ELF segments, kernel stack and physical memory to virtual memory
     let mut page_table = current_page_table();
-
     // root page table is readonly, disable write protect
     unsafe {
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
@@ -143,6 +142,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         physical_memory_offset: config.physical_memory_offset,
         system_table: runtime,
         loaded_apps: apps,
+        log_level: config.log_level,
     };
 
     // align stack to 8 bytes

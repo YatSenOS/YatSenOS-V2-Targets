@@ -1,6 +1,4 @@
 use core::fmt;
-use core::ops::Deref;
-use volatile::VolatileRef;
 
 #[repr(align(8), C)]
 #[derive(Clone, Default, Copy)]
@@ -20,39 +18,6 @@ pub struct RegistersValue {
     pub rbx: usize,
     pub rax: usize,
     pub rbp: usize,
-}
-
-#[repr(C)]
-pub struct Registers {
-    value: RegistersValue,
-}
-
-impl Registers {
-    #[inline]
-    pub unsafe fn as_mut(&mut self) -> VolatileRef<RegistersValue> {
-        VolatileRef::from_mut_ref(&mut self.value)
-    }
-
-    #[inline]
-    pub fn set_rax(&mut self, value: usize) {
-        self.value.rax = value;
-    }
-}
-
-impl Deref for Registers {
-    type Target = RegistersValue;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.value
-    }
-}
-
-impl fmt::Debug for Registers {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.value.fmt(f)
-    }
 }
 
 impl fmt::Debug for RegistersValue {

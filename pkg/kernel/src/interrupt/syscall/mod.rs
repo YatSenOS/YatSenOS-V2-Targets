@@ -1,11 +1,27 @@
-use crate::{process::list_app, utils::*};
+use crate::{memory::gdt, proc::*};
 use alloc::format;
 use core::convert::TryFrom;
 use syscall_def::Syscall;
-use x86_64::structures::idt::InterruptStackFrame;
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 mod service;
+use super::consts;
 use service::*;
+
+pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
+    idt[consts::Interrupts::Syscall as usize]
+        .set_handler_fn(syscall_handler)
+        .set_stack_index(gdt::SYSCALL_IST_INDEX)
+        .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
+}
+
+pub extern "C" fn syscall(mut context: ProcessContext) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        super::syscall::dispatcher(&mut context);
+    });
+}
+
+as_handler!(syscall);
 
 #[derive(Clone, Debug)]
 pub struct SyscallArgs {
@@ -15,45 +31,45 @@ pub struct SyscallArgs {
     pub arg2: usize,
 }
 
-pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
+pub fn dispatcher(context: &mut ProcessContext) {
     let args = super::syscall::SyscallArgs::new(
-        Syscall::try_from(regs.rax as u16).unwrap(),
-        regs.rdi,
-        regs.rsi,
-        regs.rdx,
+        Syscall::try_from(context.regs.rax as u16).unwrap(),
+        context.regs.rdi,
+        context.regs.rsi,
+        context.regs.rdx,
     );
 
     match args.syscall {
         // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
-        Syscall::Read => regs.set_rax(sys_read(&args)),
+        Syscall::Read => context.set_rax(sys_read(&args)),
         // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
-        Syscall::Write => regs.set_rax(sys_write(&args)),
+        Syscall::Write => context.set_rax(sys_write(&args)),
 
         // None -> pid: u16
-        Syscall::GetPid => regs.set_rax(sys_get_pid() as usize),
+        Syscall::GetPid => context.set_rax(sys_get_pid() as usize),
 
         // None -> pid: u16 (diff from parent and child)
-        Syscall::VFork => sys_fork(regs, sf),
+        Syscall::VFork => sys_fork(context),
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
-        Syscall::Spawn => regs.set_rax(spawn_process(&args)),
+        Syscall::Spawn => context.set_rax(spawn_process(&args)),
         // pid: arg0 as u16
-        Syscall::Exit => exit_process(&args, regs, sf),
+        Syscall::Exit => exit_process(&args, context),
         // pid: arg0 as u16 -> status: isize
-        Syscall::WaitPid => regs.set_rax(sys_wait_pid(&args)),
+        Syscall::WaitPid => context.set_rax(sys_wait_pid(&args)),
         // pid: arg0 as u16
-        Syscall::Kill => sys_kill(&args, regs, sf),
+        Syscall::Kill => sys_kill(&args, context),
 
         // op: u8, key: u32, val: usize -> ret: any
-        Syscall::Sem => sys_sem(&args, regs, sf),
+        Syscall::Sem => sys_sem(&args, context),
         // None -> time: usize
-        Syscall::Time => regs.set_rax(sys_clock() as usize),
+        Syscall::Time => context.set_rax(sys_clock() as usize),
         // None
         Syscall::Stat => list_process(),
         // None
         Syscall::ListApp => list_app(),
 
         // layout: arg0 as *const Layout -> ptr: *mut u8
-        Syscall::Allocate => regs.set_rax(sys_allocate(&args)),
+        Syscall::Allocate => context.set_rax(sys_allocate(&args)),
         // ptr: arg0 as *mut u8
         Syscall::Deallocate => sys_deallocate(&args),
         // None
