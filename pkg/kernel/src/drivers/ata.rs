@@ -26,6 +26,7 @@ guard_access_fn! {
     pub get_buses(BUSES: Vec<Bus>)
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Bus {
     id: u8,
@@ -244,7 +245,6 @@ impl Bus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 enum ATACommand {
-    Nop = 0x00,
     ReadSectors = 0x20,
     WriteSectors = 0x30,
     Identify = 0xEC,
@@ -252,7 +252,7 @@ enum ATACommand {
 
 #[repr(usize)]
 #[derive(Debug, Clone, Copy)]
-#[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::upper_case_acronyms, dead_code)]
 enum Status {
     #[doc = "Indicates an error occurred. Send a new command to clear it (or nuke it with a Software Reset)."]
     ERR = 0,

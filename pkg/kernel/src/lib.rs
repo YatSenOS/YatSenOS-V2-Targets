@@ -1,13 +1,9 @@
 #![no_std]
-#![allow(dead_code)]
 #![feature(naked_functions)]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
 #![feature(type_alias_impl_trait)]
 #![feature(panic_info_message)]
-#![feature(map_try_insert)]
-#![allow(clippy::missing_safety_doc)]
-#![allow(clippy::result_unit_err)]
 
 extern crate alloc;
 #[macro_use]
@@ -26,21 +22,16 @@ pub use utils::*;
 pub mod drivers;
 pub use drivers::*;
 
-pub mod memory;
-pub mod tasks;
-
-pub use tasks::*;
-
 pub mod interrupt;
-
-pub mod process;
+pub mod memory;
+pub mod proc;
 
 pub use alloc::format;
 use boot::BootInfo;
 
 pub fn init(boot_info: &'static BootInfo) {
     serial::init(); // init serial output
-    logger::init(); // init logger system
+    logger::init(boot_info); // init logger system
     memory::address::init(boot_info);
     memory::gdt::init(); // init gdt
     memory::allocator::init(); // init kernel heap allocator
@@ -48,7 +39,7 @@ pub fn init(boot_info: &'static BootInfo) {
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
     memory::user::init(); // init user heap allocator
-    process::init(); // init process manager
+    proc::init(boot_info); // init task manager
     input::init(); // init input
     ata::init(); // init ata
     filesystem::init(); // init filesystem
@@ -57,6 +48,16 @@ pub fn init(boot_info: &'static BootInfo) {
     info!("Interrupts Enabled.");
 
     info!("YatSenOS initialized.");
+}
+
+pub fn wait(init: proc::ProcessId) {
+    loop {
+        if proc::still_alive(init) {
+            x86_64::instructions::hlt();
+        } else {
+            break;
+        }
+    }
 }
 
 pub fn shutdown(boot_info: &'static BootInfo) -> ! {

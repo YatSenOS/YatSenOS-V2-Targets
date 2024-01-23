@@ -41,6 +41,20 @@ macro_rules! once_mutex {
 }
 
 #[macro_export]
+macro_rules! once_rwlock {
+    ($i:vis $v:ident: $t:ty) => {
+        $i static $v: spin::Once<spin::RwLock<$t>> = spin::Once::new();
+
+        paste::item! {
+            #[allow(non_snake_case)]
+            $i fn [<init_ $v>]([<val_ $v>]: $t) {
+                $v.call_once(|| spin::RwLock::new([<val_ $v>]));
+            }
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => (
         $crate::utils::print_internal(format_args!($($arg)*))
@@ -106,7 +120,7 @@ pub fn print_serial_internal(args: Arguments) {
 fn panic(info: &core::panic::PanicInfo) -> ! {
     let location = if let Some(location) = info.location() {
         alloc::format!(
-            "{}@{}:{}",
+            "{} @ {}:{}",
             location.file(),
             location.line(),
             location.column()
