@@ -149,14 +149,6 @@ impl ProcessInner {
         self.status = ProgramStatus::Blocked;
     }
 
-    pub fn is_running(&self) -> bool {
-        self.status == ProgramStatus::Running
-    }
-
-    pub fn is_dead(&self) -> bool {
-        self.status == ProgramStatus::Dead
-    }
-
     pub fn is_ready(&self) -> bool {
         self.status == ProgramStatus::Ready
     }
@@ -167,10 +159,6 @@ impl ProcessInner {
 
     pub fn clont_page_table(&self) -> PageTableContext {
         self.page_table.as_ref().unwrap().clone()
-    }
-
-    pub fn init_kproc_page_table(&mut self) {
-        self.page_table = Some(PageTableContext::new());
     }
 
     /// Save the process's context

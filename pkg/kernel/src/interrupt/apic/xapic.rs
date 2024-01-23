@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::LocalApic;
 use bit_field::BitField;
 use core::fmt::{Debug, Error, Formatter};
