@@ -180,31 +180,28 @@ impl ProcessInner {
 
     pub fn try_alloc_new_stack_page(&mut self, addr: VirtAddr) -> Result<(), MapToError<Size4KiB>> {
         let alloc = &mut *get_frame_alloc_for_sure();
-        let proc_data = self.proc_data.as_mut().expect("No proc data found.");
-        let mapper = &mut self.page_table.as_ref().unwrap().mapper();
+        let new_start_page = Page::<Size4KiB>::containing_address(addr);
+        let old_stack = self.proc_data.as_ref().unwrap().stack_segment.unwrap();
 
-        let start_page = Page::<Size4KiB>::containing_address(addr);
-        let pages = proc_data.stack_segment.unwrap().start - start_page;
+        let pages = old_stack.start - new_start_page;
+        let page_table = &mut self.page_table.as_mut().unwrap().mapper();
+
         trace!(
             "Fill missing pages...[{:#x} -> {:#x}) ({} pages)",
-            start_page.start_address().as_u64(),
-            proc_data
-                .stack_segment
-                .unwrap()
-                .start
-                .start_address()
-                .as_u64(),
+            new_start_page.start_address().as_u64(),
+            old_stack.start.start_address().as_u64(),
             pages
         );
 
-        elf::map_range(addr.as_u64(), pages, mapper, alloc, true)?;
+        let user_access = processor::current_pid() != KERNEL_PID;
+        elf::map_range(addr.as_u64(), pages, page_table, alloc, user_access)?;
 
-        let end_page = proc_data.stack_segment.unwrap().end;
         let new_stack = PageRange {
-            start: start_page,
-            end: end_page,
+            start: new_start_page,
+            end: old_stack.end,
         };
 
+        let proc_data = self.proc_data.as_mut().unwrap();
         proc_data.stack_memory_usage = new_stack.count();
         proc_data.stack_segment = Some(new_stack);
 
