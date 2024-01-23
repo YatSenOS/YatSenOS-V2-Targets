@@ -40,7 +40,7 @@ impl ProcessManager {
         Self {
             processes: RwLock::new(processes),
             ready_queue: Mutex::new(ready_queue),
-            app_list
+            app_list,
         }
     }
 
@@ -176,19 +176,6 @@ impl ProcessManager {
 
     pub fn kill_self(&self, ret: isize) {
         self.kill(processor::current_pid(), ret);
-    }
-
-    pub fn wake_up(&self, pid: ProcessId) {
-        if let Some(proc) = self.get_proc(&pid) {
-            proc.write().pause();
-            self.push_ready(pid);
-        }
-    }
-
-    pub fn block(&self, pid: ProcessId) {
-        if let Some(proc) = self.get_proc(&pid) {
-            proc.write().block();
-        }
     }
 
     pub fn handle_page_fault(&self, addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {

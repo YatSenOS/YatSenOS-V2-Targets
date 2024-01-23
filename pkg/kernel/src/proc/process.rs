@@ -113,10 +113,6 @@ impl ProcessInner {
         self.status = ProgramStatus::Running;
     }
 
-    pub fn block(&mut self) {
-        self.status = ProgramStatus::Blocked;
-    }
-
     pub fn is_ready(&self) -> bool {
         self.status == ProgramStatus::Ready
     }
