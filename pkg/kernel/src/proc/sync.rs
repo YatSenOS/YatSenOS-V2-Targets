@@ -82,6 +82,7 @@ impl SemaphoreSet {
         self.sems.remove(&SemaphoreId::new(key)).is_some()
     }
 
+    /// Up the semaphore (release)
     pub fn up(&self, key: u32) -> SemaphoreResult {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {
@@ -93,6 +94,7 @@ impl SemaphoreSet {
         }
     }
 
+    /// Down the semaphore (acquire)
     pub fn down(&self, key: u32, pid: ProcessId) -> SemaphoreResult {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {

@@ -224,8 +224,7 @@ impl ProcessManager {
                 addr
             );
             if cur_proc.read().is_on_stack(addr) {
-                cur_proc.write().try_alloc_new_stack_page(addr).unwrap();
-                true
+                cur_proc.write().try_alloc_new_stack_page(addr).is_ok()
             } else {
                 false
             }
