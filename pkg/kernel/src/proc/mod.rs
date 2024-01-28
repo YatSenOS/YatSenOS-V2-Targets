@@ -73,7 +73,6 @@ pub fn init() {
         Some(kproc_data),
     );
 
-    kproc.write().resume();
     manager::init(kproc);
 
     info!("Process Manager Initialized.");

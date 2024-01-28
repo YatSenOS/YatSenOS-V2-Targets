@@ -12,6 +12,7 @@ use x86_64::VirtAddr;
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
 
 pub fn init(init: Arc<Process>) {
+    init.write().resume();
     processor::set_pid(init.pid());
     PROCESS_MANAGER.call_once(|| ProcessManager::new(init));
 }
