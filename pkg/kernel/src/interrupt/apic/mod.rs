@@ -14,6 +14,7 @@ pub use xapic::{XApic, LAPIC_ADDR};
 mod ioapic;
 mod xapic;
 
+#[allow(dead_code)]
 pub trait LocalApic {
     /// If this type APIC is supported
     fn support() -> bool;
@@ -29,6 +30,7 @@ pub trait LocalApic {
     /// Interrupt Command Register
     fn icr(&self) -> u64;
 
+    /// Set Interrupt Command Register
     fn set_icr(&mut self, value: u64);
 
     /// Acknowledge interrupt on the current CPU
