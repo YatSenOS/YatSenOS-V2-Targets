@@ -33,7 +33,7 @@ pub struct SyscallArgs {
 
 pub fn dispatcher(context: &mut ProcessContext) {
     let args = super::syscall::SyscallArgs::new(
-        Syscall::try_from(context.regs.rax as u16).unwrap(),
+        Syscall::try_from(context.regs.rax).unwrap(),
         context.regs.rdi,
         context.regs.rsi,
         context.regs.rdx,
