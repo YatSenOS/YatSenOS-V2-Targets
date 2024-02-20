@@ -216,7 +216,7 @@ impl ProcessInner {
         .unwrap();
 
         let stack_segment =
-            elf::map_range(STACT_INIT_BOT, STACK_DEF_PAGE, &mut mapper, alloc, true).unwrap();
+            elf::map_range(STACK_INIT_BOT, STACK_DEF_PAGE, &mut mapper, alloc, true).unwrap();
 
         // record memory usage
         let proc_data = self.proc_data.as_mut().unwrap();
