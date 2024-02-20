@@ -35,7 +35,7 @@ pub const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
 pub const STACK_DEF_BOT: u64 = STACK_MAX - STACK_MAX_SIZE;
 pub const STACK_DEF_PAGE: u64 = 1;
 pub const STACK_DEF_SIZE: u64 = STACK_DEF_PAGE * crate::memory::PAGE_SIZE;
-pub const STACT_INIT_BOT: u64 = STACK_MAX - STACK_DEF_SIZE;
+pub const STACK_INIT_BOT: u64 = STACK_MAX - STACK_DEF_SIZE;
 pub const STACK_INIT_TOP: u64 = STACK_MAX - 8;
 // [bot..0xffffff0100000000..top..0xffffff01ffffffff]
 // kernel stack

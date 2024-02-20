@@ -94,7 +94,7 @@ impl Process {
         // stack top set by pid
         let offset = (self.pid.0 - 1) as u64 * STACK_MAX_SIZE;
         let stack_top = STACK_INIT_TOP - offset;
-        let stack_bottom = STACT_INIT_BOT - offset;
+        let stack_bottom = STACK_INIT_BOT - offset;
 
         let stack_top_addr = VirtAddr::new(stack_top);
         let stack_bottom_addr = VirtAddr::new(stack_bottom);
