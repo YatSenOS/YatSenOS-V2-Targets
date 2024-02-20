@@ -8,9 +8,9 @@ extern crate lib;
 const QUEUE_COUNT: usize = 16;
 static mut COUNT: usize = 0;
 
-static IS_NOT_FULL: Semaphore = Semaphore(0x1000);
-static IS_NOT_EMPTY: Semaphore = Semaphore(0x2000);
-static MUTEX: Semaphore = Semaphore(0x6666);
+static IS_NOT_FULL: Semaphore = Semaphore::new(0x1000);
+static IS_NOT_EMPTY: Semaphore = Semaphore::new(0x2000);
+static MUTEX: Semaphore = Semaphore::new(0x6666);
 
 fn main() -> usize {
     IS_NOT_EMPTY.init(0);
@@ -54,16 +54,16 @@ fn producer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New producer #{}({})", id, pid);
     for _ in 0..10 {
-        IS_NOT_FULL.acquire();
-        MUTEX.acquire();
+        IS_NOT_FULL.wait();
+        MUTEX.wait();
         unsafe {
             COUNT += 1;
         }
         println!("Produced by #{:<3}({:<3}) count={}", id, pid, unsafe {
             COUNT
         });
-        MUTEX.release();
-        IS_NOT_EMPTY.release();
+        MUTEX.signal();
+        IS_NOT_EMPTY.signal();
     }
     sys_exit(0);
 }
@@ -72,16 +72,16 @@ fn consumer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New consumer #{}({})", id, pid);
     for _ in 0..10 {
-        IS_NOT_EMPTY.acquire();
-        MUTEX.acquire();
+        IS_NOT_EMPTY.wait();
+        MUTEX.wait();
         unsafe {
             COUNT -= 1;
         }
         println!("Consumed by #{:<3}({:<3}) count={}", id, pid, unsafe {
             COUNT
         });
-        MUTEX.release();
-        IS_NOT_FULL.release();
+        MUTEX.signal();
+        IS_NOT_FULL.signal();
     }
     sys_exit(0);
 }

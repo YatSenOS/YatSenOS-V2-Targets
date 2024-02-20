@@ -148,39 +148,47 @@ pub fn kill(pid: ProcessId, context: &mut ProcessContext) {
     })
 }
 
-pub fn new_sem(key: u32, value: usize) -> isize {
+pub fn new_sem(key: u32, value: usize) -> usize {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().write().new_sem(key, value) as isize
+        if get_process_manager().current().write().new_sem(key, value) {
+            0
+        } else {
+            1
+        }
     })
 }
 
-pub fn remove_sem(key: u32) -> isize {
+pub fn remove_sem(key: u32) -> usize {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().write().remove_sem(key) as isize
+        if get_process_manager().current().write().remove_sem(key) {
+            0
+        } else {
+            1
+        }
     })
 }
 
-pub fn sem_up(key: u32, context: &mut ProcessContext) {
+pub fn sem_wait(key: u32, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
-        let ret = manager.current().write().sem_up(key);
+        let ret = manager.current().write().sem_wait(key);
         match ret {
             SemaphoreResult::Ok => context.set_rax(0),
-            SemaphoreResult::NoExist => context.set_rax(1),
+            SemaphoreResult::NotExist => context.set_rax(1),
             SemaphoreResult::WakeUp(pid) => manager.wake_up(pid),
             _ => unreachable!(),
         }
     })
 }
 
-pub fn sem_down(key: u32, context: &mut ProcessContext) {
+pub fn sem_signal(key: u32, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
         let pid = processor::current_pid();
-        let ret = manager.current().write().sem_down(key, pid);
+        let ret = manager.current().write().sem_signal(key, pid);
         match ret {
             SemaphoreResult::Ok => context.set_rax(0),
-            SemaphoreResult::NoExist => context.set_rax(1),
+            SemaphoreResult::NotExist => context.set_rax(1),
             SemaphoreResult::Block(pid) => {
                 manager.save_current(context);
                 manager.block(pid);

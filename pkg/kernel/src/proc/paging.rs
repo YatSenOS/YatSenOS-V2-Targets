@@ -31,7 +31,7 @@ impl PageTableContext {
         }
     }
 
-    pub fn clone(&self) -> Self {
+    pub fn clone_l4(&self) -> Self {
         // 1. alloc new page table
         let mut frame_alloc = crate::memory::get_frame_alloc_for_sure();
         let page_table_addr = frame_alloc
@@ -47,7 +47,7 @@ impl PageTableContext {
             );
         }
 
-        // 3. create page table object
+        // 3. create page table
         Self {
             reg: Arc::new(Cr3RegValue::new(page_table_addr, Cr3Flags::empty())),
         }
