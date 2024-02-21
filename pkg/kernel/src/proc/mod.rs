@@ -10,12 +10,12 @@ mod sync;
 use alloc::sync::Arc;
 use fs::File;
 use manager::*;
-use paging::*;
 use process::*;
 use sync::*;
 
 pub use context::ProcessContext;
 pub use data::ProcessData;
+pub use paging::PageTableContext;
 pub use pid::ProcessId;
 use xmas_elf::ElfFile;
 
