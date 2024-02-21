@@ -9,11 +9,11 @@ mod processor;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use manager::*;
-use paging::*;
 use process::*;
 
 pub use context::ProcessContext;
 pub use data::ProcessData;
+pub use paging::PageTableContext;
 pub use pid::ProcessId;
 use xmas_elf::ElfFile;
 
