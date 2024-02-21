@@ -39,7 +39,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let size = used + usable_mem_size as usize;
 
     unsafe {
-        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, usable_mem_size as usize));
+        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, used, size));
     }
 
     info!("Frame Allocator initialized.");
