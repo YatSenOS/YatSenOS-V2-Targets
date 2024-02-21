@@ -1,14 +1,12 @@
 pub mod address;
 pub mod allocator;
 mod frames;
-mod paging;
 
 pub mod gdt;
 pub mod user;
 
 pub use address::*;
 pub use frames::*;
-pub use paging::*;
 
 pub fn init(boot_info: &'static boot::BootInfo) {
     let memory_map = &boot_info.memory_map;
@@ -41,7 +39,6 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let size = used + usable_mem_size as usize;
 
     unsafe {
-        init_PAGE_TABLE(paging::init(boot_info.physical_memory_offset));
         init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, used, size));
     }
 
