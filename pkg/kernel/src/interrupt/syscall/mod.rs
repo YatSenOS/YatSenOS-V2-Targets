@@ -1,6 +1,5 @@
 use crate::{memory::gdt, proc::*};
 use alloc::format;
-use core::convert::TryFrom;
 use syscall_def::Syscall;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
