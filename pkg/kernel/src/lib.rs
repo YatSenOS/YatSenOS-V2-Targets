@@ -42,7 +42,6 @@ pub fn init(boot_info: &'static BootInfo) {
     interrupt::init(); // init interrupts
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
-    input::init(); // init input
 
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
