@@ -71,14 +71,14 @@ pub struct SemaphoreSet {
 
 impl SemaphoreSet {
     pub fn insert(&mut self, key: u32, value: usize) -> bool {
-        trace!("Sem Ins : <{:#x}>{}", key, value);
+        trace!("Sem Insert: <{:#x}>{}", key, value);
         self.sems
             .insert(SemaphoreId::new(key), Mutex::new(Semaphore::new(value)))
             .is_none()
     }
 
     pub fn remove(&mut self, key: u32) -> bool {
-        trace!("Sem Rem : <{:#x}>", key);
+        trace!("Sem Remove: <{:#x}>", key);
         self.sems.remove(&SemaphoreId::new(key)).is_some()
     }
 
@@ -87,7 +87,7 @@ impl SemaphoreSet {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {
             let mut locked = sem.lock();
-            trace!("Sem Up  : <{:#x}>{}", key, locked);
+            trace!("Sem Wait  : <{:#x}>{}", key, locked);
             locked.signal()
         } else {
             SemaphoreResult::NotExist
@@ -99,7 +99,7 @@ impl SemaphoreSet {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {
             let mut locked = sem.lock();
-            trace!("Sem Down: <{:#x}>{}", key, locked);
+            trace!("Sem Signal: <{:#x}>{}", key, locked);
             locked.wait(pid)
         } else {
             SemaphoreResult::NotExist
