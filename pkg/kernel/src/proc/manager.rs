@@ -65,7 +65,7 @@ impl ProcessManager {
     pub fn wait_pid(&self, pid: ProcessId) -> isize {
         self.get_proc(&pid)
             .and_then(|p| p.read().exit_code())
-            .unwrap_or(-1)
+            .unwrap_or(-0xfeed0ca7)
     }
 
     pub fn save_current(&self, context: &ProcessContext) -> ProcessId {
