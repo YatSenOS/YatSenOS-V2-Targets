@@ -41,7 +41,6 @@ pub fn init(boot_info: &'static BootInfo) {
     memory::init(boot_info); // init memory manager
     memory::user::init(); // init user heap allocator
     proc::init(boot_info); // init task manager
-    input::init(); // init input
 
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
