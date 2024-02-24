@@ -55,8 +55,8 @@ impl Semaphore {
     /// if the wait queue is not empty, then pop a process from the wait queue
     /// else increase the count
     pub fn signal(&mut self) -> SemaphoreResult {
-        if !self.wait_queue.is_empty() {
-            SemaphoreResult::WakeUp(self.wait_queue.pop().unwrap())
+        if let Some(pid) = self.wait_queue.pop() {
+            SemaphoreResult::WakeUp(pid)
         } else {
             self.count += 1;
             SemaphoreResult::Ok
