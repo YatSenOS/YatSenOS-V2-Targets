@@ -85,7 +85,7 @@ impl ProcessData {
         self.stack_memory_usage = size as usize;
         self
     }
-    
+
     pub fn is_on_stack(&self, addr: VirtAddr) -> bool {
         if let Some(stack_range) = self.stack_segment {
             let addr = addr.as_u64();
@@ -109,12 +109,12 @@ impl ProcessData {
     }
 
     #[inline]
-    pub fn sem_up(&mut self, key: u32) -> SemaphoreResult {
-        self.semaphores.read().up(key)
+    pub fn sem_signal(&mut self, key: u32) -> SemaphoreResult {
+        self.semaphores.read().signal(key)
     }
 
     #[inline]
-    pub fn sem_down(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
-        self.semaphores.read().down(key, pid)
+    pub fn sem_wait(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
+        self.semaphores.read().wait(key, pid)
     }
 }
