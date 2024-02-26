@@ -28,7 +28,10 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     info!("Free Usable Memory : {:>7.*} {}", 3, size, unit);
 
     unsafe {
-        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, usable_mem_size as usize));
+        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(
+            memory_map,
+            usable_mem_size as usize,
+        ));
     }
 
     info!("Frame Allocator initialized.");

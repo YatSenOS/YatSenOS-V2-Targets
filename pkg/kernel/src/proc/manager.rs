@@ -6,7 +6,7 @@ use crate::memory::{
     user::{USER_ALLOCATOR, USER_HEAP_SIZE},
     PAGE_SIZE,
 };
-use alloc::{collections::BTreeMap, sync::Weak, collections::VecDeque, format};
+use alloc::{collections::BTreeMap, collections::VecDeque, format, sync::Weak};
 use spin::{Mutex, RwLock};
 
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
@@ -37,7 +37,7 @@ impl ProcessManager {
         Self {
             processes: RwLock::new(processes),
             ready_queue: Mutex::new(ready_queue),
-            app_list
+            app_list,
         }
     }
 

@@ -56,6 +56,8 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
         warn!("spawn_process: failed to spawn process: {}", name);
         return 0;
     }
+
+    pid.unwrap().0 as usize
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
