@@ -82,24 +82,24 @@ impl SemaphoreSet {
         self.sems.remove(&SemaphoreId::new(key)).is_some()
     }
 
-    /// Wait the semaphore (acquire/down/proberen)
-    pub fn wait(&self, key: u32) -> SemaphoreResult {
+    /// Signal the semaphore (release/up/verhogen)
+    pub fn signal(&self, key: u32) -> SemaphoreResult {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {
             let mut locked = sem.lock();
-            trace!("Sem Wait  : <{:#x}>{}", key, locked);
+            trace!("Sem Signal: <{:#x}>{}", key, locked);
             locked.signal()
         } else {
             SemaphoreResult::NotExist
         }
     }
 
-    /// Signal the semaphore (release/up/verhogen)
-    pub fn signal(&self, key: u32, pid: ProcessId) -> SemaphoreResult {
+    /// Wait the semaphore (acquire/down/proberen)
+    pub fn wait(&self, key: u32, pid: ProcessId) -> SemaphoreResult {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {
             let mut locked = sem.lock();
-            trace!("Sem Signal: <{:#x}>{}", key, locked);
+            trace!("Sem Wait  : <{:#x}>{}", key, locked);
             locked.wait(pid)
         } else {
             SemaphoreResult::NotExist

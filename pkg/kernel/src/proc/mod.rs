@@ -164,10 +164,10 @@ pub fn remove_sem(key: u32) -> usize {
     })
 }
 
-pub fn sem_wait(key: u32, context: &mut ProcessContext) {
+pub fn sem_siganl(key: u32, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
-        let ret = manager.current().write().sem_wait(key);
+        let ret = manager.current().write().sem_signal(key);
         match ret {
             SemaphoreResult::Ok => context.set_rax(0),
             SemaphoreResult::NotExist => context.set_rax(1),
@@ -177,11 +177,11 @@ pub fn sem_wait(key: u32, context: &mut ProcessContext) {
     })
 }
 
-pub fn sem_signal(key: u32, context: &mut ProcessContext) {
+pub fn sem_wait(key: u32, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
         let pid = processor::current_pid();
-        let ret = manager.current().write().sem_signal(key, pid);
+        let ret = manager.current().write().sem_wait(key, pid);
         match ret {
             SemaphoreResult::Ok => context.set_rax(0),
             SemaphoreResult::NotExist => context.set_rax(1),

@@ -104,12 +104,12 @@ impl ProcessData {
     }
 
     #[inline]
-    pub fn sem_wait(&mut self, key: u32) -> SemaphoreResult {
-        self.semaphores.read().wait(key)
+    pub fn sem_signal(&mut self, key: u32) -> SemaphoreResult {
+        self.semaphores.read().signal(key)
     }
 
     #[inline]
-    pub fn sem_signal(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
-        self.semaphores.read().signal(key, pid)
+    pub fn sem_wait(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
+        self.semaphores.read().wait(key, pid)
     }
 }
