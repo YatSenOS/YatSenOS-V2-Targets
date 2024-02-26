@@ -1,6 +1,5 @@
 use core::ops::Deref;
-
-use crate::alloc::borrow::ToOwned;
+use alloc::borrow::ToOwned;
 
 #[derive(Clone)]
 pub struct Block {

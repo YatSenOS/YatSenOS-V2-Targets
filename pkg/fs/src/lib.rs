@@ -1,5 +1,5 @@
 #![cfg_attr(not(test), no_std)]
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports)]
 #![feature(trait_alias)]
 
 #[macro_use]
