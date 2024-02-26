@@ -47,13 +47,13 @@ fn philosopher(id: usize) -> ! {
 
         println!("philosopher #{}({}) is thinking...", id, pid);
 
-        CHOPSTICK[id].acquire();
-        CHOPSTICK[(id + 1) % 5].acquire();
+        CHOPSTICK[id].wait();
+        CHOPSTICK[(id + 1) % 5].wait();
 
         println!("philosopher #{}({}) is eating...", id, pid);
 
-        CHOPSTICK[(id + 1) % 5].release();
-        CHOPSTICK[id].release();
+        CHOPSTICK[(id + 1) % 5].signal();
+        CHOPSTICK[id].signal();
     }
     sys_exit(0);
 }

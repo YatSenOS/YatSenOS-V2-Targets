@@ -1,8 +1,5 @@
-use super::ProcessId;
 use super::*;
 use crate::memory::{self, *};
-use alloc::string::String;
-use alloc::sync::Arc;
 use alloc::sync::Weak;
 use alloc::vec::Vec;
 use core::intrinsics::copy_nonoverlapping;
@@ -10,8 +7,6 @@ use spin::*;
 use x86_64::structures::paging::mapper::{CleanUp, MapToError};
 use x86_64::structures::paging::page::PageRange;
 use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
-use xmas_elf::ElfFile;
 
 #[derive(Clone)]
 pub struct Process {
@@ -97,7 +92,7 @@ impl Process {
         });
 
         // fork ret value
-        inner.context.set_rax(u16::from(child.pid) as usize);
+        inner.context.set_rax(child.pid.0 as usize);
 
         // record child pid
         inner.add_child(child.clone());
@@ -158,7 +153,7 @@ impl ProcessInner {
     }
 
     pub fn clont_page_table(&self) -> PageTableContext {
-        self.page_table.as_ref().unwrap().clone()
+        self.page_table.as_ref().unwrap().clone_l4()
     }
 
     /// Save the process's context
@@ -461,8 +456,8 @@ impl core::fmt::Display for Process {
         write!(
             f,
             " #{:-3} | #{:-3} | {:12} | {:7} | {:>5.1} {} | {:?}",
-            u16::from(self.pid),
-            inner.parent().map(|p| u16::from(p.pid)).unwrap_or(0),
+            self.pid.0,
+            inner.parent().map(|p| p.pid.0).unwrap_or(0),
             inner.name,
             inner.ticks_passed,
             size,

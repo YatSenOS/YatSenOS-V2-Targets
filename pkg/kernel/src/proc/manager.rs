@@ -6,11 +6,8 @@ use crate::memory::{
     user::{USER_ALLOCATOR, USER_HEAP_SIZE},
     PAGE_SIZE,
 };
-use alloc::{collections::BTreeMap, sync::Weak};
-use alloc::{collections::VecDeque, format, sync::Arc};
+use alloc::{collections::BTreeMap, sync::Weak, collections::VecDeque, format};
 use spin::{Mutex, RwLock};
-use x86_64::VirtAddr;
-use xmas_elf::ElfFile;
 
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
 
@@ -71,7 +68,7 @@ impl ProcessManager {
     pub fn wait_pid(&self, pid: ProcessId) -> isize {
         self.get_proc(&pid)
             .and_then(|p| p.read().exit_code())
-            .unwrap_or(-1)
+            .unwrap_or(-0xfeed0ca7)
     }
 
     pub fn save_current(&self, context: &ProcessContext) -> ProcessId {
@@ -207,8 +204,7 @@ impl ProcessManager {
                 addr
             );
             if cur_proc.read().is_on_stack(addr) {
-                cur_proc.write().try_alloc_new_stack_page(addr).unwrap();
-                true
+                cur_proc.write().try_alloc_new_stack_page(addr).is_ok()
             } else {
                 false
             }

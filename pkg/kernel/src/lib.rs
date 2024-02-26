@@ -50,7 +50,7 @@ pub fn init(boot_info: &'static BootInfo) {
 
 pub fn wait(init: proc::ProcessId) {
     loop {
-        if proc::still_alive(init) {
+        if proc::wait_pid(init) == -0xfeed0ca7 {
             x86_64::instructions::hlt();
         } else {
             break;

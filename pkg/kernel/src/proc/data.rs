@@ -1,14 +1,12 @@
-use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
+use alloc::{collections::BTreeMap, vec::Vec};
+use boot::KernelPages;
 use spin::RwLock;
-use x86_64::{
-    structures::paging::{
+use x86_64::structures::paging::{
         page::{PageRange, PageRangeInclusive},
         Page,
-    },
-    VirtAddr,
-};
+    };
 
-use crate::{resource::StdIO, Resource};
+use crate::filesystem::StdIO;
 
 use super::*;
 
@@ -109,12 +107,12 @@ impl ProcessData {
     }
 
     #[inline]
-    pub fn sem_up(&mut self, key: u32) -> SemaphoreResult {
-        self.semaphores.read().up(key)
+    pub fn sem_wait(&mut self, key: u32) -> SemaphoreResult {
+        self.semaphores.read().wait(key)
     }
 
     #[inline]
-    pub fn sem_down(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
-        self.semaphores.read().down(key, pid)
+    pub fn sem_signal(&mut self, key: u32, pid: ProcessId) -> SemaphoreResult {
+        self.semaphores.read().signal(key, pid)
     }
 }
