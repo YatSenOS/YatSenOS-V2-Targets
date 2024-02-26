@@ -22,6 +22,7 @@ pub fn push_key(key: Key) {
 pub fn try_get_key() -> Option<Key> {
     INPUT_BUF.pop()
 }
+
 pub fn get_key() -> DecodedKey {
     loop {
         if let Some(k) = try_get_key() {

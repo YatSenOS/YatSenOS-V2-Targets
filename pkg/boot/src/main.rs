@@ -11,7 +11,6 @@ use alloc::vec;
 use core::arch::asm;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
-use x86_64::registers::model_specific::EferFlags;
 use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
