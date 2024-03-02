@@ -1,5 +1,5 @@
 use super::ProcessId;
-use alloc::{collections::BTreeMap, vec::Vec};
+use alloc::collections::*;
 use spin::Mutex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -15,7 +15,7 @@ impl SemaphoreId {
 #[derive(Debug, Clone)]
 pub struct Semaphore {
     count: usize,
-    wait_queue: Vec<ProcessId>,
+    wait_queue: VecDeque<ProcessId>,
 }
 
 /// Semaphore result
@@ -32,7 +32,7 @@ impl Semaphore {
     pub fn new(value: usize) -> Self {
         Self {
             count: value,
-            wait_queue: Vec::new(),
+            wait_queue: VecDeque::new(),
         }
     }
 
@@ -42,7 +42,7 @@ impl Semaphore {
     /// else decrease the count and return Ok
     pub fn wait(&mut self, pid: ProcessId) -> SemaphoreResult {
         if self.count == 0 {
-            self.wait_queue.push(pid);
+            self.wait_queue.push_back(pid);
             SemaphoreResult::Block(pid)
         } else {
             self.count -= 1;
@@ -55,7 +55,7 @@ impl Semaphore {
     /// if the wait queue is not empty, then pop a process from the wait queue
     /// else increase the count
     pub fn signal(&mut self) -> SemaphoreResult {
-        if let Some(pid) = self.wait_queue.pop() {
+        if let Some(pid) = self.wait_queue.pop_front() {
             SemaphoreResult::WakeUp(pid)
         } else {
             self.count += 1;
