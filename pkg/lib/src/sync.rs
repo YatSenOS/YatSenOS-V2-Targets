@@ -16,7 +16,7 @@ impl SpinLock {
         }
     }
 
-    pub fn acquire(&mut self) {
+    pub fn acquire(&self) {
         while self
             .bolt
             .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
@@ -26,7 +26,7 @@ impl SpinLock {
         }
     }
 
-    pub fn release(&mut self) {
+    pub fn release(&self) {
         self.bolt.store(false, Ordering::Relaxed);
     }
 }
