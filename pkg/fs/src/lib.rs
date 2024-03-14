@@ -159,27 +159,40 @@ pub fn read_to_buf<T>(
     volume: &FAT16Volume<T>,
     file: &File,
     buf: &mut [u8],
-) -> Result<usize, VolumeError>
+    mut offset: usize,
+) -> Result<usize, DeviceError>
 where
     T: BlockDevice,
 {
-    if buf.len() < file.length() as usize {
-        return Err(VolumeError::BufferTooSmall);
+    let length = file.length() as usize;
+
+    if offset >= length {
+        return Ok(0);
     }
 
-    let mut length = file.length() as usize;
+    let total_blocks = (length + Block::SIZE - 1) / Block::SIZE;
+    let mut current_block = offset / Block::SIZE;
     let mut block = Block::default();
+    let sector = volume.cluster_to_sector(&file.start_cluster());
 
-    for i in 0..=file.length() as usize / Block::SIZE {
-        let sector = volume.cluster_to_sector(&file.start_cluster());
-        volume.read_block(sector + i, &mut block).unwrap();
-        if length > Block::SIZE {
-            buf[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(block.as_u8_slice());
-            length -= Block::SIZE;
-        } else {
-            buf[i * Block::SIZE..i * Block::SIZE + length].copy_from_slice(&block[..length]);
-            break;
-        }
+    let mut bytes_read = 0;
+
+    while bytes_read < buf.len() && offset < length && current_block < total_blocks {
+        current_block = offset / Block::SIZE;
+        let current_offset = offset % Block::SIZE;
+        volume.read_block(sector + current_block, &mut block)?;
+
+        let block_remain = Block::SIZE - current_offset;
+        let buf_remain = buf.len() - bytes_read;
+        let file_remain = length - offset;
+        let to_read = buf_remain.min(block_remain).min(file_remain);
+
+        buf[bytes_read..bytes_read + to_read]
+            .copy_from_slice(&block[current_offset..current_offset + to_read]);
+
+        bytes_read += to_read;
+        offset += to_read;
     }
-    Ok(file.length() as usize)
+
+    Ok(bytes_read)
 }

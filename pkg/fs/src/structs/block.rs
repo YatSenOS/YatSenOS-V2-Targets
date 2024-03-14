@@ -1,5 +1,5 @@
-use core::ops::Deref;
 use alloc::borrow::ToOwned;
+use core::ops::Deref;
 
 #[derive(Clone)]
 pub struct Block {

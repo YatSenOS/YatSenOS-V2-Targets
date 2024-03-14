@@ -6,7 +6,7 @@ use crate::memory::{
     user::{USER_ALLOCATOR, USER_HEAP_SIZE},
     PAGE_SIZE,
 };
-use alloc::{collections::BTreeMap, sync::Weak, collections::VecDeque, format};
+use alloc::{collections::BTreeMap, collections::VecDeque, format, sync::Weak};
 use spin::{Mutex, RwLock};
 
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
@@ -131,6 +131,16 @@ impl ProcessManager {
         } else {
             self.current().write().close(fd)
         }
+    }
+
+    #[inline]
+    pub fn read(&self, fd: u8, buf: &mut [u8]) -> isize {
+        self.current().read().read(fd, buf)
+    }
+
+    #[inline]
+    pub fn write(&self, fd: u8, buf: &[u8]) -> isize {
+        self.current().read().write(fd, buf)
     }
 
     pub fn spawn(

@@ -118,10 +118,12 @@ pub fn wait_pid(pid: ProcessId) -> isize {
     x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid))
 }
 
-pub fn handle(fd: u8) -> Option<Resource> {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().read().handle(fd)
-    })
+pub fn read(fd: u8, buf: &mut [u8]) -> isize {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().read(fd, buf))
+}
+
+pub fn write(fd: u8, buf: &[u8]) -> isize {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().write(fd, buf))
 }
 
 pub fn open(path: &str, mode: u8) -> Option<u8> {
@@ -204,7 +206,7 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
     let pages = (size as usize + 0x1000 - 1) / 0x1000;
     let mut buf = vec![0u8; pages * 0x1000];
 
-    fs::read_to_buf(get_volume(), file, &mut buf).map_err(|_| "Failed to read file")?;
+    fs::read_to_buf(get_volume(), file, &mut buf, 0).map_err(|_| "Failed to read file")?;
 
     let elf = xmas_elf::ElfFile::new(&buf).map_err(|_| "Invalid ELF file")?;
 

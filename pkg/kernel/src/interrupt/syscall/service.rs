@@ -69,31 +69,15 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
-    let fd = handle(args.arg0 as u8);
-    if let Some(res) = fd {
-        let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
-        if let Some(size) = res.read(buf) {
-            size
-        } else {
-            0
-        }
-    } else {
-        0
-    }
+    let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
+    let fd = args.arg0 as u8;
+    read(fd, buf) as usize
 }
 
 pub fn sys_write(args: &SyscallArgs) -> usize {
-    let fd = handle(args.arg0 as u8);
-    if let Some(res) = fd {
-        let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
-        if let Some(size) = res.write(buf) {
-            size
-        } else {
-            0
-        }
-    } else {
-        0
-    }
+    let buf = unsafe { core::slice::from_raw_parts(args.arg1 as *const u8, args.arg2) };
+    let fd = args.arg0 as u8;
+    write(fd, buf) as usize
 }
 
 pub fn sys_get_pid() -> u16 {
