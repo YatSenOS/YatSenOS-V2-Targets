@@ -1,6 +1,6 @@
 #![feature(concat_bytes)]
 
-use ysos_fs::structs::bpb::*;
+use ysos_fs::fat16::bpb::*;
 
 #[cfg(test)]
 #[test]

@@ -1,4 +1,5 @@
-use ysos_fs::device::*;
+use ysos_fs::random::*;
+use ysos_fs::Device;
 
 #[cfg(test)]
 #[test]

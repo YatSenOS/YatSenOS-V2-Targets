@@ -1,5 +1,5 @@
 use chrono::{TimeZone, Utc};
-use ysos_fs::structs::dir_entry::*;
+use ysos_fs::fat16::dir_entry::*;
 
 #[cfg(test)]
 #[test]

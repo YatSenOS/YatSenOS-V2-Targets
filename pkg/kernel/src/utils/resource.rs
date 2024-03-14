@@ -1,18 +1,15 @@
 #![allow(clippy::len_without_is_empty)]
 
-use alloc::{collections::BTreeMap, string::String};
-use fs::{Device, File, Random};
+use alloc::{boxed::Box, collections::BTreeMap, string::String};
+use fs::{random::Random, Device, SeekAndRead};
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
 
-use crate::{
-    filesystem::{get_volume, StdIO},
-    input::try_get_key,
-};
+use crate::{filesystem::StdIO, input::try_get_key};
 
 #[derive(Debug)]
 pub struct ResourceSet {
-    pub handles: BTreeMap<u8, Mutex<ResourceHandle>>,
+    pub handles: BTreeMap<u8, Mutex<Resource>>,
 }
 
 impl Default for ResourceSet {
@@ -32,8 +29,7 @@ impl Default for ResourceSet {
 impl ResourceSet {
     pub fn open(&mut self, res: Resource) -> u8 {
         let fd = self.handles.len() as u8;
-        self.handles
-            .insert(fd, Mutex::new(ResourceHandle::new(res)));
+        self.handles.insert(fd, Mutex::new(res));
         fd
     }
 
@@ -42,82 +38,34 @@ impl ResourceSet {
     }
 
     pub fn read(&self, fd: u8, buf: &mut [u8]) -> isize {
-        if let Some(handle) = self.handles.get(&fd) {
-            handle.lock().read(buf)
+        if let Some(count) = self.handles.get(&fd).and_then(|h| h.lock().read(buf)) {
+            count as isize
         } else {
-            0
+            -1
         }
     }
 
     pub fn write(&self, fd: u8, buf: &[u8]) -> isize {
-        if let Some(handle) = self.handles.get(&fd) {
-            handle.lock().write(buf)
+        if let Some(count) = self.handles.get(&fd).and_then(|h| h.lock().write(buf)) {
+            count as isize
         } else {
-            0
-        }
-    }
-
-    pub fn seek(&self, fd: u8, offset: usize) {
-        if let Some(handle) = self.handles.get(&fd) {
-            handle.lock().seek(offset)
+            -1
         }
     }
 }
 
-#[derive(Debug, Clone)]
 pub enum Resource {
-    File(File),
+    File(Box<dyn SeekAndRead + Send>),
     Console(StdIO),
     Random(Random),
     Null,
 }
 
-#[derive(Debug, Clone)]
-pub struct ResourceHandle {
-    pub resource: Resource,
-    pub offset: usize,
-}
-
-impl ResourceHandle {
-    pub fn new(resource: Resource) -> Self {
-        Self {
-            resource,
-            offset: 0,
-        }
-    }
-
-    pub fn read(&mut self, buf: &mut [u8]) -> isize {
-        if let Some(bytes) = self.resource.read(buf, self.offset) {
-            self.offset += bytes;
-            bytes as isize
-        } else {
-            -1
-        }
-    }
-
-    pub fn write(&mut self, buf: &[u8]) -> isize {
-        if let Some(bytes) = self.resource.write(buf, self.offset) {
-            self.offset += bytes;
-            bytes as isize
-        } else {
-            -1
-        }
-    }
-
-    pub fn seek(&mut self, offset: usize) {
-        self.offset = offset
-    }
-
-    pub fn len(&self) -> usize {
-        self.resource.len()
-    }
-}
-
 impl Resource {
-    fn read(&self, buf: &mut [u8], offset: usize) -> Option<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> Option<usize> {
         match self {
             Resource::File(file) => {
-                let ret = fs::read_to_buf(get_volume(), file, buf, offset);
+                let ret = file.read(buf);
                 if let Err(e) = ret {
                     error!("Failed to read file: {:?}", e);
                     None
@@ -126,7 +74,7 @@ impl Resource {
                 }
             }
             Resource::Console(stdio) => match stdio {
-                &StdIO::Stdin => {
+                &mut StdIO::Stdin => {
                     return Some(if buf.len() < 4 {
                         0
                     } else if let Some(DecodedKey::Unicode(k)) = try_get_key() {
@@ -143,7 +91,7 @@ impl Resource {
         }
     }
 
-    fn write(&self, buf: &[u8], _offset: usize) -> Option<usize> {
+    fn write(&self, buf: &[u8]) -> Option<usize> {
         match self {
             Resource::File(_) => None,
             Resource::Console(stdio) => match *stdio {
@@ -161,11 +109,15 @@ impl Resource {
             Resource::Null => Some(buf.len()),
         }
     }
+}
 
-    fn len(&self) -> usize {
+impl core::fmt::Debug for Resource {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Resource::File(file) => file.length as usize,
-            _ => 0,
+            Resource::File(_) => write!(f, "File"),
+            Resource::Console(_) => write!(f, "Console"),
+            Resource::Random(_) => write!(f, "Random"),
+            Resource::Null => write!(f, "Null"),
         }
     }
 }

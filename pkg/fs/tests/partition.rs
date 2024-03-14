@@ -1,4 +1,4 @@
-use ysos_fs::structs::partition::*;
+use ysos_fs::mbr::*;
 
 #[cfg(test)]
 #[test]

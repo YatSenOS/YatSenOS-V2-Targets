@@ -8,7 +8,7 @@ mod processor;
 mod sync;
 
 use alloc::sync::Arc;
-use fs::File;
+use alloc::vec::Vec;
 use manager::*;
 use process::*;
 use sync::*;
@@ -19,8 +19,9 @@ pub use paging::PageTableContext;
 pub use pid::ProcessId;
 use xmas_elf::ElfFile;
 
-use crate::{filesystem::get_volume, Resource};
-use alloc::{string::String, vec};
+use crate::filesystem::get_rootfs;
+use crate::Resource;
+use alloc::string::String;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::VirtAddr;
 
@@ -126,8 +127,8 @@ pub fn write(fd: u8, buf: &[u8]) -> isize {
     x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().write(fd, buf))
 }
 
-pub fn open(path: &str, mode: u8) -> Option<u8> {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().open(path, mode))
+pub fn open(path: &str) -> Option<u8> {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().open(path))
 }
 
 pub fn close(fd: u8) -> bool {
@@ -201,39 +202,59 @@ pub fn sem_wait(key: u32, context: &mut ProcessContext) {
     })
 }
 
-pub fn spawn(file: &File) -> Result<ProcessId, String> {
-    let size = file.length();
-    let pages = (size as usize + 0x1000 - 1) / 0x1000;
-    let mut buf = vec![0u8; pages * 0x1000];
+pub fn spawn(name: String, file_buffer: Vec<u8>) -> Result<ProcessId, String> {
+    let elf = xmas_elf::ElfFile::new(&file_buffer).map_err(|_| "Invalid ELF file")?;
 
-    fs::read_to_buf(get_volume(), file, &mut buf, 0).map_err(|_| "Failed to read file")?;
-
-    let elf = xmas_elf::ElfFile::new(&buf).map_err(|_| "Invalid ELF file")?;
-
-    let pid = elf_spawn(file.entry.filename(), &elf, Some(file))?;
+    let pid = elf_spawn(name, &elf)?;
 
     Ok(pid)
 }
 
-pub fn elf_spawn(name: String, elf: &ElfFile, file: Option<&File>) -> Result<ProcessId, String> {
+pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
         let process_name = name.to_lowercase();
 
         let parent = Arc::downgrade(&manager.current());
-        let mut proc_data = ProcessData::new();
-
-        if let Some(f) = file {
-            proc_data.open(Resource::File(f.clone()));
-        }
-
-        let pid = manager.spawn(elf, name, Some(parent), Some(proc_data));
+        let pid = manager.spawn(elf, name, Some(parent), None);
 
         debug!("Spawned process: {}#{}", process_name, pid);
         pid
     });
 
     Ok(pid)
+}
+
+pub fn fs_spawn(path: &str) -> Option<ProcessId> {
+    let meta = get_rootfs().metadata(path);
+
+    if let Err(e) = meta {
+        warn!("fs_spawn: file error: {}, err: {:?}", path, e);
+        return None;
+    }
+
+    let meta = meta.unwrap();
+
+    let mut file_buffer = Vec::with_capacity(meta.len);
+    match get_rootfs()
+        .open_file(path)
+        .unwrap()
+        .read_all(&mut file_buffer)
+    {
+        Ok(_) => {}
+        Err(e) => {
+            warn!("fs_spawn: failed to read file: {}, err: {:?}", path, e);
+            return None;
+        }
+    }
+
+    match spawn(meta.name, file_buffer) {
+        Ok(pid) => Some(pid),
+        Err(_) => {
+            warn!("fs_spawn: failed to spawn process: {}", path);
+            None
+        }
+    }
 }
 
 pub fn fork(context: &mut ProcessContext) {

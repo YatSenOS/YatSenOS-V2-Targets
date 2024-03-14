@@ -50,19 +50,10 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
         ))
     };
 
-    let file = crate::filesystem::try_get_file(path, fs::Mode::ReadOnly);
-
-    if file.is_err() {
-        warn!("spawn_process: file not found: {}", path);
-        return 0;
-    }
-
-    let file = file.unwrap();
-
-    match spawn(&file) {
-        Ok(pid) => pid.0 as usize,
-        Err(_) => {
-            warn!("spawn_process: failed to spawn process: {}", path);
+    match fs_spawn(path) {
+        Some(pid) => pid.0 as usize,
+        None => {
+            warn!("spawn_process: failed to spawn: {}", path);
             0
         }
     }
@@ -96,18 +87,13 @@ pub fn sys_open(args: &SyscallArgs) -> usize {
         ))
     };
 
-    let fd = open(path, args.arg2 as u8);
-
-    if fd.is_none() {
-        warn!("sys_open: failed to open: {}", path);
-        return 0;
+    match open(path) {
+        Some(fd) => fd as usize,
+        None => {
+            warn!("sys_open: failed to open: {}", path);
+            0
+        }
     }
-
-    let fd = fd.unwrap();
-
-    trace!("sys_open: opened: {} at fd={}", path, &fd);
-
-    fd as usize
 }
 
 pub fn sys_close(args: &SyscallArgs) -> usize {

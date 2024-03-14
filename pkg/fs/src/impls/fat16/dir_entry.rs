@@ -5,17 +5,20 @@
 //! - <https://github.com/xfoxfu/rust-xos/blob/main/fatpart/src/struct/dir_entry.rs>
 //! - <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs>
 
+use crate::*;
 use alloc::string::String;
 use bitflags::bitflags;
 use chrono::LocalResult::Single;
 use chrono::{DateTime, TimeZone, Utc};
+use core::fmt::{Debug, Display};
+use core::ops::*;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct DirEntry {
     pub filename: ShortFileName,
-    pub moditified_time: DateTime<Utc>,
-    pub created_time: DateTime<Utc>,
-    pub accessed_time: DateTime<Utc>,
+    pub moditified_time: FsTime,
+    pub created_time: FsTime,
+    pub accessed_time: FsTime,
     pub cluster: Cluster,
     pub attributes: Attributes,
     pub size: u32,
@@ -90,7 +93,7 @@ impl DirEntry {
     }
 
     /// For Standard 8.3 format
-    pub fn parse(data: &[u8]) -> Result<DirEntry, FilenameError> {
+    pub fn parse(data: &[u8]) -> Result<DirEntry> {
         // trace!(
         //     "Parsing file...\n    {:016x} {:016x} {:016x} {:016x}",
         //     u64::from_be_bytes(data[0..8].try_into().unwrap()),
@@ -137,22 +140,9 @@ impl DirEntry {
             size,
         })
     }
-
-    fn humanized_size(&self) -> (f32, String) {
-        let bytes = self.size as f32;
-        if bytes < 1024f32 {
-            (bytes, String::from("B"))
-        } else if (bytes / (1 << 10) as f32) < 1024f32 {
-            (bytes / (1 << 10) as f32, String::from("K"))
-        } else if (bytes / (1 << 20) as f32) < 1024f32 {
-            (bytes / (1 << 20) as f32, String::from("M"))
-        } else {
-            (bytes / (1 << 30) as f32, String::from("G"))
-        }
-    }
 }
 
-fn prase_datetime(time: u32) -> DateTime<Utc> {
+fn prase_datetime(time: u32) -> FsTime {
     let year = ((time >> 25) + 1980) as i32;
     let month = (time >> 21) & 0x0f;
     let day = (time >> 16) & 0x1f;
@@ -201,7 +191,7 @@ impl ShortFileName {
         self.name == sfn.name && self.ext == sfn.ext
     }
 
-    pub fn parse(name: &str) -> Result<ShortFileName, FilenameError> {
+    pub fn parse(name: &str) -> Result<ShortFileName> {
         let mut sfn = ShortFileName {
             name: [0x20; 8],
             ext: [0x20; 3],
@@ -228,7 +218,7 @@ impl ShortFileName {
                 | 0x5C
                 | 0x5D
                 | 0x7C => {
-                    return Err(FilenameError::InvalidCharacter);
+                    return Err(FilenameError::InvalidCharacter.into());
                 }
                 // Denotes the start of the file extension
                 b'.' => {
@@ -236,7 +226,7 @@ impl ShortFileName {
                         seen_dot = true;
                         idx = 8;
                     } else {
-                        return Err(FilenameError::MisplacedPeriod);
+                        return Err(FilenameError::MisplacedPeriod.into());
                     }
                 }
                 _ => {
@@ -246,31 +236,31 @@ impl ShortFileName {
                         if (8..11).contains(&idx) {
                             sfn.ext[idx - 8] = ch;
                         } else {
-                            return Err(FilenameError::NameTooLong);
+                            return Err(FilenameError::NameTooLong.into());
                         }
                     } else if idx < 8 {
                         sfn.name[idx] = ch;
                     } else {
-                        return Err(FilenameError::NameTooLong);
+                        return Err(FilenameError::NameTooLong.into());
                     }
                     idx += 1;
                 }
             }
         }
         if idx == 0 {
-            return Err(FilenameError::FilenameEmpty);
+            return Err(FilenameError::FilenameEmpty.into());
         }
         Ok(sfn)
     }
 }
 
-impl core::fmt::Debug for ShortFileName {
+impl Debug for ShortFileName {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", self)
     }
 }
 
-impl core::fmt::Display for ShortFileName {
+impl Display for ShortFileName {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if self.ext[0] == 0x20 {
             write!(f, "{}", self.basename().trim_end())
@@ -282,22 +272,6 @@ impl core::fmt::Display for ShortFileName {
                 self.extension().trim_end()
             )
         }
-    }
-}
-
-impl core::fmt::Display for DirEntry {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let (size, unit) = self.humanized_size();
-        write!(
-            f,
-            "{:>5.*}{} | {} | {}{}",
-            1,
-            size,
-            unit,
-            self.moditified_time.format("%Y/%m/%d %H:%M:%S"),
-            self.filename,
-            if self.is_directory() { "/" } else { "" }
-        )
     }
 }
 
@@ -315,74 +289,57 @@ impl Cluster {
     pub const END_OF_FILE: Cluster = Cluster(0xFFFF_FFFF);
 }
 
-impl core::ops::Add<u32> for Cluster {
+impl Add<u32> for Cluster {
     type Output = Cluster;
     fn add(self, rhs: u32) -> Cluster {
         Cluster(self.0 + rhs)
     }
 }
 
-impl core::ops::AddAssign<u32> for Cluster {
+impl AddAssign<u32> for Cluster {
     fn add_assign(&mut self, rhs: u32) {
         self.0 += rhs;
     }
 }
 
-impl core::ops::Add<Cluster> for Cluster {
+impl Add<Cluster> for Cluster {
     type Output = Cluster;
     fn add(self, rhs: Cluster) -> Cluster {
         Cluster(self.0 + rhs.0)
     }
 }
 
-impl core::ops::AddAssign<Cluster> for Cluster {
+impl AddAssign<Cluster> for Cluster {
     fn add_assign(&mut self, rhs: Cluster) {
         self.0 += rhs.0;
     }
 }
 
-impl core::fmt::Display for Cluster {
+impl Display for Cluster {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "0x{:08X}", self.0)
     }
 }
 
-impl core::fmt::Debug for Cluster {
+impl Debug for Cluster {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "0x{:08X}", self.0)
     }
 }
 
-/// Various filename related errors that can occur.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum FilenameError {
-    /// Tried to create a file with an invalid character.
-    InvalidCharacter,
-    /// Tried to create a file with no file name.
-    FilenameEmpty,
-    /// Given name was too long (we are limited to 8.3).
-    NameTooLong,
-    /// Can't start a file with a period, or after 8 characters.
-    MisplacedPeriod,
-    /// Can't extract utf8 from file name
-    Utf8Error,
-    /// Can't parse file entry
-    UnableToParse,
-}
-
-/// The different ways we can open a file.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum Mode {
-    /// Open a file for reading, if it exists.
-    ReadOnly,
-    /// Open a file for appending (writing to the end of the existing file), if it exists.
-    ReadWriteAppend,
-    /// Open a file and remove all contents, before writing to the start of the existing file, if it exists.
-    ReadWriteTruncate,
-    /// Create a new empty file. Fail if it exists.
-    ReadWriteCreate,
-    /// Create a new empty file, or truncate an existing file.
-    ReadWriteCreateOrTruncate,
-    /// Create a new empty file, or append to an existing file.
-    ReadWriteCreateOrAppend,
+impl Into<FsMetadata> for &DirEntry {
+    fn into(self) -> FsMetadata {
+        FsMetadata {
+            entry_type: if self.is_directory() {
+                FileType::Directory
+            } else {
+                FileType::File
+            },
+            name: self.filename(),
+            len: self.size as usize,
+            created: Some(self.created_time),
+            accessed: Some(self.accessed_time),
+            modified: Some(self.moditified_time),
+        }
+    }
 }

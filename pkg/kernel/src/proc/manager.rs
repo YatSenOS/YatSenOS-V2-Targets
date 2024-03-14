@@ -102,23 +102,13 @@ impl ProcessManager {
         pid
     }
 
-    pub fn open(&self, path: &str, mode: u8) -> Option<u8> {
-        let res = match path {
-            "/dev/random" => Resource::Random(fs::Random::new(
-                crate::utils::clock::now().timestamp() as u64,
-            )),
-            path => {
-                let file = crate::filesystem::try_get_file(path, fs::Mode::try_from(mode).unwrap());
-
-                if file.is_err() {
-                    return None;
-                }
-
-                Resource::File(file.unwrap())
-            }
+    pub fn open(&self, path: &str) -> Option<u8> {
+        let res = match get_rootfs().open_file(path) {
+            Ok(file) => Resource::File(file),
+            Err(_) => return None,
         };
 
-        trace!("Opening {}...\n{:#?}", path, &res);
+        trace!("Opening {}...", path);
 
         let fd = self.current().write().open(res);
 

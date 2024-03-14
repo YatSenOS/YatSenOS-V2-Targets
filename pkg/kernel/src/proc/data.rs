@@ -1,4 +1,4 @@
-use alloc::{collections::BTreeMap, vec::Vec};
+use alloc::collections::BTreeMap;
 use boot::KernelPages;
 use spin::RwLock;
 use x86_64::structures::paging::{
