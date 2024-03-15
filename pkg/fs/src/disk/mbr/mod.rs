@@ -41,9 +41,10 @@ where
 }
 
 /// Identifies a Volume on the disk.
+#[derive(Clone, Copy)]
 pub struct Volume<T>
 where
-    T: BlockDevice<Block512>,
+    T: BlockDevice<Block512> + Clone,
 {
     inner: T,
     pub meta: PartitionMetaData,
@@ -51,16 +52,25 @@ where
 
 impl<T> Volume<T>
 where
-    T: BlockDevice<Block512>,
+    T: BlockDevice<Block512> + Clone,
 {
     pub fn new(inner: T, meta: PartitionMetaData) -> Self {
         Self { inner, meta }
     }
 }
 
+impl<T> core::fmt::Debug for Volume<T>
+where
+    T: BlockDevice<Block512> + Clone,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Volume").field("meta", &self.meta).finish()
+    }
+}
+
 impl<T> BlockDevice<Block512> for Volume<T>
 where
-    T: BlockDevice<Block512>,
+    T: BlockDevice<Block512> + Clone,
 {
     fn block_count(&self) -> Result<usize> {
         self.inner.block_count()

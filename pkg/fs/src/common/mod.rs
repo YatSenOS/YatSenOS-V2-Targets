@@ -8,17 +8,20 @@ mod filehandle;
 mod filesystem;
 mod io;
 mod metadata;
-mod path;
+mod mount;
 
 use super::*;
-pub use block::*; // Done
-pub use device::*; // Done
-pub use error::*; // Done
+
+pub use block::*;
+pub use device::*;
+pub use error::*;
 pub use filehandle::*;
 pub use filesystem::*;
-pub use io::*; // Done
-pub use metadata::*; // Done
-pub use path::*;
+pub use io::*;
+pub use metadata::*;
+pub use mount::*;
+
+pub const PATH_SEPARATOR: char = '/';
 
 pub fn humanized_size(size: usize) -> (f32, String) {
     let bytes = size as f32;

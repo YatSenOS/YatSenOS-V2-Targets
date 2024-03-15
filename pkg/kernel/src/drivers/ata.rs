@@ -4,8 +4,9 @@
 //! reference: https://wiki.osdev.org/ATA_PIO_Mode
 //! reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/drivers/ide.rs
 
-use alloc::boxed::Box;
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
+use alloc::vec;
+use alloc::{boxed::Box, vec::Vec};
 use bit_field::BitField;
 use core::hint::spin_loop;
 use spin::Mutex;
@@ -13,9 +14,10 @@ use x86_64::instructions::port::*;
 
 lazy_static! {
     static ref BUSES: Vec<Mutex<Bus>> = {
-        let mut buses = Vec::new();
-        buses.push(Mutex::new(Bus::new(0, 14, 0x1F0, 0x3F6)));
-        buses.push(Mutex::new(Bus::new(1, 15, 0x170, 0x376)));
+        let buses = vec![
+            Mutex::new(Bus::new(0, 14, 0x1F0, 0x3F6)),
+            Mutex::new(Bus::new(1, 15, 0x170, 0x376)),
+        ];
 
         info!("Initialized ATA Buses.");
 

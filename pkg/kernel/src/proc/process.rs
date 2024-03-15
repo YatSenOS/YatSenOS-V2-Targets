@@ -152,7 +152,7 @@ impl ProcessInner {
     }
 
     pub fn clont_page_table(&self) -> PageTableContext {
-        self.page_table.as_ref().unwrap().clone_l4()
+        self.page_table.as_ref().unwrap().clone_level_4()
     }
 
     /// Save the process's context

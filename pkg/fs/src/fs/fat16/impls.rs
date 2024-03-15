@@ -10,9 +10,9 @@ where
         let block_size = Block512::size();
 
         volume.read_block(0, &mut block).unwrap();
-        let bpb = FAT16Bpb::new(block.as_u8_slice()).unwrap();
+        let bpb = Fat16Bpb::new(block.as_u8_slice()).unwrap();
 
-        trace!("Loading FAT16 Volume: {:?}", bpb);
+        trace!("Loading Fat16 Volume: {:#?}", bpb);
 
         // FirstDataSector = BPB_ResvdSecCnt + (BPB_NumFATs * FATSz) + RootDirSectors;
         let root_dir_size =

@@ -1,6 +1,6 @@
 #![cfg_attr(not(test), no_std)]
 #![allow(dead_code, unused_imports)]
-#![feature(trait_alias)]
+#![cfg_attr(test, feature(concat_bytes))]
 
 #[macro_use]
 extern crate alloc;
@@ -30,10 +30,10 @@ use alloc::vec::Vec;
 //
 //     [ MBR | Partitions ] [ Partition 1 ] [ Partition 2 ] [ Partition 3 ] [ Partition 4 ]
 //
-// 2. The partition structure (in FAT16)
+// 2. The partition structure (in Fat16)
 //
 //    - The partition is a collection of clusters.
 //     BPB (Boot Parameter Block) is the first sector of the partition.
 //     The BPB contains information about the filesystem.
 //
-//     [ FAT16 BPB ] [ Data ]
+//     [ Fat16 BPB ] [ Data ]
