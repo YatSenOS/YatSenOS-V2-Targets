@@ -29,7 +29,7 @@ where
         let mut mbr = Block::default();
         self.inner.read_block(0, &mut mbr)?;
 
-        let volumes = MBRPartitions::parse(mbr.as_u8_slice());
+        let volumes = MbrPartitions::parse(&mbr);
 
         Ok([
             Volume::new(self.inner.clone(), volumes.partitions[0]),

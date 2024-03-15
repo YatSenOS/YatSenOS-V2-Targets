@@ -4,11 +4,11 @@
 
 use crate::alloc::borrow::ToOwned;
 
-pub struct MBRPartitions {
+pub struct MbrPartitions {
     pub partitions: [PartitionMetaData; 4],
 }
 
-impl MBRPartitions {
+impl MbrPartitions {
     pub fn parse(data: &[u8; 512]) -> Self {
         let mut partitions = vec![PartitionMetaData::default(); 4];
         for i in 0..4 {

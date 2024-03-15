@@ -21,14 +21,6 @@ impl<const SIZE: usize> Block<SIZE> {
     pub const fn size() -> usize {
         SIZE
     }
-
-    pub fn as_u8_slice(&self) -> &[u8; SIZE] {
-        &self.contents
-    }
-
-    pub fn as_mut_u8_slice(&mut self) -> &mut [u8; SIZE] {
-        &mut self.contents
-    }
 }
 
 impl<const SIZE: usize> Deref for Block<SIZE> {

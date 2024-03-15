@@ -18,8 +18,8 @@ pub trait Read {
                     return Ok(buf.len());
                 }
                 Ok(n) => {
-                    buf.truncate(start_len + n);
                     start_len += n;
+                    buf.truncate(start_len);
                 }
                 Err(e) => {
                     buf.truncate(start_len);

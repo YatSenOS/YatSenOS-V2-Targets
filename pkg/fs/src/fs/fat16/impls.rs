@@ -10,7 +10,7 @@ where
         let block_size = Block512::size();
 
         volume.read_block(0, &mut block).unwrap();
-        let bpb = Fat16Bpb::new(block.as_u8_slice()).unwrap();
+        let bpb = Fat16Bpb::new(block.as_ref()).unwrap();
 
         trace!("Loading Fat16 Volume: {:#?}", bpb);
 
@@ -225,8 +225,7 @@ where
     }
 
     fn metadata(&self, path: &str) -> Result<Metadata> {
-        let entry = &self.handle.get_dir_entry(path)?;
-        Ok(entry.into())
+        Ok(self.handle.get_dir_entry(path)?.as_meta())
     }
 
     fn exists(&self, path: &str) -> Result<bool> {
