@@ -9,9 +9,9 @@ pub trait Read {
 
     /// Read all bytes until EOF in this source, placing them into `buf`.
     fn read_all(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
-        let start_len = buf.len();
+        let mut start_len = buf.len();
         loop {
-            buf.resize(start_len + 1024, 0);
+            buf.resize(start_len + 512, 0);
             match self.read(&mut buf[start_len..]) {
                 Ok(0) => {
                     buf.truncate(start_len);
@@ -19,6 +19,7 @@ pub trait Read {
                 }
                 Ok(n) => {
                     buf.truncate(start_len + n);
+                    start_len += n;
                 }
                 Err(e) => {
                     buf.truncate(start_len);

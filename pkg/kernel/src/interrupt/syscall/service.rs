@@ -6,7 +6,7 @@ use crate::utils::*;
 use super::SyscallArgs;
 
 pub fn sys_clock() -> i64 {
-    clock::now().timestamp_nanos_opt().unwrap_or_default()
+    clock::now().and_utc().timestamp_nanos_opt().unwrap_or_default()
 }
 
 pub fn sys_allocate(args: &SyscallArgs) -> usize {

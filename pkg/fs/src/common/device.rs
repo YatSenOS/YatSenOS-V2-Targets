@@ -9,7 +9,8 @@ pub trait Device<T> {
 }
 
 pub trait BlockDevice<B>: Send + Sync + 'static
-where B: AsMut<[u8]> + AsRef<[u8]> + Default + Send + Sync + 'static
+where
+    B: AsMut<[u8]> + AsRef<[u8]> + Default + Send + Sync + 'static,
 {
     /// Returns the number of blocks in the device
     fn block_count(&self) -> Result<usize>;

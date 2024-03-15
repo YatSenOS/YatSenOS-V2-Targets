@@ -1,4 +1,4 @@
-use chrono::naive::*;
+use chrono::{naive::*, DateTime, Utc};
 use syscall_def::Syscall;
 
 #[inline(always)]
@@ -58,10 +58,10 @@ pub fn sys_wait_pid(pid: u16) -> isize {
 }
 
 #[inline(always)]
-pub fn sys_time() -> NaiveDateTime {
+pub fn sys_time() -> DateTime<Utc> {
     let time = syscall!(Syscall::Time) as i64;
     const BILLION: i64 = 1_000_000_000;
-    NaiveDateTime::from_timestamp_opt(time / BILLION, (time % BILLION) as u32).unwrap_or_default()
+    DateTime::from_timestamp(time / BILLION, (time % BILLION) as u32).unwrap_or_default()
 }
 
 #[inline(always)]

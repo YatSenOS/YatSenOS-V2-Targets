@@ -67,15 +67,14 @@ pub enum FilenameError {
     UnableToParse,
 }
 
-
-impl Into<FsError> for FilenameError {
-    fn into(self) -> FsError {
-        FsError::FileNameError(self)
+impl From<FilenameError> for FsError {
+    fn from(err: FilenameError) -> FsError {
+        FsError::FileNameError(err)
     }
 }
 
-impl Into<FsError> for DeviceError {
-    fn into(self) -> FsError {
-        FsError::DeviceError(self)
+impl From<DeviceError> for FsError {
+    fn from(err: DeviceError) -> FsError {
+        FsError::DeviceError(err)
     }
 }

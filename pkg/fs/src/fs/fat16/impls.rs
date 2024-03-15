@@ -165,20 +165,34 @@ where
         Err(FsError::FileNotFound)
     }
 
-    fn get_dir_entry(&self, path: &str) -> Result<DirEntry> {
-        let mut current = Directory::root();
+    fn get_parent_dir(&self, path: &str) -> Result<Directory> {
         let mut path = path.split(PATH_SEPARATOR);
+        let mut current = Directory::root();
 
         while let Some(dir) = path.next() {
+            if dir.is_empty() {
+                continue;
+            }
+
             let entry = self.find_directory_entry(&current, dir)?;
+
             if entry.is_directory() {
                 current = Directory::from_entry(entry);
-            } else {
+            } else if path.next().is_some() {
                 return Err(FsError::NotADirectory);
+            } else {
+                break;
             }
         }
 
-        Ok(current.entry.unwrap())
+        Ok(current)
+    }
+
+    fn get_dir_entry(&self, path: &str) -> Result<DirEntry> {
+        let parent = self.get_parent_dir(path)?;
+        let name = path.rsplit(PATH_SEPARATOR).next().unwrap_or("");
+
+        self.find_directory_entry(&parent, name)
     }
 }
 
@@ -186,29 +200,31 @@ impl<T> FileSystem for Fat16<T>
 where
     T: BlockDevice<Block512>,
 {
-    fn read_dir(&self, path: &str) -> Result<Box<dyn Iterator<Item = FsMetadata> + Send>> {
-        let handle = self.handle.clone();
-        let dir = handle.get_dir_entry(path)?;
+    fn read_dir(&self, path: &str) -> Result<Box<dyn Iterator<Item = Metadata> + Send>> {
+        let dir = self.handle.get_parent_dir(path)?;
         let mut entries = Vec::new();
 
-        handle.iterate_dir(&Directory::from_entry(dir), |entry| {
-            entries.push(entry.into());
+        self.handle.iterate_dir(&dir, |entry| {
+            entries.push(entry.as_meta());
         })?;
 
         Ok(Box::new(entries.into_iter()))
     }
 
-    fn open_file(&self, path: &str) -> Result<Box<dyn SeekAndRead + Send>> {
+    fn open_file(&self, path: &str) -> Result<FileHandle> {
         let entry = self.handle.get_dir_entry(path)?;
 
         if entry.is_directory() {
             return Err(FsError::NotAFile);
         }
 
-        Ok(Box::new(File::new(self.handle.clone(), entry)))
+        Ok(FileHandle::new(
+            entry.as_meta(),
+            Box::new(File::new(self.handle.clone(), entry)),
+        ))
     }
 
-    fn metadata(&self, path: &str) -> Result<FsMetadata> {
+    fn metadata(&self, path: &str) -> Result<Metadata> {
         let entry = &self.handle.get_dir_entry(path)?;
         Ok(entry.into())
     }

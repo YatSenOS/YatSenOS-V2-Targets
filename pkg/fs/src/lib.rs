@@ -10,15 +10,15 @@ extern crate log;
 #[macro_use]
 pub mod common;
 mod disk;
-mod impls;
+mod fs;
 
-pub use impls::*;
-pub use disk::*;
 pub use common::*;
+pub use disk::*;
+pub use fs::*;
 
+use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::sync::Arc;
-use alloc::boxed::Box;
 use alloc::vec::Vec;
 
 // 1. The disk structure

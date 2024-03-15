@@ -44,7 +44,7 @@ where
     fn seek(&mut self, pos: SeekFrom) -> Result<usize> {
         match pos {
             SeekFrom::Start(offset) => {
-                self.offset = offset as usize;
+                self.offset = offset;
             }
             SeekFrom::End(offset) => {
                 self.offset = (self.entry.size as isize + offset) as usize;

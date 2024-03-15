@@ -21,7 +21,7 @@ use xmas_elf::ElfFile;
 
 use crate::filesystem::get_rootfs;
 use crate::Resource;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::VirtAddr;
 
@@ -203,7 +203,7 @@ pub fn sem_wait(key: u32, context: &mut ProcessContext) {
 }
 
 pub fn spawn(name: String, file_buffer: Vec<u8>) -> Result<ProcessId, String> {
-    let elf = xmas_elf::ElfFile::new(&file_buffer).map_err(|_| "Invalid ELF file")?;
+    let elf = xmas_elf::ElfFile::new(&file_buffer).map_err(|e| e.to_string())?;
 
     let pid = elf_spawn(name, &elf)?;
 
@@ -226,32 +226,26 @@ pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
 }
 
 pub fn fs_spawn(path: &str) -> Option<ProcessId> {
-    let meta = get_rootfs().metadata(path);
+    let handle = get_rootfs().open_file(path);
 
-    if let Err(e) = meta {
+    if let Err(e) = handle {
         warn!("fs_spawn: file error: {}, err: {:?}", path, e);
         return None;
     }
 
-    let meta = meta.unwrap();
+    let mut handle = handle.unwrap();
 
-    let mut file_buffer = Vec::with_capacity(meta.len);
-    match get_rootfs()
-        .open_file(path)
-        .unwrap()
-        .read_all(&mut file_buffer)
-    {
-        Ok(_) => {}
-        Err(e) => {
-            warn!("fs_spawn: failed to read file: {}, err: {:?}", path, e);
-            return None;
-        }
+    let mut file_buffer = Vec::new();
+
+    if let Err(e) = handle.read_all(&mut file_buffer) {
+        warn!("fs_spawn: failed to read file: {}, err: {:?}", path, e);
+        return None;
     }
 
-    match spawn(meta.name, file_buffer) {
+    match spawn(handle.meta.name, file_buffer) {
         Ok(pid) => Some(pid),
-        Err(_) => {
-            warn!("fs_spawn: failed to spawn process: {}", path);
+        Err(e) => {
+            warn!("fs_spawn: failed to spawn process: {}, {}", path, e);
             None
         }
     }

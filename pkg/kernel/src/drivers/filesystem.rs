@@ -50,9 +50,13 @@ pub fn ls(root_path: &str) {
             1,
             size,
             unit,
-            meta.modified.map(|t| t.format("%Y/%m/%d %H:%M:%S")).unwrap_or(
-                DateTime::from_timestamp_millis(0).unwrap().format("%Y/%m/%d %H:%M:%S")
-            ),
+            meta.modified
+                .map(|t| t.format("%Y/%m/%d %H:%M:%S"))
+                .unwrap_or(
+                    DateTime::from_timestamp_millis(0)
+                        .unwrap()
+                        .format("%Y/%m/%d %H:%M:%S")
+                ),
             meta.name,
             if meta.is_dir() { "/" } else { "" }
         );

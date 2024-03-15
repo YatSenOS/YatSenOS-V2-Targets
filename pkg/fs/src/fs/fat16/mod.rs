@@ -5,9 +5,9 @@ pub mod file;
 pub mod impls;
 
 use crate::*;
-use file::File;
 use dir_entry::*;
 use directory::Directory;
+use file::File;
 
 use bpb::FAT16Bpb;
 

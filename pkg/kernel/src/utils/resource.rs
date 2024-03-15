@@ -1,7 +1,5 @@
-#![allow(clippy::len_without_is_empty)]
-
-use alloc::{boxed::Box, collections::BTreeMap, string::String};
-use fs::{random::Random, Device, SeekAndRead};
+use alloc::{collections::BTreeMap, string::String};
+use fs::{random::Random, Device, FileHandle};
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
 
@@ -55,7 +53,7 @@ impl ResourceSet {
 }
 
 pub enum Resource {
-    File(Box<dyn SeekAndRead + Send>),
+    File(FileHandle),
     Console(StdIO),
     Random(Random),
     Null,
@@ -114,8 +112,8 @@ impl Resource {
 impl core::fmt::Debug for Resource {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Resource::File(_) => write!(f, "File"),
-            Resource::Console(_) => write!(f, "Console"),
+            Resource::File(h) => write!(f, "File({})", h.meta.name),
+            Resource::Console(c) => write!(f, "Console({:?})", c),
             Resource::Random(_) => write!(f, "Random"),
             Resource::Null => write!(f, "Null"),
         }

@@ -55,12 +55,12 @@ impl FsPath {
     }
 
     /// Opens the file at this path for reading
-    pub fn open_file(&self) -> Result<Box<dyn SeekAndRead + Send>> {
+    pub fn open_file(&self) -> Result<FileHandle> {
         self.fs.open_file(&self.path)
     }
 
     /// Returns the entry metadata for the file at this path
-    pub fn metadata(&self) -> Result<FsMetadata> {
+    pub fn metadata(&self) -> Result<Metadata> {
         self.fs.metadata(&self.path)
     }
 

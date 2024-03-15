@@ -140,6 +140,10 @@ impl DirEntry {
             size,
         })
     }
+
+    pub fn as_meta(&self) -> Metadata {
+        self.into()
+    }
 }
 
 fn prase_datetime(time: u32) -> FsTime {
@@ -153,7 +157,7 @@ fn prase_datetime(time: u32) -> FsTime {
     if let Single(time) = Utc.with_ymd_and_hms(year, month, day, hour, min, sec) {
         time
     } else {
-        Utc.with_ymd_and_hms(1980, 1, 1, 0, 0, 0).single().unwrap()
+        DateTime::from_timestamp_millis(0).unwrap()
     }
 }
 
@@ -315,6 +319,23 @@ impl AddAssign<Cluster> for Cluster {
     }
 }
 
+impl From<&DirEntry> for Metadata {
+    fn from(entry: &DirEntry) -> Metadata {
+        Metadata {
+            entry_type: if entry.is_directory() {
+                FileType::Directory
+            } else {
+                FileType::File
+            },
+            name: entry.filename(),
+            len: entry.size as usize,
+            created: Some(entry.created_time),
+            accessed: Some(entry.accessed_time),
+            modified: Some(entry.moditified_time),
+        }
+    }
+}
+
 impl Display for Cluster {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "0x{:08X}", self.0)
@@ -324,22 +345,5 @@ impl Display for Cluster {
 impl Debug for Cluster {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "0x{:08X}", self.0)
-    }
-}
-
-impl Into<FsMetadata> for &DirEntry {
-    fn into(self) -> FsMetadata {
-        FsMetadata {
-            entry_type: if self.is_directory() {
-                FileType::Directory
-            } else {
-                FileType::File
-            },
-            name: self.filename(),
-            len: self.size as usize,
-            created: Some(self.created_time),
-            accessed: Some(self.accessed_time),
-            modified: Some(self.moditified_time),
-        }
     }
 }

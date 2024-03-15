@@ -1,5 +1,5 @@
-use chrono::{naive, DateTime, TimeZone, Utc};
 use alloc::string::String;
+use chrono::{naive, DateTime, TimeZone, Utc};
 
 pub type FsTime = DateTime<Utc>;
 
@@ -14,7 +14,7 @@ pub enum FileType {
 
 #[derive(Debug)]
 /// File entry metadata
-pub struct FsMetadata {
+pub struct Metadata {
     /// Name of the entry
     pub name: String,
     /// The type of entry
@@ -29,7 +29,7 @@ pub struct FsMetadata {
     pub accessed: Option<FsTime>,
 }
 
-impl FsMetadata {
+impl Metadata {
     /// Create a new metadata object
     pub fn new(
         name: String,
