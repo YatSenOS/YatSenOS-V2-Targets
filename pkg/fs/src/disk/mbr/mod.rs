@@ -47,14 +47,14 @@ where
     T: BlockDevice<Block512> + Clone,
 {
     inner: T,
-    pub meta: PartitionMetaData,
+    pub meta: PartitionMetadata,
 }
 
 impl<T> Volume<T>
 where
     T: BlockDevice<Block512> + Clone,
 {
-    pub fn new(inner: T, meta: PartitionMetaData) -> Self {
+    pub fn new(inner: T, meta: PartitionMetadata) -> Self {
         Self { inner, meta }
     }
 }

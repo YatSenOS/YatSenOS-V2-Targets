@@ -5,14 +5,14 @@
 use crate::alloc::borrow::ToOwned;
 
 pub struct MbrPartitions {
-    pub partitions: [PartitionMetaData; 4],
+    pub partitions: [PartitionMetadata; 4],
 }
 
 impl MbrPartitions {
     pub fn parse(data: &[u8; 512]) -> Self {
-        let mut partitions = vec![PartitionMetaData::default(); 4];
+        let mut partitions = vec![PartitionMetadata::default(); 4];
         for i in 0..4 {
-            partitions[i] = PartitionMetaData::parse(
+            partitions[i] = PartitionMetadata::parse(
                 &data[0x1be + (i * 16)..0x1be + (i * 16) + 16]
                     .try_into()
                     .unwrap(),
@@ -28,14 +28,14 @@ impl MbrPartitions {
 }
 
 #[derive(Clone, Copy, Default)]
-pub struct PartitionMetaData {
+pub struct PartitionMetadata {
     data: [u8; 16],
 }
 
-impl PartitionMetaData {
+impl PartitionMetadata {
     /// Attempt to parse a Boot Parameter Block from a 512 byte sector.
-    pub fn parse(data: &[u8; 16]) -> PartitionMetaData {
-        PartitionMetaData {
+    pub fn parse(data: &[u8; 16]) -> PartitionMetadata {
+        PartitionMetadata {
             data: data.to_owned(),
         }
     }
@@ -74,7 +74,7 @@ impl PartitionMetaData {
     }
 }
 
-impl core::fmt::Debug for PartitionMetaData {
+impl core::fmt::Debug for PartitionMetadata {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Partition Meta Data")
             .field("Active", &self.is_active())
@@ -105,7 +105,7 @@ mod tests {
     fn partition_test() {
         let data = hex_literal::hex!("80 01 01 00 0b fe bf fc 3f 00 00 00 7e 86 bb 00");
 
-        let meta = PartitionMetaData::parse(&data);
+        let meta = PartitionMetadata::parse(&data);
 
         println!("{:?}", meta);
 

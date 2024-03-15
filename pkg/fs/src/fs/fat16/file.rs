@@ -19,7 +19,7 @@ where
     /// The file system handle that contains this file.
     handle: Fat16Handle<T>,
 }
-
+    
 impl<T> File<T>
 where
     T: BlockDevice<Block512>,
