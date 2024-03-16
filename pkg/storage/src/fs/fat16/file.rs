@@ -97,3 +97,16 @@ where
         Ok(bytes_read)
     }
 }
+
+impl<T> Write for File<T>
+where
+    T: BlockDevice<Block512>,
+{
+    fn write(&mut self, _buf: &[u8]) -> Result<usize> {
+        unimplemented!()
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        unimplemented!()
+    }
+}
