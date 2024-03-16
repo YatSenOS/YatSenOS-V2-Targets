@@ -1,7 +1,8 @@
 use alloc::borrow::ToOwned;
 use core::ops::Deref;
 
-pub trait BlockTrait = AsMut<[u8]> + AsRef<[u8]> + SizedBlock + Default + Send + Sync + 'static;
+pub trait BlockTrait =
+    AsMut<[u8]> + AsRef<[u8]> + SizedBlock + Default + Send + Sync + Clone + 'static;
 
 pub trait SizedBlock {
     const BLOCK_SIZE: usize;
@@ -11,14 +12,14 @@ pub trait SizedBlock {
     }
 }
 
+pub type Block512 = Block<512>;
+pub type Block4096 = Block<4096>;
+
 /// A block of data.
 #[derive(Clone)]
 pub struct Block<const SIZE: usize> {
     contents: [u8; SIZE],
 }
-
-pub type Block512 = Block<512>;
-pub type Block4096 = Block<4096>;
 
 impl<const SIZE: usize> Block<SIZE> {
     /// Create a new block with data

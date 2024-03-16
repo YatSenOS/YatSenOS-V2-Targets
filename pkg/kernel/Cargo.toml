@@ -27,3 +27,4 @@ crossbeam-queue = { version = "0.3", default-features = false, features = ["allo
 volatile = "0.5"
 xmas-elf = "0.9"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+lru = "0.12"

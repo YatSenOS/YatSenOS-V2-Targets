@@ -2,6 +2,7 @@
 mod macros;
 
 mod block;
+mod cache;
 mod device;
 mod error;
 mod filehandle;
@@ -13,6 +14,7 @@ mod mount;
 use super::*;
 
 pub use block::*;
+pub use cache::*;
 pub use device::*;
 pub use error::*;
 pub use filehandle::*;

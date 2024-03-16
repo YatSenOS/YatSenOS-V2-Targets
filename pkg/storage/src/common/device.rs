@@ -1,4 +1,4 @@
-use super::{BlockTrait, Result};
+use super::*;
 
 pub trait Device<T> {
     /// Read data from the device into the buffer

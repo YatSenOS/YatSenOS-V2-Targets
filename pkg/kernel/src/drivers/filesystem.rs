@@ -1,3 +1,4 @@
+use super::cache::*;
 use crate::ata::*;
 use alloc::boxed::Box;
 use chrono::DateTime;
@@ -18,6 +19,13 @@ pub enum StdIO {
     Stderr,
 }
 
+static CACHE: spin::Once<LruSharedInner> = spin::Once::new();
+
+pub fn cache_usage() -> (usize, usize) {
+    let cache = CACHE.get().unwrap().lock();
+    (cache.len(), cache.cap().into())
+}
+
 pub fn init() {
     info!("Opening disk device...");
 
@@ -30,11 +38,15 @@ pub fn init() {
         .expect("Failed to get partitions")
         .remove(0);
 
+    let lru = LruCacheImpl::new();
+
+    CACHE.call_once(|| lru.inner());
+
+    let cache_layer = ATACachedDevice::new(part, lru);
+
     info!("Mounting filesystem...");
 
-    let fs = Box::new(Fat16::new(part));
-
-    ROOTFS.call_once(|| Mount::new(fs, "/".into()));
+    ROOTFS.call_once(|| Mount::new(Box::new(Fat16::new(cache_layer)), "/".into()));
 
     trace!("Root filesystem: {:#?}", ROOTFS.get().unwrap());
 

@@ -1,5 +1,6 @@
 use super::*;
 use crate::{
+    filesystem::cache_usage,
     memory::{
         allocator::{ALLOCATOR, HEAP_SIZE},
         get_frame_alloc_for_sure,
@@ -276,6 +277,10 @@ impl ProcessManager {
 
         output += &format_usage("Memory", used, total);
 
+        let (cache_used, cache_total) = cache_usage();
+
+        output += &format_res_usage("Cache", cache_used, cache_total);
+
         output += format!("Queue  : {:?}\n", self.ready_queue.lock()).as_str();
 
         output += &processor::print_processors();
@@ -297,6 +302,16 @@ fn format_usage(name: &str, used: usize, total: usize) -> String {
         2,
         total_float,
         total_unit,
+        used as f32 / total as f32 * 100.0
+    )
+}
+
+fn format_res_usage(name: &str, used: usize, total: usize) -> String {
+    format!(
+        "{:<6} : {:>10} / {:<10} ({:>5.2}%)\n",
+        name,
+        used,
+        total,
         used as f32 / total as f32 * 100.0
     )
 }

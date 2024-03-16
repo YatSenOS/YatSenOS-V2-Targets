@@ -2,6 +2,7 @@
 #![allow(dead_code, unused_imports)]
 #![cfg_attr(test, feature(concat_bytes))]
 #![feature(trait_alias)]
+#![feature(associated_type_defaults)]
 
 #[macro_use]
 extern crate alloc;

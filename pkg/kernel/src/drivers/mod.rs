@@ -1,3 +1,4 @@
+mod cache;
 mod uart16550;
 
 pub mod ata;

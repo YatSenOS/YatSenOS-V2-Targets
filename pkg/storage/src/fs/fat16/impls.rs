@@ -212,10 +212,13 @@ impl FileSystem for Fat16 {
             return Err(FsError::NotAFile);
         }
 
-        Ok(FileHandle::new(
-            entry.as_meta(),
-            Box::new(File::new(self.handle.clone(), entry)),
-        ))
+        let handle = self.handle.clone();
+        let meta = entry.as_meta();
+        let file = Box::new(File::new(handle, entry));
+
+        let file_handle = FileHandle::new(meta, file);
+
+        Ok(file_handle)
     }
 
     fn metadata(&self, path: &str) -> Result<Metadata> {
