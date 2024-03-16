@@ -1,5 +1,5 @@
 [package]
-name = "ysos_fs"
+name = "ysos_storage"
 version = "1.0.0"
 edition = "2021"
 authors = ["GZTime <Time.GZ@outlook.com>"]

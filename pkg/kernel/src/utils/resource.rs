@@ -1,5 +1,5 @@
 use alloc::{collections::BTreeMap, string::String};
-use fs::{random::Random, Device, FileHandle};
+use storage::{random::Random, Device, FileHandle};
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
 

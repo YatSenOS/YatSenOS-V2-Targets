@@ -488,22 +488,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ysos_fs"
-version = "1.0.0"
-dependencies = [
- "bitflags 2.4.2",
- "chrono",
- "hex-literal",
- "log",
- "num_enum",
- "paste",
- "rand",
- "rand_hc",
- "spin 0.9.8",
- "x86_64",
-]
-
-[[package]]
 name = "ysos_hello"
 version = "0.1.0"
 dependencies = [
@@ -533,7 +517,7 @@ dependencies = [
  "xmas-elf",
  "ysos_boot",
  "ysos_elf",
- "ysos_fs",
+ "ysos_storage",
  "ysos_syscall",
 ]
 
@@ -556,6 +540,22 @@ name = "ysos_sh"
 version = "0.5.1"
 dependencies = [
  "yslib",
+]
+
+[[package]]
+name = "ysos_storage"
+version = "1.0.0"
+dependencies = [
+ "bitflags 2.4.2",
+ "chrono",
+ "hex-literal",
+ "log",
+ "num_enum",
+ "paste",
+ "rand",
+ "rand_hc",
+ "spin 0.9.8",
+ "x86_64",
 ]
 
 [[package]]

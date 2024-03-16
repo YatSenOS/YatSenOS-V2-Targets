@@ -7,7 +7,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 boot = { package = "ysos_boot", path = "../boot", default-features = false }
-fs = { package = "ysos_fs", path = "../fs" }
+storage = { package = "ysos_storage", path = "../storage" }
 elf = { package = "ysos_elf", path = "../elf" }
 syscall_def = { package = "ysos_syscall", path = "../syscall" }
 lazy_static = { version = "1.4", features = ["spin_no_std"] }

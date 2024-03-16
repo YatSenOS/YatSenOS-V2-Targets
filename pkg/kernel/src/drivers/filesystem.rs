@@ -1,9 +1,9 @@
 use crate::ata::*;
 use alloc::boxed::Box;
 use chrono::DateTime;
-use fs::fat16::Fat16;
-use fs::mbr::*;
-use fs::*;
+use storage::fat16::Fat16;
+use storage::mbr::*;
+use storage::*;
 
 pub static ROOTFS: spin::Once<Mount> = spin::Once::new();
 

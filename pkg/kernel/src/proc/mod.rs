@@ -11,6 +11,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use manager::*;
 use process::*;
+use storage::FileSystem;
 use sync::*;
 
 pub use context::ProcessContext;
@@ -22,7 +23,6 @@ use xmas_elf::ElfFile;
 use crate::filesystem::get_rootfs;
 use crate::Resource;
 use alloc::string::{String, ToString};
-use fs::FileSystem;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::VirtAddr;
 

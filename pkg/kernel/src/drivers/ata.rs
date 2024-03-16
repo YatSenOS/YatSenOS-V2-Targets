@@ -323,24 +323,24 @@ impl core::fmt::Display for Drive {
     }
 }
 
-use fs::{Block512, BlockDevice};
+use storage::{Block512, BlockDevice};
 
 impl BlockDevice<Block512> for Drive {
-    fn block_count(&self) -> fs::Result<usize> {
+    fn block_count(&self) -> storage::Result<usize> {
         Ok(self.blocks as usize)
     }
 
-    fn read_block(&self, offset: usize, block: &mut Block512) -> fs::Result<()> {
+    fn read_block(&self, offset: usize, block: &mut Block512) -> storage::Result<()> {
         BUSES[self.bus as usize]
             .lock()
             .read(self.dsk, offset as u32, block.as_mut())
-            .map_err(|_| fs::DeviceError::ReadError.into())
+            .map_err(|_| storage::DeviceError::ReadError.into())
     }
 
-    fn write_block(&self, offset: usize, block: &Block512) -> fs::Result<()> {
+    fn write_block(&self, offset: usize, block: &Block512) -> storage::Result<()> {
         BUSES[self.bus as usize]
             .lock()
             .write(self.dsk, offset as u32, block.as_ref())
-            .map_err(|_| fs::DeviceError::WriteError.into())
+            .map_err(|_| storage::DeviceError::WriteError.into())
     }
 }

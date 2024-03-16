@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "pkg/fs",
     "pkg/elf",
     "pkg/boot",
     "pkg/kernel",
+    "pkg/storage",
     "pkg/syscall",
     "pkg/lib",
     "pkg/app/*"
