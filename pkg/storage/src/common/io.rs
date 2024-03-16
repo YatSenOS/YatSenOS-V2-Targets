@@ -1,5 +1,4 @@
-use super::*;
-use alloc::vec::Vec;
+use crate::*;
 
 /// The `Read` trait allows for reading bytes from a source.
 pub trait Read {

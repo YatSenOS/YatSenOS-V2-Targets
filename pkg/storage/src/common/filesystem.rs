@@ -1,7 +1,5 @@
 //! The filesystem trait definitions needed to implement new virtual filesystems
-use super::*;
-use alloc::boxed::Box;
-use alloc::string::String;
+use crate::*;
 
 use core::fmt::Debug;
 
@@ -18,4 +16,43 @@ pub trait FileSystem: Debug + Sync + Send {
 
     /// Returns true if a file or directory at path exists, false otherwise
     fn exists(&self, path: &str) -> Result<bool>;
+
+    // ----------------------------------------------------
+    // NOTE: following functions are not implemented (optional)
+    // ----------------------------------------------------
+
+    /// Creates a file at this path for writing
+    fn create_file(&self, _path: &str) -> Result<FileHandle> {
+        Err(FsError::NotSupported)
+    }
+
+    /// Opens the file at this path for appending
+    fn append_file(&self, _path: &str) -> Result<FileHandle> {
+        Err(FsError::NotSupported)
+    }
+
+    /// Removes the file at this path
+    fn remove_file(&self, _path: &str) -> Result<FileHandle> {
+        Err(FsError::NotSupported)
+    }
+
+    /// Removes the directory at this path
+    fn remove_dir(&self, _path: &str) -> Result<FileHandle> {
+        Err(FsError::NotSupported)
+    }
+
+    /// Copies the src path to the destination path within the same filesystem
+    fn copy_file(&self, _src: &str, _dst: &str) -> Result<()> {
+        Err(FsError::NotSupported)
+    }
+
+    /// Moves the src path to the destination path within the same filesystem
+    fn move_file(&self, _src: &str, _dst: &str) -> Result<()> {
+        Err(FsError::NotSupported)
+    }
+
+    /// Moves the src directory to the destination path within the same filesystem
+    fn move_dir(&self, _src: &str, _dst: &str) -> Result<()> {
+        Err(FsError::NotSupported)
+    }
 }

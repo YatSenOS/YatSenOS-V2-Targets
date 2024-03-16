@@ -5,7 +5,6 @@
 //! - <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs>
 
 use super::*;
-use num_enum::TryFromPrimitive;
 
 #[derive(Debug, Clone)]
 pub struct File {

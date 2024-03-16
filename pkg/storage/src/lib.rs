@@ -2,7 +2,6 @@
 #![allow(dead_code, unused_imports)]
 #![cfg_attr(test, feature(concat_bytes))]
 #![feature(trait_alias)]
-#![feature(associated_type_defaults)]
 
 #[macro_use]
 extern crate alloc;
@@ -19,9 +18,10 @@ pub use fs::*;
 pub use partition::*;
 
 use alloc::boxed::Box;
-use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::borrow::ToOwned;
 
 // 1. The disk structure
 // How to read a file from disk

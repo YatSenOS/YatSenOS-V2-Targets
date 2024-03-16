@@ -1,5 +1,3 @@
-use core::{marker::PhantomData, num::NonZeroUsize};
-
 use spin::RwLock;
 
 use super::*;
@@ -45,6 +43,7 @@ impl<B: BlockTrait> BlockCache<B> {
 
 impl<B: BlockTrait> Drop for BlockCache<B> {
     fn drop(&mut self) {
+        // This can be implemented as kernel async task
         if self.modified {
             match self.device.write_block(self.offset, &self.inner) {
                 Ok(_) => {}

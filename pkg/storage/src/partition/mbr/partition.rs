@@ -2,8 +2,7 @@
 //!
 //! This struct represents partitions' metadata.
 
-use crate::*;
-use alloc::borrow::ToOwned;
+use super::*;
 
 #[derive(Clone, Copy, Default)]
 pub struct MbrPartition {

@@ -1,5 +1,4 @@
 use super::*;
-use alloc::borrow::ToOwned;
 
 impl Fat16Impl {
     pub fn new(inner: impl BlockDevice<Block512>) -> Self {

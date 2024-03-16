@@ -605,7 +605,6 @@ dependencies = [
  "rand",
  "rand_hc",
  "spin 0.9.8",
- "volatile 0.5.1",
  "x86_64",
 ]
 
