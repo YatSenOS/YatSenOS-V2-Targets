@@ -24,6 +24,8 @@ pub enum FsError {
     NotSupported,
     /// Bad cluster.
     BadCluster,
+    /// Invalid offset.
+    InvalidOffset,
     /// The file name is invalid.
     FileNameError(FilenameError),
     /// Encountered an error while reading from the device.

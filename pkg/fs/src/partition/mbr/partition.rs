@@ -2,49 +2,29 @@
 //!
 //! This struct represents partitions' metadata.
 
-use crate::alloc::borrow::ToOwned;
-
-pub struct MbrPartitions {
-    pub partitions: [PartitionMetadata; 4],
-}
-
-impl MbrPartitions {
-    pub fn parse(data: &[u8; 512]) -> Self {
-        let mut partitions = vec![PartitionMetadata::default(); 4];
-        for i in 0..4 {
-            partitions[i] = PartitionMetadata::parse(
-                &data[0x1be + (i * 16)..0x1be + (i * 16) + 16]
-                    .try_into()
-                    .unwrap(),
-            );
-            if partitions[i].is_active() {
-                trace!("Partition {}: {:#?}", i, partitions[i]);
-            }
-        }
-        Self {
-            partitions: partitions.try_into().unwrap(),
-        }
-    }
-}
+use crate::*;
+use alloc::borrow::ToOwned;
 
 #[derive(Clone, Copy, Default)]
-pub struct PartitionMetadata {
+pub struct MbrPartition {
     data: [u8; 16],
 }
 
-impl PartitionMetadata {
+impl MbrPartition {
     /// Attempt to parse a Boot Parameter Block from a 512 byte sector.
-    pub fn parse(data: &[u8; 16]) -> PartitionMetadata {
-        PartitionMetadata {
+    pub fn parse(data: &[u8; 16]) -> MbrPartition {
+        MbrPartition {
             data: data.to_owned(),
         }
     }
 
     define_field!(u8, 0x00, status);
     define_field!(u8, 0x01, begin_head);
+
     // 0x02 - 0x03 begin sector & begin cylinder
     define_field!(u8, 0x04, filesystem_flag);
     define_field!(u8, 0x05, end_head);
+
     // 0x06 - 0x07 end sector & end cylinder
     define_field!(u32, 0x08, begin_lba);
     define_field!(u32, 0x0c, total_lba);
@@ -74,7 +54,7 @@ impl PartitionMetadata {
     }
 }
 
-impl core::fmt::Debug for PartitionMetadata {
+impl core::fmt::Debug for MbrPartition {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Partition Meta Data")
             .field("Active", &self.is_active())
@@ -105,7 +85,7 @@ mod tests {
     fn partition_test() {
         let data = hex_literal::hex!("80 01 01 00 0b fe bf fc 3f 00 00 00 7e 86 bb 00");
 
-        let meta = PartitionMetadata::parse(&data);
+        let meta = MbrPartition::parse(&data);
 
         println!("{:?}", meta);
 

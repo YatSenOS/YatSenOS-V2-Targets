@@ -1,11 +1,9 @@
 use crate::ata::*;
 use alloc::boxed::Box;
 use chrono::DateTime;
-use fs::{FileSystem, Mount};
-
-pub type Disk = fs::mbr::Disk<Drive>;
-pub type Volume = fs::mbr::Volume<Drive>;
-pub type Fat16 = fs::fat16::Fat16<Volume>;
+use fs::fat16::Fat16;
+use fs::mbr::*;
+use fs::*;
 
 pub static ROOTFS: spin::Once<Mount> = spin::Once::new();
 
@@ -22,13 +20,15 @@ pub enum StdIO {
 
 pub fn init() {
     info!("Opening disk device...");
-    let disk = Disk::new(Drive::open(0, 0).unwrap());
 
-    // QEMU's default disk image has a single partition
-    let [p0, _, _, _] = disk.volumes().unwrap();
+    let drive = Drive::open(0, 0).expect("Failed to open disk device");
+    let mut parts = MbrTable::parse(drive)
+        .expect("Failed to parse MBR")
+        .partitions()
+        .expect("Failed to get partitions");
 
     info!("Mounting filesystem...");
-    ROOTFS.call_once(|| Mount::new(Box::new(Fat16::new(p0)), "/".into()));
+    ROOTFS.call_once(|| Mount::new(Box::new(Fat16::new(parts.remove(0))), "/".into()));
 
     trace!("Root filesystem: {:#?}", ROOTFS.get().unwrap());
 
@@ -48,7 +48,7 @@ pub fn ls(root_path: &str) {
     println!("  Size | Last Modified       | Name");
 
     for meta in iter {
-        let (size, unit) = fs::humanized_size(meta.len);
+        let (size, unit) = crate::humanized_size_short(meta.len as u64);
         println!(
             "{:>5.*}{} | {} | {}{}",
             1,

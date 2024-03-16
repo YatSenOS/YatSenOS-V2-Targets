@@ -163,8 +163,6 @@ impl Bus {
     }
 
     fn read(&mut self, drive: u8, block: u32, buf: &mut [u8]) -> Result<(), ()> {
-        debug_assert!(buf.len() == fs::Block512::size());
-
         self.setup_pio(drive, block)?;
         self.write_command(ATACommand::ReadSectors)?;
         for chunk in buf.chunks_mut(2) {
@@ -181,8 +179,6 @@ impl Bus {
     }
 
     fn write(&mut self, drive: u8, block: u32, buf: &[u8]) -> Result<(), ()> {
-        debug_assert!(buf.len() == fs::Block512::size());
-
         self.setup_pio(drive, block)?;
         self.write_command(ATACommand::WriteSectors)?;
         for chunk in buf.chunks(2) {
@@ -311,21 +307,12 @@ impl Drive {
         }
     }
 
-    pub const fn block_size(&self) -> usize {
-        fs::Block512::size()
-    }
-
-    fn humanized_size(&self) -> (usize, &'static str) {
+    fn humanized_size(&self) -> (f32, &'static str) {
         let size = self.block_size();
         let count = self.block_count().unwrap();
         let bytes = size * count;
-        if bytes >> 20 < 1024 {
-            (bytes >> 20, "MiB")
-        } else if bytes >> 30 < 1024 {
-            (bytes >> 30, "GiB")
-        } else {
-            (bytes >> 40, "TiB")
-        }
+
+        crate::humanized_size(bytes as u64)
     }
 }
 
@@ -346,14 +333,14 @@ impl BlockDevice<Block512> for Drive {
     fn read_block(&self, offset: usize, block: &mut Block512) -> fs::Result<()> {
         BUSES[self.bus as usize]
             .lock()
-            .read(self.dsk, offset as u32, block.as_mut_u8_slice())
+            .read(self.dsk, offset as u32, block.as_mut())
             .map_err(|_| fs::DeviceError::ReadError.into())
     }
 
     fn write_block(&self, offset: usize, block: &Block512) -> fs::Result<()> {
         BUSES[self.bus as usize]
             .lock()
-            .write(self.dsk, offset as u32, block.as_u8_slice())
+            .write(self.dsk, offset as u32, block.as_ref())
             .map_err(|_| fs::DeviceError::WriteError.into())
     }
 }

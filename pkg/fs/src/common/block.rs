@@ -1,6 +1,16 @@
 use alloc::borrow::ToOwned;
 use core::ops::Deref;
 
+pub trait BlockTrait = AsMut<[u8]> + AsRef<[u8]> + SizedBlock + Default + Send + Sync + 'static;
+
+pub trait SizedBlock {
+    const BLOCK_SIZE: usize;
+
+    fn size() -> usize {
+        Self::BLOCK_SIZE
+    }
+}
+
 /// A block of data.
 #[derive(Clone)]
 pub struct Block<const SIZE: usize> {
@@ -11,15 +21,11 @@ pub type Block512 = Block<512>;
 pub type Block4096 = Block<4096>;
 
 impl<const SIZE: usize> Block<SIZE> {
-    /// Create a new block full of zeros.
+    /// Create a new block with data
     pub fn new(data: &[u8; SIZE]) -> Self {
         Self {
             contents: data.to_owned(),
         }
-    }
-
-    pub const fn size() -> usize {
-        SIZE
     }
 }
 
@@ -50,6 +56,10 @@ impl<const SIZE: usize> Default for Block<SIZE> {
             contents: [0u8; SIZE],
         }
     }
+}
+
+impl<const SIZE: usize> SizedBlock for Block<SIZE> {
+    const BLOCK_SIZE: usize = SIZE;
 }
 
 impl<const SIZE: usize> core::fmt::Debug for Block<SIZE> {

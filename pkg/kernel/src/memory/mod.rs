@@ -21,10 +21,10 @@ pub fn init(boot_info: &'static boot::BootInfo) {
         }
     }
 
-    let (size, unit) = humanized_size(mem_size * PAGE_SIZE);
+    let (size, unit) = crate::humanized_size(mem_size * PAGE_SIZE);
     info!("Physical Memory    : {:>7.*} {}", 3, size, unit);
 
-    let (size, unit) = humanized_size(usable_mem_size * PAGE_SIZE);
+    let (size, unit) = crate::humanized_size(usable_mem_size * PAGE_SIZE);
     info!("Free Usable Memory : {:>7.*} {}", 3, size, unit);
 
     let mut used = crate::proc::KSTACK_DEF_PAGE as usize;
@@ -33,7 +33,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
         used += page.count();
     }
 
-    let (size, unit) = humanized_size(used as u64 * PAGE_SIZE);
+    let (size, unit) = crate::humanized_size(used as u64 * PAGE_SIZE);
     info!("Kernel Used Memory : {:>7.*} {}", 3, size, unit);
 
     let size = used + usable_mem_size as usize;
@@ -43,19 +43,4 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     }
 
     info!("Frame Allocator initialized.");
-}
-
-pub fn humanized_size(size: u64) -> (f64, &'static str) {
-    let bytes = size as f64;
-
-    // use 1000 to keep the max length of the number is 3 digits
-    if bytes < 1000f64 {
-        (bytes, "  B")
-    } else if (bytes / (1 << 10) as f64) < 1000f64 {
-        (bytes / (1 << 10) as f64, "KiB")
-    } else if (bytes / (1 << 20) as f64) < 1000f64 {
-        (bytes / (1 << 20) as f64, "MiB")
-    } else {
-        (bytes / (1 << 30) as f64, "GiB")
-    }
 }
