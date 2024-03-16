@@ -1,15 +1,12 @@
 use super::*;
 use alloc::borrow::ToOwned;
 
-impl<T> Fat16Impl<T>
-where
-    T: BlockDevice<Block512>,
-{
-    pub fn new(volume: T) -> Self {
+impl Fat16Impl {
+    pub fn new(inner: impl BlockDevice<Block512>) -> Self {
         let mut block = Block::default();
         let block_size = Block512::size();
 
-        volume.read_block(0, &mut block).unwrap();
+        inner.read_block(0, &mut block).unwrap();
         let bpb = Fat16Bpb::new(block.as_ref()).unwrap();
 
         trace!("Loading Fat16 Volume: {:#?}", bpb);
@@ -25,7 +22,7 @@ where
 
         Self {
             bpb,
-            volume,
+            inner: Box::new(inner),
             fat_start,
             first_data_sector,
             first_root_dir_sector,
@@ -47,7 +44,7 @@ where
     fn find_entry_in_sector(&self, match_name: &ShortFileName, sector: usize) -> Result<DirEntry> {
         let mut block = Block::default();
         let block_size = Block512::size();
-        self.volume.read_block(sector, &mut block).unwrap();
+        self.inner.read_block(sector, &mut block).unwrap();
 
         for entry in 0..block_size / DirEntry::LEN {
             let start = entry * DirEntry::LEN;
@@ -74,7 +71,7 @@ where
         let cur_fat_sector = self.fat_start + fat_offset / block_size;
         let offset = fat_offset % block_size;
 
-        self.volume.read_block(cur_fat_sector, &mut block).unwrap();
+        self.inner.read_block(cur_fat_sector, &mut block).unwrap();
 
         let fat_entry = u16::from_le_bytes(block[offset..=offset + 1].try_into().unwrap_or([0; 2]));
         match fat_entry {
@@ -104,7 +101,7 @@ where
         let block_size = Block512::size();
         while let Some(cluster) = current_cluster {
             for sector in dir_sector_num..dir_sector_num + dir_size {
-                self.volume.read_block(sector, &mut block).unwrap();
+                self.inner.read_block(sector, &mut block).unwrap();
                 for entry in 0..block_size / DirEntry::LEN {
                     let start = entry * DirEntry::LEN;
                     let end = (entry + 1) * DirEntry::LEN;
@@ -196,10 +193,7 @@ where
     }
 }
 
-impl<T> FileSystem for Fat16<T>
-where
-    T: BlockDevice<Block512>,
-{
+impl FileSystem for Fat16 {
     fn read_dir(&self, path: &str) -> Result<Box<dyn Iterator<Item = Metadata> + Send>> {
         let dir = self.handle.get_parent_dir(path)?;
         let mut entries = Vec::new();

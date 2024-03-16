@@ -22,13 +22,19 @@ pub fn init() {
     info!("Opening disk device...");
 
     let drive = Drive::open(0, 0).expect("Failed to open disk device");
-    let mut parts = MbrTable::parse(drive)
+
+    // only get the first partition
+    let part = MbrTable::parse(drive)
         .expect("Failed to parse MBR")
         .partitions()
-        .expect("Failed to get partitions");
+        .expect("Failed to get partitions")
+        .remove(0);
 
     info!("Mounting filesystem...");
-    ROOTFS.call_once(|| Mount::new(Box::new(Fat16::new(parts.remove(0))), "/".into()));
+
+    let fs = Box::new(Fat16::new(part));
+
+    ROOTFS.call_once(|| Mount::new(fs, "/".into()));
 
     trace!("Root filesystem: {:#?}", ROOTFS.get().unwrap());
 
@@ -36,14 +42,13 @@ pub fn init() {
 }
 
 pub fn ls(root_path: &str) {
-    let iter = get_rootfs().read_dir(root_path);
-
-    if let Err(err) = iter {
-        warn!("{:?}", err);
-        return;
-    }
-
-    let iter = iter.unwrap();
+    let iter = match get_rootfs().read_dir(root_path) {
+        Ok(iter) => iter,
+        Err(err) => {
+            warn!("{:?}", err);
+            return;
+        }
+    };
 
     println!("  Size | Last Modified       | Name");
 
