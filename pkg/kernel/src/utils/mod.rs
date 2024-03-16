@@ -45,11 +45,11 @@ const SHORT_UNITS: [&str; 4] = ["B", "K", "M", "G"];
 const UNITS: [&str; 4] = ["B", "KiB", "MiB", "GiB"];
 
 pub fn humanized_size(size: u64) -> (f32, &'static str) {
-    humanized_size_impl(size.into(), false)
+    humanized_size_impl(size, false)
 }
 
 pub fn humanized_size_short(size: u64) -> (f32, &'static str) {
-    humanized_size_impl(size.into(), true)
+    humanized_size_impl(size, true)
 }
 
 #[inline]
