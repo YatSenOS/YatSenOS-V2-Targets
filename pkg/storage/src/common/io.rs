@@ -91,6 +91,6 @@ pub trait Seek {
     fn seek(&mut self, pos: SeekFrom) -> Result<usize>;
 }
 
-pub trait ReadWriteAndSeek: Read + Write + Seek {}
+pub trait FileIO: Read + Write + Seek {}
 
-impl<T: Read + Write + Seek> ReadWriteAndSeek for T {}
+impl<T: Read + Write + Seek> FileIO for T {}
