@@ -188,7 +188,7 @@ impl Bus {
     /// Identifies the drive at the given `drive` number (0 or 1).
     ///
     /// reference: <https://wiki.osdev.org/ATA_PIO_Mode#IDENTIFY_command>
-    pub(super) fn identify_drive(&mut self, drive: u8) -> Result<AtaDeviceType, ()> {
+    pub(super) fn identify_drive(&mut self, drive: u8) -> storage::Result<AtaDeviceType> {
         info!("Identifying drive {}", drive);
 
         if self
@@ -198,7 +198,7 @@ impl Bus {
             if self.status().is_empty() {
                 return Ok(AtaDeviceType::None);
             } else {
-                return Err(());
+                return Err(storage::DeviceError::UnknownDevice.into());
             }
         }
 
