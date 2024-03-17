@@ -29,7 +29,7 @@ lazy_static! {
 #[derive(Clone)]
 pub struct AtaDrive {
     pub bus: u8,
-    pub dsk: u8,
+    pub drive: u8,
     blocks: u32,
     model: Box<str>,
     serial: Box<str>,
@@ -45,7 +45,7 @@ impl AtaDrive {
             let blocks = u32::from_be_bytes(buf[120..124].try_into().unwrap()).rotate_left(16);
             let drive = Self {
                 bus,
-                dsk,
+                drive: dsk,
                 model,
                 serial,
                 blocks,
@@ -84,12 +84,12 @@ impl BlockDevice<Block512> for AtaDrive {
     fn read_block(&self, offset: usize, block: &mut Block512) -> storage::Result<()> {
         BUSES[self.bus as usize]
             .lock()
-            .read_pio(self.dsk, offset as u32, block.as_mut())
+            .read_pio(self.drive, offset as u32, block.as_mut())
     }
 
     fn write_block(&self, offset: usize, block: &Block512) -> storage::Result<()> {
         BUSES[self.bus as usize]
             .lock()
-            .write_pio(self.dsk, offset as u32, block.as_ref())
+            .write_pio(self.drive, offset as u32, block.as_ref())
     }
 }

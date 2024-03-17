@@ -1,3 +1,30 @@
+/// Used to define fields in a struct
+///
+/// # Example
+///
+/// ```rust
+/// struct Example {
+///     data: [u8; 10],
+/// }
+///
+/// impl Example {
+///     define_field!(u8, 0, field1);
+///     define_field!(u16, 1, field2);
+///     define_field!(u32, 3, field3);
+///     define_field!([u8; 3], 7, field4);
+/// }
+///
+/// impl Debug for Example {
+///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+///         f.debug_struct("Example")
+///             .field("field1", &self.field1())
+///             .field("field2", &self.field2())
+///             .field("field3", &self.field3())
+///             .field("field4", &self.field4_str()) // to get str
+///             .finish()
+///     }
+/// }
+/// ```
 macro_rules! define_field {
     (u8, $offset:expr, $name:ident) => {
         paste::item! {
