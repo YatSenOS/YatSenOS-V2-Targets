@@ -3,7 +3,14 @@ use pc_keyboard::DecodedKey;
 use spin::Mutex;
 use storage::{random::Random, Device, FileHandle};
 
-use crate::{filesystem::StdIO, input::try_get_key};
+use crate::input::try_get_key;
+
+#[derive(Debug, Clone)]
+pub enum StdIO {
+    Stdin,
+    Stdout,
+    Stderr,
+}
 
 #[derive(Debug)]
 pub struct ResourceSet {
@@ -72,7 +79,7 @@ impl Resource {
                 }
             }
             Resource::Console(stdio) => match stdio {
-                &mut StdIO::Stdin => {
+                StdIO::Stdin => {
                     return Some(if buf.len() < 4 {
                         0
                     } else if let Some(DecodedKey::Unicode(k)) = try_get_key() {
@@ -89,7 +96,7 @@ impl Resource {
         }
     }
 
-    fn write(&self, buf: &[u8]) -> Option<usize> {
+    fn write(&mut self, buf: &[u8]) -> Option<usize> {
         match self {
             Resource::File(_) => None,
             Resource::Console(stdio) => match *stdio {

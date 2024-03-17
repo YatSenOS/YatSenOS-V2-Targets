@@ -12,13 +12,6 @@ pub fn get_rootfs() -> &'static Mount {
     ROOTFS.get().unwrap()
 }
 
-#[derive(Debug, Clone)]
-pub enum StdIO {
-    Stdin,
-    Stdout,
-    Stderr,
-}
-
 static CACHE: spin::Once<LruSharedInner> = spin::Once::new();
 
 pub fn cache_usage() -> (usize, usize) {
