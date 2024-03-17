@@ -17,11 +17,11 @@ pub use common::*;
 pub use fs::*;
 pub use partition::*;
 
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
+use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-use alloc::string::String;
-use alloc::borrow::ToOwned;
 
 // 1. The disk structure
 // How to read a file from disk

@@ -29,7 +29,7 @@ pub fn cache_usage() -> (usize, usize) {
 pub fn init() {
     info!("Opening disk device...");
 
-    let drive = Drive::open(0, 0).expect("Failed to open disk device");
+    let drive = AtaDrive::open(0, 0).expect("Failed to open disk device");
 
     // only get the first partition
     let part = MbrTable::parse(drive)
