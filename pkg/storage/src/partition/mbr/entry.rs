@@ -86,7 +86,7 @@ mod tests {
 
         let meta = MbrPartition::parse(&data);
 
-        println!("{:?}", meta);
+        println!("{:#?}", meta);
 
         assert!(meta.is_active());
         assert_eq!(meta.begin_head(), 1);

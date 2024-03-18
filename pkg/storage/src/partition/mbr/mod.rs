@@ -3,12 +3,12 @@
 //! reference: <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs#L1350>
 //! reference: <https://github.com/llenotre/maestro>
 
-mod partition;
+mod entry;
 
 use core::marker::PhantomData;
 
 use crate::*;
-pub use partition::*;
+pub use entry::*;
 
 pub struct MbrTable<T, B>
 where

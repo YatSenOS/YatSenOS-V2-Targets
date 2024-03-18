@@ -134,7 +134,7 @@ mod tests {
 
         assert_eq!(bpb.total_sectors(), 0x1e000);
 
-        println!("{:?}", bpb);
+        println!("{:#?}", bpb);
     }
 
     #[test]
@@ -179,6 +179,6 @@ mod tests {
 
         assert_eq!(bpb.total_sectors(), 0xfbfc1);
 
-        println!("{:?}", bpb);
+        println!("{:#?}", bpb);
     }
 }
