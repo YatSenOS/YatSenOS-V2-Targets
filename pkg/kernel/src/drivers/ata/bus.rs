@@ -11,7 +11,7 @@ use x86_64::instructions::port::*;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
-pub struct Bus {
+pub struct AtaBus {
     id: u8,
     irq: u8,
     io_base: u16,
@@ -34,7 +34,7 @@ pub struct Bus {
     drive_blockess: PortReadOnly<u8>,
 }
 
-impl Bus {
+impl AtaBus {
     pub fn new(id: u8, irq: u8, io_base: u16, ctrl_base: u16) -> Self {
         Self {
             id,
