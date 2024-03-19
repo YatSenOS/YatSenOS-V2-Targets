@@ -352,7 +352,8 @@ impl ProcessInner {
         self.status = ProgramStatus::Dead;
     }
 
-    fn clean_up_page_table(&mut self, pid: ProcessId) {
+    #[no_mangle]
+    pub fn clean_up_page_table(&mut self, pid: ProcessId) {
         let page_table = self.page_table.take().unwrap();
         let mut mapper = page_table.mapper();
 
@@ -386,8 +387,15 @@ impl ProcessInner {
             unsafe {
                 if let Some(ref mut segments) = proc_data.code_segments {
                     for range in segments {
+                        trace!(
+                            "Free code segment: [{:#x} -> {:#x}) ({} pages)",
+                            range.start.start_address(),
+                            range.end.start_address(),
+                            range.count()
+                        );
                         for page in range {
                             if let Ok(ret) = mapper.unmap(page) {
+                                trace!("Unmap page: {:#x}", page.start_address());
                                 frame_deallocator.deallocate_frame(ret.0);
                                 ret.1.flush();
                             }
@@ -395,13 +403,21 @@ impl ProcessInner {
                     }
                 }
                 // free P1-P3
+                trace!(
+                    "Free page table: {:#x}",
+                    page_table.reg.addr.start_address()
+                );
                 mapper.clean_up(frame_deallocator);
+
                 // free P4
+                trace!("Free P4: {:#x}", page_table.reg.addr.start_address());
                 frame_deallocator.deallocate_frame(page_table.reg.addr);
             }
         }
 
         drop(page_table);
+
+        trace!("Free {}#{} page table done.", self.name, pid);
 
         let end_count = frame_deallocator.recycled_count();
 
