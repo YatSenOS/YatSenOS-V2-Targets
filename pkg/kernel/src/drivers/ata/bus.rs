@@ -177,7 +177,7 @@ impl AtaBus {
             if self.status().is_empty() {
                 return Ok(AtaDeviceType::None);
             } else {
-                return Err(storage::DeviceError::UnknownDevice.into());
+                return Err(storage::DeviceError::Unknown.into());
             }
         }
 
