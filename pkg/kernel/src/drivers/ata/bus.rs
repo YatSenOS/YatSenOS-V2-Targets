@@ -129,49 +129,28 @@ impl AtaBus {
         warn!("ATA status register : {:?}", self.status());
     }
 
-    /// Selects the given drive (0 or 1) by writing to the `drive` port.
-    ///
-    /// - 0: Master
-    /// - 1: Slave
-    fn select_drive(&mut self, drive: u8) {
-        debug_assert!(drive < 2);
-        self.poll(AtaStatus::BUSY, false);
-        self.poll(AtaStatus::DATA_REQUEST_READY, false);
-
-        unsafe { self.drive.write(0xA0 | (drive << 4)) }
-
-        self.poll(AtaStatus::BUSY, false);
-        self.poll(AtaStatus::DATA_REQUEST_READY, false);
-    }
-
-    /// Sets up the PIO mode for the given drive and block.
+    /// Writes the given command
     ///
     /// reference: https://wiki.osdev.org/ATA_PIO_Mode#28_bit_PIO
-    fn setup_pio(&mut self, drive: u8, block: u32, cmd: AtaCommand) {
-        self.select_drive(drive);
-
+    fn write_command(&mut self, drive: u8, block: u32, cmd: AtaCommand) -> storage::Result<()> {
         let bytes = block.to_le_bytes();
+
         unsafe {
+            self.drive.write(0xE0 | (drive << 4) | (bytes[3] & 0x0F));
             // just 1 sector for current implementation
             self.sector_count.write(1);
             self.lba_low.write(bytes[0]);
             self.lba_mid.write(bytes[1]);
             self.lba_high.write(bytes[2]);
-            self.drive.write(0xE0 | (bytes[3] & 0x0F));
             self.command.write(cmd as u8);
         }
-    }
 
-    /// Writes the given command
-    fn write_command(&mut self, drive: u8, block: u32, cmd: AtaCommand) -> storage::Result<()> {
-        self.setup_pio(drive, block, cmd);
+        self.poll(AtaStatus::BUSY, false);
 
         if self.status().is_empty() {
             // drive does not exist
             return Err(storage::DeviceError::UnknownDevice.into());
         }
-
-        self.poll(AtaStatus::BUSY, false);
 
         if self.is_error() {
             warn!("ATA error: {:?} command error", cmd);
