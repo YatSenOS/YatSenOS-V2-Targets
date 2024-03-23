@@ -11,11 +11,11 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct File {
     /// The current offset in the file.
-    pub offset: usize,
+    offset: usize,
     /// DirEntry of this file
     entry: DirEntry,
     /// The current cluster of this file
-    current: Cluster,
+    current_cluster: Cluster,
     /// The file system handle that contains this file.
     handle: Fat16Handle,
 }
@@ -24,7 +24,7 @@ impl File {
     pub fn new(handle: Fat16Handle, entry: DirEntry) -> Self {
         Self {
             offset: 0,
-            current: entry.cluster,
+            current_cluster: entry.cluster,
             entry,
             handle,
         }
@@ -51,7 +51,7 @@ impl Read for File {
         let mut bytes_read = 0;
 
         while bytes_read < buf.len() && self.offset < length {
-            let cluster_sector = self.handle.cluster_to_sector(&self.current);
+            let cluster_sector = self.handle.cluster_to_sector(&self.current_cluster);
             let cluster_offset = self.offset % cluster_size;
             let current_sector = cluster_sector + cluster_offset / BLOCK_SIZE;
 
@@ -74,8 +74,8 @@ impl Read for File {
             }
 
             if self.offset % cluster_size == 0 {
-                if let Ok(next_cluster) = self.handle.next_cluster(&self.current) {
-                    self.current = next_cluster;
+                if let Ok(next_cluster) = self.handle.next_cluster(&self.current_cluster) {
+                    self.current_cluster = next_cluster;
                 } else {
                     break;
                 }
