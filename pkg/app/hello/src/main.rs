@@ -9,7 +9,7 @@ fn main() -> usize {
     println!("Hello, world!!!");
 
     let time = lib::sys_time();
-    println!("Now at: {} UTC", time);
+    println!("Now at: {}", time);
 
     huge_stack();
 
