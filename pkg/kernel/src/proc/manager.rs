@@ -1,3 +1,6 @@
+use alloc::collections::BTreeSet;
+use core::isize;
+
 use super::*;
 use crate::{
     filesystem::cache_usage,
@@ -28,17 +31,18 @@ pub fn get_process_manager() -> &'static ProcessManager {
 pub struct ProcessManager {
     processes: RwLock<BTreeMap<ProcessId, Arc<Process>>>,
     ready_queue: Mutex<VecDeque<ProcessId>>,
+    wait_queue: Mutex<BTreeMap<ProcessId, BTreeSet<ProcessId>>>,
 }
 
 impl ProcessManager {
     pub fn new(init: Arc<Process>) -> Self {
         let mut processes = BTreeMap::new();
-        let ready_queue = VecDeque::new();
         let pid = init.pid();
         processes.insert(pid, init);
         Self {
             processes: RwLock::new(processes),
-            ready_queue: Mutex::new(ready_queue),
+            ready_queue: Mutex::new(VecDeque::new()),
+            wait_queue: Mutex::new(BTreeMap::new()),
         }
     }
 
@@ -62,10 +66,21 @@ impl ProcessManager {
             .expect("No current process")
     }
 
-    pub fn wait_pid(&self, pid: ProcessId) -> isize {
-        self.get_proc(&pid)
-            .and_then(|p| p.read().exit_code())
-            .unwrap_or(-0xfeed0ca7)
+    pub fn wait_pid(&self, pid: ProcessId) -> Option<isize> {
+        if let Some(ret) = self.get_ret(pid) {
+            return Some(ret);
+        };
+
+        // push the current process to the wait queue
+        let mut wait_queue = self.wait_queue.lock();
+        let entry = wait_queue.entry(pid).or_default();
+        entry.insert(processor::current_pid());
+
+        None
+    }
+
+    pub(super) fn get_ret(&self, pid: ProcessId) -> Option<isize> {
+        self.get_proc(&pid).and_then(|p| p.read().exit_code())
     }
 
     pub fn save_current(&self, context: &ProcessContext) -> ProcessId {
@@ -246,6 +261,12 @@ impl ProcessManager {
         trace!("Kill {:#?}", &proc);
 
         proc.kill(ret);
+
+        if let Some(pids) = self.wait_queue.lock().remove(&pid) {
+            for p in pids {
+                self.wake_up(p);
+            }
+        }
     }
 
     pub fn print_process_list(&self) {

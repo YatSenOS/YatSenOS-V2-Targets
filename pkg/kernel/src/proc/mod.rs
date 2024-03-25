@@ -116,8 +116,21 @@ pub fn process_exit(ret: isize, context: &mut ProcessContext) {
     })
 }
 
-pub fn wait_pid(pid: ProcessId) -> isize {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid))
+pub fn wait_pid(pid: ProcessId, context: &mut ProcessContext) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager();
+        if let Some(ret) = manager.wait_pid(pid) {
+            context.set_rax(ret as usize);
+        } else {
+            manager.save_current(context);
+            manager.current().write().block();
+            manager.switch_next(context);
+        }
+    })
+}
+
+pub(crate) fn wait_no_block(pid: ProcessId) -> Option<isize> {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().get_ret(pid))
 }
 
 pub fn read(fd: u8, buf: &mut [u8]) -> isize {
