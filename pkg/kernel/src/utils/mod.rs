@@ -17,7 +17,3 @@ __  __      __  _____            ____  _____
         env!("CARGO_PKG_VERSION")
     )
 }
-
-pub const fn get_header() -> &'static str {
-    concat!(">>> YatSenOS v", env!("CARGO_PKG_VERSION"))
-}

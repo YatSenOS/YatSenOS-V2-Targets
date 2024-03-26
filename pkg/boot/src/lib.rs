@@ -11,9 +11,9 @@ pub use uefi::table::Runtime;
 pub use uefi::Status as UefiStatus;
 
 use arrayvec::ArrayVec;
-use x86_64::VirtAddr;
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::{OffsetPageTable, PageTable};
+use x86_64::VirtAddr;
 
 pub mod allocator;
 pub mod config;

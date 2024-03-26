@@ -64,6 +64,7 @@ pub fn free_elf(bs: &BootServices, elf: ElfFile) {
     let mem_start = buffer.as_ptr() as u64;
 
     unsafe {
-        bs.free_pages(mem_start, pages).expect("Failed to free pages");
+        bs.free_pages(mem_start, pages)
+            .expect("Failed to free pages");
     }
 }

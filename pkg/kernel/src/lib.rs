@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(core_intrinsics)]
 #![feature(naked_functions)]
 #![feature(abi_x86_interrupt)]
 #![feature(type_alias_impl_trait)]
@@ -9,6 +8,8 @@
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate bitflags;
 extern crate libm;
 
 #[macro_use]

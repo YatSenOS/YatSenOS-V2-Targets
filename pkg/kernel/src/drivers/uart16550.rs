@@ -3,7 +3,6 @@
 /// reference: http://www.larvierinehart.com/serial/serialadc/serial.htm
 /// reference: https://wiki.osdev.org/Serial_Ports
 use core::fmt;
-use bitflags::bitflags;
 use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 
 macro_rules! wait_for {
@@ -25,7 +24,6 @@ bitflags! {
 }
 
 /// A port-mapped UART.
-#[cfg_attr(docsrs, doc(cfg(target_arch = "x86_64")))]
 pub struct SerialPort {
     /// - ransmit Holding Register (write)
     /// - receive Holding Register (read)
@@ -101,20 +99,14 @@ impl SerialPort {
 
     /// Sends a byte on the serial port.
     pub fn send(&mut self, data: u8) {
-        unsafe {
-            match data {
-                8 | 0x7F => {
-                    wait_for!(self.line_sts().contains(LineStsFlags::OUTPUT_EMPTY));
-                    self.data.write(8);
-                    wait_for!(self.line_sts().contains(LineStsFlags::OUTPUT_EMPTY));
-                    self.data.write(b' ');
-                    wait_for!(self.line_sts().contains(LineStsFlags::OUTPUT_EMPTY));
-                    self.data.write(8)
-                }
-                _ => {
-                    wait_for!(self.line_sts().contains(LineStsFlags::OUTPUT_EMPTY));
-                    self.data.write(data);
-                }
+        match data {
+            8 | 0x7F => {
+                self.send_raw(0x08);
+                self.send_raw(0x20);
+                self.send_raw(0x08);
+            }
+            _ => {
+                self.send_raw(data);
             }
         }
     }
@@ -131,9 +123,10 @@ impl SerialPort {
     pub fn receive(&mut self) -> Option<u8> {
         unsafe {
             if self.line_sts().contains(LineStsFlags::INPUT_FULL) {
-                return Some(self.data.read());
+                Some(self.data.read())
+            } else {
+                None
             }
-            None
         }
     }
 }

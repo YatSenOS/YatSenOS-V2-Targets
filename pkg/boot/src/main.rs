@@ -10,7 +10,6 @@ use alloc::boxed::Box;
 use alloc::vec;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
-use x86_64::registers::model_specific::EferFlags;
 use xmas_elf::ElfFile;
 use ysos_boot::*;
 
