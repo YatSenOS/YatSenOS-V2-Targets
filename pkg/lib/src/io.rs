@@ -1,5 +1,5 @@
 use crate::*;
-use alloc::string::{String, ToString};
+use alloc::string::*;
 use alloc::vec;
 
 pub struct Stdin;

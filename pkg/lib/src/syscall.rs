@@ -1,4 +1,4 @@
-use chrono::naive::*;
+use chrono::{naive::*, DateTime, Utc};
 use syscall_def::Syscall;
 
 #[inline(always)]
@@ -49,19 +49,14 @@ pub fn sys_exit(code: usize) -> ! {
 
 #[inline(always)]
 pub fn sys_wait_pid(pid: u16) -> isize {
-    loop {
-        let ret = syscall!(Syscall::WaitPid, pid as u64) as isize;
-        if !ret.is_negative() {
-            return ret;
-        }
-    }
+    syscall!(Syscall::WaitPid, pid as u64) as isize
 }
 
 #[inline(always)]
-pub fn sys_time() -> NaiveDateTime {
+pub fn sys_time() -> DateTime<Utc> {
     let time = syscall!(Syscall::Time) as i64;
     const BILLION: i64 = 1_000_000_000;
-    NaiveDateTime::from_timestamp_opt(time / BILLION, (time % BILLION) as u32).unwrap_or_default()
+    DateTime::from_timestamp(time / BILLION, (time % BILLION) as u32).unwrap_or_default()
 }
 
 #[inline(always)]
@@ -111,21 +106,21 @@ pub fn sys_kill(pid: u16) {
 }
 
 #[inline(always)]
-pub fn sys_new_sem(key: u32, value: usize) -> isize {
-    syscall!(Syscall::Sem, 0, key as usize, value) as isize
+pub fn sys_new_sem(key: u32, value: usize) -> bool {
+    syscall!(Syscall::Sem, 0, key as usize, value) == 0
 }
 
 #[inline(always)]
-pub fn sys_rm_sem(key: u32) -> isize {
-    syscall!(Syscall::Sem, 1, key as usize) as isize
+pub fn sys_rm_sem(key: u32) -> bool {
+    syscall!(Syscall::Sem, 1, key as usize) == 0
 }
 
 #[inline(always)]
-pub fn sys_sem_up(key: u32) -> isize {
-    syscall!(Syscall::Sem, 2, key as usize) as isize
+pub fn sys_sem_signal(key: u32) {
+    _ = syscall!(Syscall::Sem, 2, key as usize)
 }
 
 #[inline(always)]
-pub fn sys_sem_down(key: u32) -> isize {
-    syscall!(Syscall::Sem, 3, key as usize) as isize
+pub fn sys_sem_wait(key: u32) {
+    _ = syscall!(Syscall::Sem, 3, key as usize)
 }

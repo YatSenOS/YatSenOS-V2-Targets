@@ -11,14 +11,13 @@ use alloc::vec;
 use core::arch::asm;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
-use x86_64::registers::model_specific::EferFlags;
 use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
 use ysos_boot::allocator::*;
 use ysos_boot::fs::*;
-use ysos_boot::MemoryType;
 use ysos_boot::BootInfo;
+use ysos_boot::MemoryType;
 
 mod config;
 
@@ -78,7 +77,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     // 4. Map ELF segments, kernel stack and physical memory to virtual memory
     let mut page_table = current_page_table();
-    
+
     // root page table is readonly, disable write protect
     unsafe {
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));

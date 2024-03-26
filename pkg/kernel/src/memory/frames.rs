@@ -17,7 +17,7 @@ type BootInfoFrameIter = impl Iterator<Item = PhysFrame>;
 pub struct BootInfoFrameAllocator {
     size: usize,
     used: usize,
-    frames: BootInfoFrameIter
+    frames: BootInfoFrameIter,
 }
 
 impl BootInfoFrameAllocator {
@@ -28,11 +28,11 @@ impl BootInfoFrameAllocator {
     /// This function is unsafe because the caller must guarantee that the passed
     /// memory map is valid. The main requirement is that all frames that are marked
     /// as `USABLE` in it are really unused.
-    pub unsafe fn init(memory_map: &MemoryMap, size: usize) -> Self {
+    pub unsafe fn init(memory_map: &MemoryMap, size: u64) -> Self {
         BootInfoFrameAllocator {
-            size,
+            size: size as usize,
             frames: create_frame_iter(memory_map),
-            used: 0
+            used: 0,
         }
     }
 

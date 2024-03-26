@@ -1,17 +1,12 @@
-use super::ProcessId;
 use super::*;
-use crate::memory::{self, *};
-use alloc::string::String;
-use alloc::sync::Arc;
+use crate::humanized_size;
+use crate::memory::*;
 use alloc::sync::Weak;
-use alloc::vec::Vec;
 use core::intrinsics::copy_nonoverlapping;
 use spin::*;
 use x86_64::structures::paging::mapper::{CleanUp, MapToError};
 use x86_64::structures::paging::page::PageRange;
 use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
-use xmas_elf::ElfFile;
 
 #[derive(Clone)]
 pub struct Process {
@@ -97,7 +92,7 @@ impl Process {
         });
 
         // fork ret value
-        inner.context.set_rax(u16::from(child.pid) as usize);
+        inner.context.set_rax(child.pid.0 as usize);
 
         // record child pid
         inner.add_child(child.clone());
@@ -158,7 +153,7 @@ impl ProcessInner {
     }
 
     pub fn clont_page_table(&self) -> PageTableContext {
-        self.page_table.as_ref().unwrap().clone()
+        self.page_table.as_ref().unwrap().clone_level_4()
     }
 
     /// Save the process's context
@@ -357,7 +352,7 @@ impl ProcessInner {
         self.status = ProgramStatus::Dead;
     }
 
-    fn clean_up_page_table(&mut self, pid: ProcessId) {
+    pub fn clean_up_page_table(&mut self, pid: ProcessId) {
         let page_table = self.page_table.take().unwrap();
         let mut mapper = page_table.mapper();
 
@@ -365,15 +360,6 @@ impl ProcessInner {
 
         let proc_data = self.proc_data.as_mut().unwrap();
         let stack = proc_data.stack_segment.unwrap();
-
-        trace!(
-            "Free stack for {}#{}: [{:#x} -> {:#x}) ({} frames)",
-            self.name,
-            pid,
-            stack.start.start_address(),
-            stack.end.start_address(),
-            stack.count()
-        );
 
         elf::unmap_range(
             stack.start.start_address().as_u64(),
@@ -390,8 +376,15 @@ impl ProcessInner {
             unsafe {
                 if let Some(ref mut segments) = proc_data.code_segments {
                     for range in segments {
+                        // trace!(
+                        //     "Free code segment: [{:#x} -> {:#x}) ({} pages)",
+                        //     range.start.start_address(),
+                        //     range.end.start_address(),
+                        //     range.count()
+                        // );
                         for page in range {
                             if let Ok(ret) = mapper.unmap(page) {
+                                trace!("Unmap page: {:#x}", page.start_address());
                                 frame_deallocator.deallocate_frame(ret.0);
                                 ret.1.flush();
                             }
@@ -400,6 +393,7 @@ impl ProcessInner {
                 }
                 // free P1-P3
                 mapper.clean_up(frame_deallocator);
+
                 // free P4
                 frame_deallocator.deallocate_frame(page_table.reg.addr);
             }
@@ -457,12 +451,12 @@ impl core::fmt::Debug for Process {
 impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         let inner = self.inner.read();
-        let (size, unit) = memory::humanized_size(inner.memory_usage() as u64 * 4096);
+        let (size, unit) = humanized_size(inner.memory_usage() as u64 * 4096);
         write!(
             f,
             " #{:-3} | #{:-3} | {:12} | {:7} | {:>5.1} {} | {:?}",
-            u16::from(self.pid),
-            inner.parent().map(|p| u16::from(p.pid)).unwrap_or(0),
+            self.pid.0,
+            inner.parent().map(|p| p.pid.0).unwrap_or(0),
             inner.name,
             inner.ticks_passed,
             size,
