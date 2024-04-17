@@ -272,11 +272,12 @@ impl ProcessManager {
     pub fn print_process_list(&self) {
         let mut output =
             String::from("  PID | PPID | Process Name |  Ticks  |   Memory  | Status\n");
-        for (_, p) in self.processes.read().iter() {
-            if p.read().status() != ProgramStatus::Dead {
-                output += format!("{}\n", p).as_str();
-            }
-        }
+
+        self.processes
+            .read()
+            .values()
+            .filter(|p| p.read().status() != ProgramStatus::Dead)
+            .for_each(|p| output += format!("{}\n", p).as_str());
 
         let heap_used = ALLOCATOR.lock().used();
         let heap_size = HEAP_SIZE;

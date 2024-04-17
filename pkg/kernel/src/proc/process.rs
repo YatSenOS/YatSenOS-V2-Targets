@@ -336,12 +336,15 @@ impl ProcessInner {
         if let Some(parent) = self.parent() {
             if parent.read().exit_code().is_none() {
                 parent.write().remove_child(pid);
-                let wake = Arc::downgrade(&parent);
+                let weak = Arc::downgrade(&parent);
                 for child in children {
-                    child.write().set_parent(wake.clone());
+                    child.write().set_parent(weak.clone());
                 }
             } else {
-                // FIXME: handle parent exited
+                // parent already exited, set parent to None
+                for child in children {
+                    child.write().set_parent(Weak::new());
+                }
             }
         }
 
