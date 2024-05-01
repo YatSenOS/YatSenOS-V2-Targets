@@ -414,15 +414,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "uefi-services"
-version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62d502e54e05da57380e0b6f3cb1baa89860e4ae314afb5a17080ed14379b6e2"
-dependencies = [
- "uefi",
-]
-
-[[package]]
 name = "uguid"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -499,7 +490,6 @@ dependencies = [
  "arrayvec",
  "log",
  "uefi",
- "uefi-services",
  "x86_64",
  "xmas-elf",
  "ysos_elf",
