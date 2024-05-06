@@ -1,5 +1,4 @@
 use super::*;
-use crate::humanized_size;
 use crate::memory::*;
 use alloc::sync::Weak;
 use core::intrinsics::copy_nonoverlapping;
@@ -454,16 +453,13 @@ impl core::fmt::Debug for Process {
 impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         let inner = self.inner.read();
-        let (size, unit) = humanized_size(inner.memory_usage() as u64 * 4096);
         write!(
             f,
-            " #{:-3} | #{:-3} | {:12} | {:7} | {:>5.1} {} | {:?}",
+            " #{:-3} | #{:-3} | {:12} | {:7} | {:?}",
             self.pid.0,
             inner.parent().map(|p| p.pid.0).unwrap_or(0),
             inner.name,
             inner.ticks_passed,
-            size,
-            unit,
             inner.status
         )?;
         Ok(())
