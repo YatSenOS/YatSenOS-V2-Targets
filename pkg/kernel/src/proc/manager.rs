@@ -254,8 +254,7 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
-        let mut output =
-            String::from("  PID | PPID | Process Name |  Ticks  |   Memory  | Status\n");
+        let mut output = String::from("  PID | PPID | Process Name |  Ticks  | Status\n");
 
         self.processes
             .read()
