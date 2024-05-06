@@ -139,12 +139,12 @@ pub extern "x86-interrupt" fn page_fault_handler(
     stack_frame: InterruptStackFrame,
     err_code: PageFaultErrorCode,
 ) {
-    if !crate::proc::handle_page_fault(Cr2::read(), err_code) {
+    let addr = Cr2::read().unwrap();
+
+    if !crate::proc::handle_page_fault(addr, err_code) {
         warn!(
             "EXCEPTION: PAGE FAULT, ERROR_CODE: {:?}\n\nTrying to access: {:#x}\n{:#?}",
-            err_code,
-            Cr2::read(),
-            stack_frame
+            err_code, addr, stack_frame
         );
         crate::proc::current_process_info();
         panic!("Cannot handle page fault!");

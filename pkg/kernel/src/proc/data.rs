@@ -1,11 +1,7 @@
-use alloc::{collections::BTreeMap, string::String, sync::Arc};
-use spin::RwLock;
-use x86_64::{
-    structures::paging::{page::PageRange, Page},
-    VirtAddr,
-};
-
 use super::*;
+use alloc::{collections::BTreeMap, sync::Arc};
+use spin::RwLock;
+use x86_64::structures::paging::{page::PageRange, Page};
 
 #[derive(Debug, Clone)]
 pub struct ProcessData {

@@ -1,15 +1,11 @@
-use super::ProcessId;
 use super::*;
 use crate::memory::*;
-use alloc::string::String;
-use alloc::sync::Arc;
-use alloc::sync::Weak;
+use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use spin::*;
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::page::PageRange;
 use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
 
 #[derive(Clone)]
 pub struct Process {
@@ -135,7 +131,7 @@ impl ProcessInner {
     }
 
     pub fn clone_page_table(&self) -> PageTableContext {
-        self.page_table.as_ref().unwrap().clone()
+        self.page_table.as_ref().unwrap().clone_level_4()
     }
 
     pub fn is_ready(&self) -> bool {
@@ -261,8 +257,8 @@ impl core::fmt::Display for Process {
         write!(
             f,
             " #{:-3} | #{:-3} | {:12} | {:7} | {:?}",
-            u16::from(self.pid),
-            inner.parent().map(|p| u16::from(p.pid)).unwrap_or(0),
+            self.pid.0,
+            inner.parent().map(|p| p.pid.0).unwrap_or(0),
             inner.name,
             inner.ticks_passed,
             inner.status

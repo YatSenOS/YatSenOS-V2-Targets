@@ -7,12 +7,12 @@ mod process;
 mod processor;
 
 use manager::*;
-use paging::*;
 use process::*;
 
 use alloc::string::String;
 pub use context::ProcessContext;
 pub use data::ProcessData;
+pub use paging::PageTableContext;
 pub use pid::ProcessId;
 
 use x86_64::structures::idt::PageFaultErrorCode;
@@ -118,8 +118,8 @@ pub fn env(key: &str) -> Option<String> {
     })
 }
 
-pub fn wait_pid(pid: ProcessId) -> isize {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid))
+pub(crate) fn wait_no_block(pid: ProcessId) -> Option<isize> {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().get_ret(pid))
 }
 
 pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {

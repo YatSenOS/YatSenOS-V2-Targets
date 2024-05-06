@@ -40,7 +40,6 @@ pub fn init(boot_info: &'static BootInfo) {
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
     proc::init(); // init process manager
-    input::init(); // init input
 
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
@@ -60,9 +59,7 @@ pub fn stack_thread_test() {
 
 pub fn wait(pid: proc::ProcessId) {
     loop {
-        let ret = proc::wait_pid(pid);
-        print!("wait_pid({}) = {}\n", pid, ret);
-        if ret == -1 {
+        if proc::wait_no_block(pid).is_none() {
             x86_64::instructions::hlt();
         } else {
             break;

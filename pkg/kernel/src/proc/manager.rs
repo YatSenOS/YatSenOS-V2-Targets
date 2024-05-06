@@ -1,8 +1,10 @@
 use super::*;
-use crate::memory::{
-    self,
-    allocator::{ALLOCATOR, HEAP_SIZE},
-    get_frame_alloc_for_sure, PAGE_SIZE,
+use crate::{
+    humanized_size,
+    memory::{
+        allocator::{ALLOCATOR, HEAP_SIZE},
+        get_frame_alloc_for_sure, PAGE_SIZE,
+    },
 };
 use alloc::collections::BTreeMap;
 use alloc::{collections::VecDeque, format, sync::Arc};
@@ -31,7 +33,6 @@ pub struct ProcessManager {
 impl ProcessManager {
     pub fn new(init: Arc<Process>) -> Self {
         let mut processes = BTreeMap::new();
-        let ready_queue = VecDeque::new();
         let pid = init.pid();
 
         trace!("Init {:#?}", init);
@@ -39,7 +40,7 @@ impl ProcessManager {
         processes.insert(pid, init);
         Self {
             processes: RwLock::new(processes),
-            ready_queue: Mutex::new(ready_queue),
+            ready_queue: Mutex::new(VecDeque::new()),
         }
     }
 
@@ -63,10 +64,8 @@ impl ProcessManager {
             .expect("No current process")
     }
 
-    pub fn wait_pid(&self, pid: ProcessId) -> isize {
-        self.get_proc(&pid)
-            .and_then(|p| p.read().exit_code())
-            .unwrap_or(-1)
+    pub(super) fn get_ret(&self, pid: ProcessId) -> Option<isize> {
+        self.get_proc(&pid).and_then(|p| p.read().exit_code())
     }
 
     pub fn save_current(&self, context: &ProcessContext) {
@@ -182,49 +181,27 @@ impl ProcessManager {
 
     pub fn print_process_list(&self) {
         let mut output = String::from("  PID | PPID | Process Name |  Ticks  | Status\n");
-        for (_, p) in self.processes.read().iter() {
-            if p.read().status() != ProgramStatus::Dead {
-                output += format!("{}\n", p).as_str();
-            }
-        }
+
+        self.processes
+            .read()
+            .values()
+            .filter(|p| p.read().status() != ProgramStatus::Dead)
+            .for_each(|p| output += format!("{}\n", p).as_str());
 
         let heap_used = ALLOCATOR.lock().used();
         let heap_size = HEAP_SIZE;
+
+        output += &format_usage("Kernel", heap_used, heap_size);
 
         let alloc = get_frame_alloc_for_sure();
         let frames_used = alloc.frames_used();
         let frames_total = alloc.frames_total();
 
-        let (sys_used, sys_used_unit) = memory::humanized_size(heap_used as u64);
-        let (sys_size, sys_size_unit) = memory::humanized_size(heap_size as u64);
-
-        output += format!(
-            "Kernel : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
-            2,
-            sys_used,
-            sys_used_unit,
-            2,
-            sys_size,
-            sys_size_unit,
-            heap_used as f64 / heap_size as f64 * 100.0
-        )
-        .as_str();
-
-        // put used/total frames in MiB
-        let (used_size, used_unit) = memory::humanized_size(frames_used as u64 * PAGE_SIZE);
-        let (tot_size, tot_unit) = memory::humanized_size(frames_total as u64 * PAGE_SIZE);
-
-        output += format!(
-            "Memory : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
-            2,
-            used_size,
-            used_unit,
-            2,
-            tot_size,
-            tot_unit,
-            frames_used as f64 / frames_total as f64 * 100.0
-        )
-        .as_str();
+        output += &format_usage(
+            "Kernel",
+            frames_used * PAGE_SIZE as usize,
+            frames_total * PAGE_SIZE as usize,
+        );
 
         output += format!("Queue  : {:?}\n", self.ready_queue.lock()).as_str();
 
@@ -232,4 +209,21 @@ impl ProcessManager {
 
         print!("{}", output);
     }
+}
+
+fn format_usage(name: &str, used: usize, total: usize) -> String {
+    let (used_float, used_unit) = humanized_size(used as u64);
+    let (total_float, total_unit) = humanized_size(total as u64);
+
+    format!(
+        "{:<6} : {:>6.*} {:>3} / {:>6.*} {:>3} ({:>5.2}%)\n",
+        name,
+        2,
+        used_float,
+        used_unit,
+        2,
+        total_float,
+        total_unit,
+        used as f32 / total as f32 * 100.0
+    )
 }
