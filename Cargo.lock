@@ -106,9 +106,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.14.3"
+version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
+checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
  "ahash",
  "allocator-api2",
@@ -146,9 +146,9 @@ dependencies = [
 
 [[package]]
 name = "lock_api"
-version = "0.4.11"
+version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c168f8615b12bc01f9c17e2eb0cc07dcae1940121185446edc3744920e8ef45"
+checksum = "07af8b9cdd281b7915f413fa73f29ebd5d55d0d3f0155584dade1ff18cea1b17"
 dependencies = [
  "autocfg",
  "scopeguard",
@@ -204,7 +204,7 @@ checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.59",
+ "syn 2.0.60",
 ]
 
 [[package]]
@@ -357,9 +357,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.59"
+version = "2.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a6531ffc7b071655e4ce2e04bd464c4830bb585a61cabb96cf808f05172615a"
+checksum = "909518bc7b1c9b779f1bbf07f2929d35af9f0f37e47c6e9ef7f9dddc1e1821f3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -377,11 +377,12 @@ dependencies = [
 
 [[package]]
 name = "uefi"
-version = "0.27.0"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89ee9c34c612d45735fef4c478450cd2a1e64e59ad1e5988e5024af53914a854"
+checksum = "a9c0a56dc9fed2589aad6ddca11c2584968fc21f227b5d7083bb8961d26a69fa"
 dependencies = [
  "bitflags 2.5.0",
+ "cfg-if",
  "log",
  "ptr_meta",
  "ucs2",
@@ -398,29 +399,18 @@ checksum = "26a7b1c2c808c3db854a54d5215e3f7e7aaf5dcfbce095598cba6af29895695d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.59",
+ "syn 2.0.60",
 ]
 
 [[package]]
 name = "uefi-raw"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cc02890e65b2b8e390d0e081907c0d5ac3931bc6935f452095d68199e3698c5"
+checksum = "efa8716f52e8cab8bcedfd5052388a0f263b69fe5cc2561548dc6a530678333c"
 dependencies = [
  "bitflags 2.5.0",
  "ptr_meta",
  "uguid",
-]
-
-[[package]]
-name = "uefi-services"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "292d48d6dae6fb4a5f960bab64a72e9dcdbe3db7dd706ae0ace5de24580d2840"
-dependencies = [
- "cfg-if",
- "log",
- "uefi",
 ]
 
 [[package]]
@@ -449,9 +439,9 @@ checksum = "442887c63f2c839b346c192d047a7c87e73d0689c9157b00b53dcc27dd5ea793"
 
 [[package]]
 name = "volatile"
-version = "0.5.2"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b214e6480cbaa16049d2f256268b51732a8d1e5507ac56392990604c7c71d936"
+checksum = "f05a5337d258c4ef40d920ffcc5a729278951d57e6596f8b62ca7d4827613e77"
 
 [[package]]
 name = "x86"
@@ -500,7 +490,6 @@ dependencies = [
  "arrayvec",
  "log",
  "uefi",
- "uefi-services",
  "x86_64",
  "xmas-elf",
  "ysos_elf",
@@ -568,7 +557,7 @@ dependencies = [
  "paste",
  "pc-keyboard",
  "spin 0.9.8",
- "volatile 0.5.2",
+ "volatile 0.5.4",
  "x86",
  "x86_64",
  "xmas-elf",
@@ -645,5 +634,5 @@ checksum = "9ce1b18ccd8e73a9321186f97e46f9f04b778851177567b1975109d26a08d2a6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.59",
+ "syn 2.0.60",
 ]
