@@ -1,4 +1,4 @@
-use crate::serial::get_serial;
+use crate::serial::{get_serial, SERIAL};
 use alloc::string::ToString;
 use core::fmt::*;
 use x86_64::instructions::interrupts;
@@ -118,6 +118,8 @@ pub fn print_serial_internal(args: Arguments) {
 
 #[cfg_attr(not(test), panic_handler)]
 fn panic(info: &core::panic::PanicInfo) -> ! {
+    unsafe { SERIAL.get().unwrap().force_unlock() };
+
     let location = if let Some(location) = info.location() {
         alloc::format!(
             "{} @ {}:{}",

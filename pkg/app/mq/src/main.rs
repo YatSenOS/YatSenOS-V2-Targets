@@ -14,7 +14,7 @@ static MUTEX: Semaphore = Semaphore::new(0x6666);
 
 fn main() -> usize {
     IS_NOT_EMPTY.init(0);
-    IS_NOT_FULL.init(QUEUE_COUNT * 2);
+    IS_NOT_FULL.init(QUEUE_COUNT);
     MUTEX.init(1);
 
     let mut pids = [0u16; QUEUE_COUNT];

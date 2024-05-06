@@ -6,7 +6,7 @@ use lib::*;
 extern crate lib;
 
 static MUTEX: Semaphore = Semaphore::new(0x6666);
-static mut LOCK: SpinLock = SpinLock::new();
+static LOCK: SpinLock = SpinLock::new();
 static mut BURGER: isize = 0;
 static mut BURGER_SEM: isize = 0;
 

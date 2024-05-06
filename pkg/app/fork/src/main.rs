@@ -27,7 +27,6 @@ fn main() -> usize {
         }
 
         c += 32;
-
     } else {
         println!("I am the parent process");
 

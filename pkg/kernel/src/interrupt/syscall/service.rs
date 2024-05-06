@@ -6,7 +6,10 @@ use crate::utils::*;
 use super::SyscallArgs;
 
 pub fn sys_clock() -> i64 {
-    clock::now().timestamp_nanos_opt().unwrap_or_default()
+    clock::now()
+        .and_utc()
+        .timestamp_nanos_opt()
+        .unwrap_or_default()
 }
 
 pub fn sys_allocate(args: &SyscallArgs) -> usize {
@@ -61,31 +64,15 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
-    let fd = handle(args.arg0 as u8);
-    if let Some(res) = fd {
-        let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
-        if let Some(size) = res.read(buf) {
-            size
-        } else {
-            0
-        }
-    } else {
-        0
-    }
+    let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
+    let fd = args.arg0 as u8;
+    read(fd, buf) as usize
 }
 
 pub fn sys_write(args: &SyscallArgs) -> usize {
-    let fd = handle(args.arg0 as u8);
-    if let Some(res) = fd {
-        let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
-        if let Some(size) = res.write(buf) {
-            size
-        } else {
-            0
-        }
-    } else {
-        0
-    }
+    let buf = unsafe { core::slice::from_raw_parts(args.arg1 as *const u8, args.arg2) };
+    let fd = args.arg0 as u8;
+    write(fd, buf) as usize
 }
 
 pub fn sys_get_pid() -> u16 {
@@ -104,10 +91,9 @@ pub fn list_process() {
     print_process_list();
 }
 
-pub fn sys_wait_pid(args: &SyscallArgs) -> usize {
+pub fn sys_wait_pid(args: &SyscallArgs, context: &mut ProcessContext) {
     let pid = ProcessId(args.arg0 as u16);
-    let ret = wait_pid(pid);
-    ret as usize
+    wait_pid(pid, context);
 }
 
 pub fn sys_kill(args: &SyscallArgs, context: &mut ProcessContext) {
@@ -123,7 +109,7 @@ pub fn sys_sem(args: &SyscallArgs, context: &mut ProcessContext) {
     match args.arg0 {
         0 => context.set_rax(new_sem(args.arg1 as u32, args.arg2)),
         1 => context.set_rax(remove_sem(args.arg1 as u32)),
-        2 => sem_siganl(args.arg1 as u32, context),
+        2 => sem_signal(args.arg1 as u32, context),
         3 => sem_wait(args.arg1 as u32, context),
         _ => context.set_rax(usize::MAX),
     }
