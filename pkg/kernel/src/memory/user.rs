@@ -36,7 +36,7 @@ pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
         page_range.end.start_address().as_u64()
     );
 
-    let (size, unit) = super::humanized_size(USER_HEAP_SIZE as u64);
+    let (size, unit) = crate::humanized_size(USER_HEAP_SIZE as u64);
     info!("User Heap Size   : {:>7.*} {}", 3, size, unit);
 
     for page in page_range {

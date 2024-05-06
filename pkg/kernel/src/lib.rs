@@ -41,7 +41,6 @@ pub fn init(boot_info: &'static BootInfo) {
     memory::init(boot_info); // init memory manager
     memory::user::init(); // init user heap allocator
     proc::init(boot_info); // init task manager
-    input::init(); // init input
 
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
@@ -51,7 +50,7 @@ pub fn init(boot_info: &'static BootInfo) {
 
 pub fn wait(init: proc::ProcessId) {
     loop {
-        if proc::still_alive(init) {
+        if proc::wait_no_block(init).is_none() {
             x86_64::instructions::hlt();
         } else {
             break;

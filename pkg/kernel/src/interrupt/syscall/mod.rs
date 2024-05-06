@@ -8,7 +8,7 @@ use super::consts;
 use service::*;
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
-    idt[consts::Interrupts::Syscall as usize]
+    idt[consts::Interrupts::Syscall as u8]
         .set_handler_fn(syscall_handler)
         .set_stack_index(gdt::SYSCALL_IST_INDEX)
         .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
@@ -52,7 +52,7 @@ pub fn dispatcher(context: &mut ProcessContext) {
         // pid: arg0 as u16
         Syscall::Exit => exit_process(&args, context),
         // pid: arg0 as u16 -> status: isize
-        Syscall::WaitPid => context.set_rax(sys_wait_pid(&args)),
+        Syscall::WaitPid => sys_wait_pid(&args, context),
         // pid: arg0 as u16
         Syscall::Kill => sys_kill(&args, context),
 

@@ -112,22 +112,29 @@ pub fn process_exit(ret: isize, context: &mut ProcessContext) {
     })
 }
 
-pub fn wait_pid(pid: ProcessId) -> isize {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid))
-}
-
-pub fn handle(fd: u8) -> Option<Resource> {
+pub fn wait_pid(pid: ProcessId, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().read().handle(fd)
+        let manager = get_process_manager();
+        if let Some(ret) = manager.wait_pid(pid) {
+            context.set_rax(ret as usize);
+        } else {
+            manager.save_current(context);
+            manager.current().write().block();
+            manager.switch_next(context);
+        }
     })
 }
 
-pub fn close(fd: u8) -> bool {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().close(fd))
+pub(crate) fn wait_no_block(pid: ProcessId) -> Option<isize> {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().get_ret(pid))
 }
 
-pub fn still_alive(pid: ProcessId) -> bool {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid) < 0)
+pub fn read(fd: u8, buf: &mut [u8]) -> isize {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().read(fd, buf))
+}
+
+pub fn write(fd: u8, buf: &[u8]) -> isize {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().write(fd, buf))
 }
 
 pub fn current_pid() -> ProcessId {
@@ -166,9 +173,8 @@ pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
         let process_name = name.to_lowercase();
 
         let parent = Arc::downgrade(&manager.current());
-        let proc_data = ProcessData::new();
 
-        let pid = manager.spawn(elf, name, Some(parent), Some(proc_data));
+        let pid = manager.spawn(elf, name, Some(parent), None);
 
         debug!("Spawned process: {}#{}", process_name, pid);
         pid

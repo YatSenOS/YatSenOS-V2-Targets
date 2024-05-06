@@ -1,22 +1,17 @@
-use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
-use spin::RwLock;
-use x86_64::{
-    structures::paging::{
-        page::{PageRange, PageRangeInclusive},
-        Page,
-    },
-    VirtAddr,
-};
-
-use crate::{resource::StdIO, Resource};
-
 use super::*;
+use crate::resource::ResourceSet;
+use alloc::collections::BTreeMap;
+use spin::RwLock;
+use x86_64::structures::paging::{
+    page::{PageRange, PageRangeInclusive},
+    Page,
+};
 
 #[derive(Debug, Clone)]
 pub struct ProcessData {
     // shared data
     pub(super) env: Arc<RwLock<BTreeMap<String, String>>>,
-    pub(super) file_handles: Arc<RwLock<BTreeMap<u8, Resource>>>,
+    pub(super) resources: Arc<RwLock<ResourceSet>>,
 
     // process specific data
     pub(super) code_segments: Option<Vec<PageRangeInclusive>>,
@@ -27,18 +22,11 @@ pub struct ProcessData {
 
 impl Default for ProcessData {
     fn default() -> Self {
-        let mut file_handles = BTreeMap::new();
-
-        // stdin, stdout, stderr
-        file_handles.insert(0, Resource::Console(StdIO::Stdin));
-        file_handles.insert(1, Resource::Console(StdIO::Stdout));
-        file_handles.insert(2, Resource::Console(StdIO::Stderr));
-
         Self {
             env: Arc::new(RwLock::new(BTreeMap::new())),
+            resources: Arc::new(RwLock::new(ResourceSet::default())),
             code_segments: None,
             stack_segment: None,
-            file_handles: Arc::new(RwLock::new(file_handles)),
             code_memory_usage: 0,
             stack_memory_usage: 0,
         }
@@ -51,17 +39,19 @@ impl ProcessData {
     }
 
     pub fn open(&mut self, res: Resource) -> u8 {
-        let fd = self.file_handles.read().len() as u8;
-        self.file_handles.write().insert(fd, res);
-        fd
+        self.resources.write().open(res)
     }
 
     pub fn close(&mut self, fd: u8) -> bool {
-        self.file_handles.write().remove(&fd).is_some()
+        self.resources.write().close(fd)
     }
 
-    pub fn handle(&self, fd: u8) -> Option<Resource> {
-        self.file_handles.read().get(&fd).cloned()
+    pub fn read(&self, fd: u8, buf: &mut [u8]) -> isize {
+        self.resources.read().read(fd, buf)
+    }
+
+    pub fn write(&self, fd: u8, buf: &[u8]) -> isize {
+        self.resources.read().write(fd, buf)
     }
 
     pub fn env(&self, key: &str) -> Option<String> {
