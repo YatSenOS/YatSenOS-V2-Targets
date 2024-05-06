@@ -14,5 +14,5 @@ xmas-elf = "0.9"
 elf = { package = "ysos_elf", path = "../elf" }
 
 [features]
-boot = ["uefi/alloc", "uefi/panic_handler", "uefi/global_allocator"]
+boot = ["uefi/alloc", "uefi/logger", "uefi/panic_handler", "uefi/global_allocator"]
 default = ["boot"]
