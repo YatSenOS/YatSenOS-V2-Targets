@@ -12,7 +12,7 @@ use xmas_elf::ElfFile;
 
 use crate::{
     humanized_size,
-    memory::{get_frame_alloc_for_sure, BootInfoFrameAllocator, PHYSICAL_OFFSET},
+    memory::*,
 };
 
 pub mod heap;
@@ -71,15 +71,14 @@ impl ProcessVm {
 
     pub fn load_elf(&mut self, elf: &ElfFile) {
         let mapper = &mut self.page_table.mapper();
+
         let alloc = &mut *get_frame_alloc_for_sure();
 
-        self.load_elf_code(elf, mapper);
-        self.stack.init(mapper, alloc)
+        self.load_elf_code(elf, mapper, alloc);
+        self.stack.init(mapper, alloc);
     }
 
-    fn load_elf_code(&mut self, elf: &ElfFile, mapper: MapperRef) {
-        let alloc = &mut *get_frame_alloc_for_sure();
-
+    fn load_elf_code(&mut self, elf: &ElfFile, mapper: MapperRef, alloc: FrameAllocatorRef) {
         self.code =
             elf::load_elf(elf, *PHYSICAL_OFFSET.get().unwrap(), mapper, alloc, true).unwrap();
 
