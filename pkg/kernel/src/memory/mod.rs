@@ -27,7 +27,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let (size, unit) = crate::humanized_size(usable_mem_size * PAGE_SIZE);
     info!("Free Usable Memory : {:>7.*} {}", 3, size, unit);
 
-    let mut used = crate::proc::KSTACK_DEF_PAGE as usize;
+    let mut used = crate::proc::stack::KSTACK_DEF_PAGE as usize;
 
     for page in &boot_info.kernel_pages {
         used += page.count();
