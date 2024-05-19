@@ -121,7 +121,8 @@ impl ProcessManager {
     ) -> ProcessId {
         let kproc = self.get_proc(&KERNEL_PID).unwrap();
         let page_table = kproc.read().clone_page_table();
-        let proc = Process::new(name, Some(Arc::downgrade(&kproc)), page_table, proc_data);
+        let proc_vm = Some(ProcessVm::new(page_table));
+        let proc = Process::new(name, Some(Arc::downgrade(&kproc)), proc_vm, proc_data);
 
         let stack_top = proc.alloc_init_stack();
         let mut inner = proc.write();
@@ -149,11 +150,9 @@ impl ProcessManager {
                 "Page Fault! Checking if {:#x} is on current process's stack",
                 addr
             );
-            if cur_proc.read().is_on_stack(addr) {
-                cur_proc.write().try_alloc_new_stack_page(addr).is_ok()
-            } else {
-                false
-            }
+
+            let mut inner = cur_proc.write();
+            inner.handle_page_fault(addr)
         } else {
             false
         }
