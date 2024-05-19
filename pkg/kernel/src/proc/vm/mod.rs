@@ -1,11 +1,7 @@
-use alloc::{format, vec::Vec};
-use x86_64::{
-    structures::paging::{page::*, *},
-    VirtAddr,
-};
+use x86_64::{structures::paging::*, VirtAddr};
 use xmas_elf::ElfFile;
 
-use crate::{humanized_size, memory::*};
+use crate::memory::*;
 
 pub mod stack;
 
@@ -22,11 +18,6 @@ pub struct ProcessVm {
 
     // stack is pre-process allocated
     pub(super) stack: Stack,
-
-    // code is hold by the first process
-    // these fields will be empty for other processes
-    pub(super) code: Vec<PageRangeInclusive>,
-    pub(super) code_usage: u64,
 }
 
 impl ProcessVm {
@@ -34,8 +25,6 @@ impl ProcessVm {
         Self {
             page_table,
             stack: Stack::empty(),
-            code: Vec::new(),
-            code_usage: 0,
         }
     }
 
@@ -55,11 +44,7 @@ impl ProcessVm {
     }
 
     fn load_elf_code(&mut self, elf: &ElfFile, mapper: MapperRef, alloc: FrameAllocatorRef) {
-        self.code =
-            elf::load_elf(elf, *PHYSICAL_OFFSET.get().unwrap(), mapper, alloc, true).unwrap();
-
-        let usage: usize = self.code.iter().map(|page| page.count()).sum();
-        self.code_usage = usage as u64 * crate::memory::PAGE_SIZE
+        elf::load_elf(elf, *PHYSICAL_OFFSET.get().unwrap(), mapper, alloc, true).ok();
     }
 
     pub fn handle_page_fault(&mut self, addr: VirtAddr) -> bool {
@@ -68,19 +53,12 @@ impl ProcessVm {
 
         self.stack.handle_page_fault(addr, mapper, alloc)
     }
-
-    pub(super) fn memory_usage(&self) -> u64 {
-        self.stack.memory_usage() + self.code_usage
-    }
 }
 
 impl core::fmt::Debug for ProcessVm {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let (size, unit) = humanized_size(self.memory_usage());
-
         f.debug_struct("ProcessVm")
             .field("stack", &self.stack)
-            .field("memory_usage", &format!("{} {}", size, unit))
             .field("page_table", &self.page_table)
             .finish()
     }
