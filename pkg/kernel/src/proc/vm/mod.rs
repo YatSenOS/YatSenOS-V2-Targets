@@ -66,6 +66,14 @@ impl ProcessVm {
         self
     }
 
+    pub fn brk(&mut self, addr: Option<VirtAddr>) -> Option<VirtAddr> {
+        self.heap.brk(
+            addr,
+            &mut self.page_table.mapper(),
+            &mut *get_frame_alloc_for_sure(),
+        )
+    }
+
     pub fn load_elf(&mut self, elf: &ElfFile) {
         let mapper = &mut self.page_table.mapper();
 
@@ -108,8 +116,9 @@ impl ProcessVm {
     }
 
     pub(super) fn memory_usage(&self) -> u64 {
-        (self.stack.memory_usage() + self.heap.memory_usage() + self.code_usage)
-            * crate::memory::PAGE_SIZE
+        self.stack.memory_usage()
+            + self.heap.memory_usage()
+            + self.code_usage * crate::memory::PAGE_SIZE
     }
 
     pub(super) fn clean_up(&mut self) -> Result<(), UnmapError> {

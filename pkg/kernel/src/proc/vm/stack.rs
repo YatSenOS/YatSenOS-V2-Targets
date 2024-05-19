@@ -80,7 +80,7 @@ impl Stack {
     pub fn init(&mut self, mapper: MapperRef, alloc: FrameAllocatorRef) {
         debug_assert!(self.usage == 0, "Stack is not empty.");
 
-        self.range = elf::map_range(STACK_INIT_BOT, STACK_DEF_PAGE, mapper, alloc, true).unwrap();
+        self.range = elf::map_pages(STACK_INIT_BOT, STACK_DEF_PAGE, mapper, alloc, true).unwrap();
         self.usage = STACK_DEF_PAGE;
     }
 
@@ -93,7 +93,7 @@ impl Stack {
         let cur_stack_base = self.range.start.start_address().as_u64();
         let mut new_stack_base = cur_stack_base - stack_offset_count * STACK_MAX_SIZE;
 
-        while elf::map_range(new_stack_base, self.usage, mapper, alloc, true).is_err() {
+        while elf::map_pages(new_stack_base, self.usage, mapper, alloc, true).is_err() {
             trace!("Map thread stack to {:#x} failed.", new_stack_base);
             new_stack_base -= STACK_MAX_SIZE; // stack grow down
         }
@@ -165,7 +165,7 @@ impl Stack {
 
         let user_access = processor::current_pid() != KERNEL_PID;
 
-        elf::map_range(
+        elf::map_pages(
             new_start_page.start_address().as_u64(),
             page_count,
             mapper,
@@ -210,7 +210,7 @@ impl Stack {
     }
 
     pub fn memory_usage(&self) -> u64 {
-        self.usage
+        self.usage * crate::memory::PAGE_SIZE
     }
 }
 

@@ -96,8 +96,6 @@ impl Process {
         // pause child process
         inner.pause();
 
-        // FIXME: trace!("{:#?}", &child);
-
         child
     }
 
@@ -205,6 +203,13 @@ impl ProcessInner {
 
     pub fn parent(&self) -> Option<Arc<Process>> {
         self.parent.as_ref().and_then(|p| p.upgrade())
+    }
+
+    pub fn brk(&mut self, addr: Option<usize>) -> usize {
+        match self.vm_mut().brk(addr.map(|a| VirtAddr::new(a as u64))) {
+            Some(addr) => addr.as_u64() as usize,
+            None => !0,
+        }
     }
 
     pub fn fork(&mut self, parent: Weak<Process>) -> ProcessInner {

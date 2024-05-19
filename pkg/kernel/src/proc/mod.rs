@@ -119,6 +119,12 @@ pub fn current_pid() -> ProcessId {
     x86_64::instructions::interrupts::without_interrupts(processor::current_pid)
 }
 
+pub fn brk(addr: Option<usize>) -> usize {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager().current().write().brk(addr)
+    })
+}
+
 pub fn kill(pid: ProcessId, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
