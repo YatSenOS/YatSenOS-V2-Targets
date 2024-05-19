@@ -56,7 +56,7 @@ pub struct Stack {
 }
 
 impl Stack {
-    pub fn new(&mut self, top: Page, size: u64) -> Self {
+    pub fn new(top: Page, size: u64) -> Self {
         Self {
             range: Page::range(top - size + 1, top + 1),
             usage: size,
