@@ -1,5 +1,4 @@
 use alloc::collections::BTreeSet;
-use core::isize;
 
 use super::*;
 use crate::{
@@ -143,15 +142,16 @@ impl ProcessManager {
         proc_data: Option<ProcessData>,
     ) -> ProcessId {
         let kproc = self.get_proc(&KERNEL_PID).unwrap();
-        let page_table = kproc.read().clont_page_table();
-        let proc = Process::new(name, parent, page_table, proc_data);
+        let page_table = kproc.read().clone_page_table();
+        let proc_vm = Some(ProcessVm::new(page_table));
+        let proc = Process::new(name, parent, proc_vm, proc_data);
 
         let mut inner = proc.write();
         inner.pause();
         inner.load_elf(elf);
         inner.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
-            VirtAddr::new_truncate(STACK_INIT_TOP),
+            VirtAddr::new_truncate(super::stack::STACK_INIT_TOP),
         );
         drop(inner);
 
@@ -208,11 +208,9 @@ impl ProcessManager {
                 "Page Fault! Checking if {:#x} is on current process's stack",
                 addr
             );
-            if cur_proc.read().is_on_stack(addr) {
-                cur_proc.write().try_alloc_new_stack_page(addr).is_ok()
-            } else {
-                false
-            }
+
+            let mut inner = cur_proc.write();
+            inner.handle_page_fault(addr)
         } else {
             false
         }

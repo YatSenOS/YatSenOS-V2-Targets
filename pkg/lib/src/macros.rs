@@ -6,6 +6,7 @@ macro_rules! entry {
     ($fn:ident) => {
         #[export_name = "_start"]
         pub extern "C" fn __impl_start() {
+            lib::init();
             let ret = $fn();
             lib::sys_exit(ret as usize);
         }

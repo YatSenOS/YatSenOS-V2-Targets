@@ -9,3 +9,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 [dependencies]
 syscall_def = { package = "ysos_syscall", path = "../syscall" }
 chrono = { version = "0.4", default-features = false }
+
+[features]
+default = ["kernel_alloc"]
+kernel_alloc = []

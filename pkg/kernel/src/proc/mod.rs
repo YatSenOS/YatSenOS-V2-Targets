@@ -5,6 +5,7 @@ mod paging;
 mod pid;
 mod process;
 mod processor;
+mod vm;
 
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -15,42 +16,12 @@ pub use context::ProcessContext;
 pub use data::ProcessData;
 pub use paging::PageTableContext;
 pub use pid::ProcessId;
+pub use vm::*;
 use xmas_elf::ElfFile;
 
 use alloc::string::{String, ToString};
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::VirtAddr;
-
-use crate::Resource;
-
-// 0xffff_ff00_0000_0000 is the kernel's address space
-pub const STACK_MAX: u64 = 0x0000_4000_0000_0000;
-// stack max addr, every thread has a stack space
-// from 0x????_????_0000_0000 to 0x????_????_ffff_ffff
-// 0x100000000 bytes -> 4GiB
-// allow 0x2000 (4096) threads run as a time
-// 0x????_2000_????_???? -> 0x????_3fff_????_????
-// init alloc stack has size of 0x2000 (2 frames)
-// every time we meet a page fault, we alloc more frames
-pub const STACK_MAX_PAGES: u64 = 0x100000;
-pub const STACK_MAX_SIZE: u64 = STACK_MAX_PAGES * crate::memory::PAGE_SIZE;
-pub const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
-// [bot..0x2000_0000_0000..top..0x3fff_ffff_ffff]
-// init stack
-pub const STACK_DEF_BOT: u64 = STACK_MAX - STACK_MAX_SIZE;
-pub const STACK_DEF_PAGE: u64 = 1;
-pub const STACK_DEF_SIZE: u64 = STACK_DEF_PAGE * crate::memory::PAGE_SIZE;
-pub const STACK_INIT_BOT: u64 = STACK_MAX - STACK_DEF_SIZE;
-pub const STACK_INIT_TOP: u64 = STACK_MAX - 8;
-// [bot..0xffffff0100000000..top..0xffffff01ffffffff]
-// kernel stack
-pub const KSTACK_MAX: u64 = 0xffff_ff02_0000_0000;
-pub const KSTACK_DEF_BOT: u64 = KSTACK_MAX - STACK_MAX_SIZE;
-pub const KSTACK_DEF_PAGE: u64 = 8;
-pub const KSTACK_DEF_SIZE: u64 = KSTACK_DEF_PAGE * crate::memory::PAGE_SIZE;
-
-pub const KSTACK_INIT_BOT: u64 = KSTACK_MAX - KSTACK_DEF_SIZE;
-pub const KSTACK_INIT_TOP: u64 = KSTACK_MAX - 8;
 
 pub const KERNEL_PID: ProcessId = ProcessId(1);
 
@@ -64,17 +35,12 @@ pub enum ProgramStatus {
 
 /// init process manager
 pub fn init(boot_info: &'static boot::BootInfo) {
-    let kproc_data = ProcessData::new().set_stack(KSTACK_INIT_BOT, KSTACK_DEF_PAGE);
+    let proc_vm = ProcessVm::new(PageTableContext::new()).init_kernel_vm();
 
-    trace!("Init process data: {:#?}", kproc_data);
+    trace!("Init kernel vm: {:#?}", proc_vm);
 
     // kernel process
-    let kproc = Process::new(
-        String::from("kernel"),
-        None,
-        PageTableContext::new(),
-        Some(kproc_data),
-    );
+    let kproc = Process::new(String::from("kernel"), None, Some(proc_vm), None);
 
     kproc.write().resume();
     let app_list = boot_info.loaded_apps.as_ref();

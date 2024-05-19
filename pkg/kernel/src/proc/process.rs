@@ -1,11 +1,6 @@
 use super::*;
-use crate::memory::*;
 use alloc::sync::Weak;
-use alloc::vec::Vec;
 use spin::*;
-use x86_64::structures::paging::mapper::{CleanUp, MapToError};
-use x86_64::structures::paging::page::PageRange;
-use x86_64::structures::paging::*;
 
 #[derive(Clone)]
 pub struct Process {
@@ -19,10 +14,10 @@ pub struct ProcessInner {
     children: Vec<Arc<Process>>,
     ticks_passed: usize,
     status: ProgramStatus,
-    exit_code: Option<isize>,
     context: ProcessContext,
-    page_table: Option<PageTableContext>,
+    exit_code: Option<isize>,
     proc_data: Option<ProcessData>,
+    proc_vm: Option<ProcessVm>,
 }
 
 impl Process {
@@ -44,13 +39,14 @@ impl Process {
     pub fn new(
         name: String,
         parent: Option<Weak<Process>>,
-        page_table: PageTableContext,
+        proc_vm: Option<ProcessVm>,
         proc_data: Option<ProcessData>,
     ) -> Arc<Self> {
         let name = name.to_ascii_lowercase();
 
         // create context
         let pid = ProcessId::new();
+        let proc_vm = proc_vm.unwrap_or_else(|| ProcessVm::new(PageTableContext::new()));
 
         let inner = ProcessInner {
             name,
@@ -60,7 +56,7 @@ impl Process {
             ticks_passed: 0,
             exit_code: None,
             children: Vec::new(),
-            page_table: Some(page_table),
+            proc_vm: Some(proc_vm),
             proc_data: Some(proc_data.unwrap_or_default()),
         };
 
@@ -83,7 +79,7 @@ impl Process {
             ret
         );
 
-        inner.kill(self.pid, ret);
+        inner.kill(ret);
     }
 }
 
@@ -120,8 +116,24 @@ impl ProcessInner {
         self.exit_code
     }
 
-    pub fn clont_page_table(&self) -> PageTableContext {
-        self.page_table.as_ref().unwrap().clone_level_4()
+    pub fn vm(&self) -> &ProcessVm {
+        self.proc_vm.as_ref().unwrap()
+    }
+
+    pub fn vm_mut(&mut self) -> &mut ProcessVm {
+        self.proc_vm.as_mut().unwrap()
+    }
+
+    pub fn handle_page_fault(&mut self, addr: VirtAddr) -> bool {
+        self.vm_mut().handle_page_fault(addr)
+    }
+
+    pub fn clone_page_table(&self) -> PageTableContext {
+        self.vm().page_table.clone_level_4()
+    }
+
+    pub fn load_elf(&mut self, elf: &ElfFile) {
+        self.vm_mut().load_elf(elf)
     }
 
     /// Save the process's context
@@ -135,7 +147,7 @@ impl ProcessInner {
     /// mark the process as running
     pub(super) fn restore(&mut self, context: &mut ProcessContext) {
         self.context.restore(context);
-        self.page_table.as_ref().unwrap().load();
+        self.vm().page_table.load();
         self.status = ProgramStatus::Running;
     }
 
@@ -147,118 +159,11 @@ impl ProcessInner {
         self.parent.as_ref().and_then(|p| p.upgrade())
     }
 
-    pub fn load_elf(&mut self, elf: &ElfFile) {
-        let alloc = &mut *get_frame_alloc_for_sure();
-
-        let page_table = self.page_table.as_ref().unwrap();
-        let mut mapper = page_table.mapper();
-
-        let code_segments = elf::load_elf(
-            elf,
-            *PHYSICAL_OFFSET.get().unwrap(),
-            &mut mapper,
-            alloc,
-            true,
-        )
-        .unwrap();
-
-        let stack_segment =
-            elf::map_range(STACK_INIT_BOT, STACK_DEF_PAGE, &mut mapper, alloc, true).unwrap();
-
-        // record memory usage
-        let proc_data = self.proc_data.as_mut().unwrap();
-        proc_data.code_memory_usage = code_segments.iter().map(|seg| seg.count()).sum();
-        proc_data.stack_memory_usage = stack_segment.count();
-        proc_data.code_segments = Some(code_segments);
-        proc_data.stack_segment = Some(stack_segment);
-    }
-
-    pub fn try_alloc_new_stack_page(&mut self, addr: VirtAddr) -> Result<(), MapToError<Size4KiB>> {
-        let alloc = &mut *get_frame_alloc_for_sure();
-        let new_start_page = Page::<Size4KiB>::containing_address(addr);
-        let old_stack = self.proc_data.as_ref().unwrap().stack_segment.unwrap();
-
-        let pages = old_stack.start - new_start_page;
-        let page_table = &mut self.page_table.as_mut().unwrap().mapper();
-
-        trace!(
-            "Fill missing pages...[{:#x} -> {:#x}) ({} pages)",
-            new_start_page.start_address().as_u64(),
-            old_stack.start.start_address().as_u64(),
-            pages
-        );
-
-        let user_access = processor::current_pid() != KERNEL_PID;
-        elf::map_range(addr.as_u64(), pages, page_table, alloc, user_access)?;
-
-        let new_stack = PageRange {
-            start: new_start_page,
-            end: old_stack.end,
-        };
-
-        let proc_data = self.proc_data.as_mut().unwrap();
-        proc_data.stack_memory_usage = new_stack.count();
-        proc_data.stack_segment = Some(new_stack);
-
-        Ok(())
-    }
-
-    pub fn kill(&mut self, pid: ProcessId, ret: isize) {
-        self.clean_up_page_table(pid);
+    pub fn kill(&mut self, ret: isize) {
+        self.proc_vm.take();
         self.proc_data.take();
-        self.page_table.take();
         self.exit_code = Some(ret);
         self.status = ProgramStatus::Dead;
-    }
-
-    pub fn clean_up_page_table(&mut self, pid: ProcessId) {
-        let page_table = self.page_table.take().unwrap();
-        let mut mapper = page_table.mapper();
-
-        let frame_deallocator = &mut *get_frame_alloc_for_sure();
-
-        let proc_data = self.proc_data.as_mut().unwrap();
-        let stack = proc_data.stack_segment.unwrap();
-
-        elf::unmap_range(
-            stack.start.start_address().as_u64(),
-            stack.count() as u64,
-            &mut mapper,
-            frame_deallocator,
-            true,
-        )
-        .unwrap();
-
-        // clean up page table when no other process using it
-        if page_table.using_count() == 1 {
-            trace!("Clean up page table for {}#{}", self.name, pid);
-            unsafe {
-                if let Some(ref mut segments) = proc_data.code_segments {
-                    for range in segments {
-                        // trace!(
-                        //     "Free code segment: [{:#x} -> {:#x}) ({} pages)",
-                        //     range.start.start_address(),
-                        //     range.end.start_address(),
-                        //     range.count()
-                        // );
-                        for page in range {
-                            if let Ok(ret) = mapper.unmap(page) {
-                                trace!("Unmap page: {:#x}", page.start_address());
-                                frame_deallocator.deallocate_frame(ret.0);
-                                ret.1.flush();
-                            }
-                        }
-                    }
-                }
-                // free P1-P3
-                mapper.clean_up(frame_deallocator);
-
-                // free P4
-                frame_deallocator.deallocate_frame(page_table.reg.addr);
-            }
-        }
-
-        drop(page_table);
     }
 }
 
@@ -290,20 +195,18 @@ impl core::ops::DerefMut for ProcessInner {
 
 impl core::fmt::Debug for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let mut f = f.debug_struct("Process");
-        f.field("pid", &self.pid);
-
         let inner = self.inner.read();
-        f.field("name", &inner.name);
-        f.field("parent", &inner.parent().map(|p| p.pid));
-        f.field("status", &inner.status);
-        f.field("ticks_passed", &inner.ticks_passed);
-        f.field("children", &inner.children.iter().map(|c| c.pid.0));
-        f.field("page_table", &inner.page_table);
-        f.field("status", &inner.status);
-        f.field("stack", &inner.stack_segment);
-        f.field("context", &inner.context);
-        f.finish()
+        f.debug_struct("Process")
+            .field("pid", &self.pid)
+            .field("name", &inner.name)
+            .field("parent", &inner.parent().map(|p| p.pid))
+            .field("status", &inner.status)
+            .field("ticks_passed", &inner.ticks_passed)
+            .field("children", &inner.children.iter().map(|c| c.pid.0))
+            .field("status", &inner.status)
+            .field("context", &inner.context)
+            .field("vm", &inner.proc_vm)
+            .finish()
     }
 }
 

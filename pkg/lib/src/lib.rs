@@ -25,6 +25,11 @@ pub use io::*;
 pub use syscall::*;
 pub use utils::*;
 
+pub fn init() {
+    #[cfg(feature = "brk_alloc")]
+    crate::allocator::init();
+}
+
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::_print(format_args!($($arg)*)));
