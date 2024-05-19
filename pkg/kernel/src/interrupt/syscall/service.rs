@@ -99,6 +99,15 @@ pub fn sys_open(args: &SyscallArgs) -> usize {
     }
 }
 
+pub fn sys_brk(args: &SyscallArgs) -> usize {
+    let new_heap_end = if args.arg0 == 0 {
+        None
+    } else {
+        Some(args.arg0)
+    };
+    brk(new_heap_end)
+}
+
 pub fn sys_close(args: &SyscallArgs) -> usize {
     close(args.arg0 as u8) as usize
 }

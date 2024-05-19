@@ -147,6 +147,6 @@ pub extern "x86-interrupt" fn page_fault_handler(
             err_code, addr, stack_frame
         );
         crate::proc::current_proc_info();
-        panic!("Cannot handle page fault!");
+        panic!("Failed to handle page fault.");
     }
 }

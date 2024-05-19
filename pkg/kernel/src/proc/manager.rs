@@ -1,5 +1,4 @@
 use alloc::collections::BTreeSet;
-use core::isize;
 
 use super::*;
 use crate::{
@@ -159,15 +158,16 @@ impl ProcessManager {
         proc_data: Option<ProcessData>,
     ) -> ProcessId {
         let kproc = self.get_proc(&KERNEL_PID).unwrap();
-        let page_table = kproc.read().clont_page_table();
-        let proc = Process::new(name, parent, page_table, proc_data);
+        let page_table = kproc.read().clone_page_table();
+        let proc_vm = Some(ProcessVm::new(page_table));
+        let proc = Process::new(name, parent, proc_vm, proc_data);
 
         let mut inner = proc.write();
         inner.pause();
         inner.load_elf(elf);
         inner.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
-            VirtAddr::new_truncate(STACK_INIT_TOP),
+            VirtAddr::new_truncate(super::stack::STACK_INIT_TOP),
         );
         drop(inner);
 
@@ -179,32 +179,6 @@ impl ProcessManager {
 
         pid
     }
-
-    // DEPRECATED: do not spawn kernel thread
-    // pub fn spawn_kernel_thread(
-    //     &self,
-    //     entry: VirtAddr,
-    //     stack_top: VirtAddr,
-    //     name: String,
-    //     parent: ProcessId,
-    //     proc_data: Option<ProcessData>,
-    // ) -> ProcessId {
-    //     let kproc = self.get_proc(KERNEL_PID).unwrap();
-    //     let page_table = kproc.read().clont_page_table();
-    //     let mut p = Process::new(
-    //         &mut crate::memory::get_frame_alloc_for_sure(),
-    //         name,
-    //         parent,
-    //         page_table,
-    //         proc_data,
-    //     );
-    //     p.pause();
-    //     p.init_stack_frame(entry, stack_top);
-    //     info!("Spawn process: {}#{}", p.name(), p.pid());
-    //     let pid = p.pid();
-    //     self.processes.push(p);
-    //     pid
-    // }
 
     pub fn fork(&self) {
         let proc = self.current().fork();
@@ -238,11 +212,9 @@ impl ProcessManager {
                 "Page Fault! Checking if {:#x} is on current process's stack",
                 addr
             );
-            if cur_proc.read().is_on_stack(addr) {
-                cur_proc.write().try_alloc_new_stack_page(addr).is_ok()
-            } else {
-                false
-            }
+
+            let mut inner = cur_proc.write();
+            inner.handle_page_fault(addr)
         } else {
             false
         }

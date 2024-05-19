@@ -105,11 +105,11 @@ where
     fn read_block(&self, offset: usize, block: &mut B) -> Result<()> {
         match self.cache.get(&offset) {
             Some(cache) => {
-                log::trace!("Cache hit for block {}", offset);
+                // log::trace!("Cache hit for block {}", offset);
                 cache.read().load(block)?;
             }
             None => {
-                log::trace!("Cache missed for block {}", offset);
+                // log::trace!("Cache missed for block {}", offset);
                 self.device.read_block(offset, block)?;
                 self.save_cache(offset, block.clone(), false);
             }
