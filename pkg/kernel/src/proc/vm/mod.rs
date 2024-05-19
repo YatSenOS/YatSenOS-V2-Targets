@@ -1,10 +1,6 @@
-use alloc::format;
-use x86_64::{
-    structures::paging::{page::*, *},
-    VirtAddr,
-};
+use x86_64::{structures::paging::*, VirtAddr};
 
-use crate::{humanized_size, memory::*};
+use crate::memory::*;
 
 pub mod stack;
 
@@ -60,19 +56,12 @@ impl ProcessVm {
 
         self.stack.handle_page_fault(addr, mapper, alloc)
     }
-
-    pub(super) fn memory_usage(&self) -> u64 {
-        self.stack.memory_usage()
-    }
 }
 
 impl core::fmt::Debug for ProcessVm {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let (size, unit) = humanized_size(self.memory_usage());
-
         f.debug_struct("ProcessVm")
             .field("stack", &self.stack)
-            .field("memory_usage", &format!("{} {}", size, unit))
             .field("page_table", &self.page_table)
             .finish()
     }
