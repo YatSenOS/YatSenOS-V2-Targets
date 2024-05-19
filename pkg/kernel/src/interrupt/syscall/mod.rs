@@ -43,10 +43,8 @@ pub fn dispatcher(context: &mut ProcessContext) {
         Syscall::Read => context.set_rax(sys_read(&args)),
         // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
         Syscall::Write => context.set_rax(sys_write(&args)),
-
         // None -> pid: u16
         Syscall::GetPid => context.set_rax(sys_get_pid() as usize),
-
         // None -> pid: u16 (diff from parent and child)
         Syscall::VFork => sys_fork(context),
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
@@ -57,7 +55,6 @@ pub fn dispatcher(context: &mut ProcessContext) {
         Syscall::WaitPid => sys_wait_pid(&args, context),
         // pid: arg0 as u16
         Syscall::Kill => sys_kill(&args, context),
-
         // op: u8, key: u32, val: usize -> ret: any
         Syscall::Sem => sys_sem(&args, context),
         // None -> time: usize

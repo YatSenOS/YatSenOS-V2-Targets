@@ -23,6 +23,8 @@ parser.add_argument('--dry-run', action='store_true', help='Enable dry run')
 parser.add_argument('--bios', type=str,
                     default=os.path.join('assets', 'OVMF.fd'), help='Set BIOS path')
 parser.add_argument('--boot', type=str, default='esp', help='Set boot path')
+parser.add_argument('--debug-listen', type=str, default='0.0.0.0:1234',
+                    help='Set listen address for gdbserver')
 
 parser.add_argument('task', type=str, choices=[
                     'build', 'clean', 'launch', 'run'
@@ -86,7 +88,7 @@ def qemu(output: str = '-nographic', memory: str = '96M', debug: bool = False, i
                  '-m', memory, '-drive', 'format=raw,file=fat:esp', '-snapshot']
 
     if debug:
-        qemu_args += ['-s', '-S']
+        qemu_args += ['-gdb', f'tcp:{args.debug_listen}', '-S']
     elif intdbg:
         qemu_args += ['-no-reboot', '-d', 'int,cpu_reset']
 
