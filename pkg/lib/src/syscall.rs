@@ -124,12 +124,3 @@ pub fn sys_sem_signal(key: u32) {
 pub fn sys_sem_wait(key: u32) {
     _ = syscall!(Syscall::Sem, 3, key as usize)
 }
-
-#[inline(always)]
-pub fn sys_brk(addr: Option<usize>) -> Option<usize> {
-    const BRK_FAILED: usize = !0;
-    match syscall!(Syscall::Brk, addr.unwrap_or(0)) {
-        BRK_FAILED => None,
-        ret => Some(ret as usize),
-    }
-}

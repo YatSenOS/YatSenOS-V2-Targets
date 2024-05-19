@@ -11,10 +11,9 @@ use xmas_elf::ElfFile;
 
 use crate::{humanized_size, memory::*};
 
-pub mod heap;
 pub mod stack;
 
-use self::{heap::Heap, stack::Stack};
+use self::stack::Stack;
 
 use super::PageTableContext;
 
@@ -28,9 +27,6 @@ pub struct ProcessVm {
     // stack is pre-process allocated
     pub(super) stack: Stack,
 
-    // heap is allocated by brk syscall
-    pub(super) heap: Heap,
-
     // code is hold by the first process
     // these fields will be empty for other processes
     pub(super) code: Vec<PageRangeInclusive>,
@@ -42,7 +38,6 @@ impl ProcessVm {
         Self {
             page_table,
             stack: Stack::empty(),
-            heap: Heap::empty(),
             code: Vec::new(),
             code_usage: 0,
         }
@@ -52,14 +47,6 @@ impl ProcessVm {
         // TODO: record kernel code usage
         self.stack = Stack::kstack();
         self
-    }
-
-    pub fn brk(&mut self, addr: Option<VirtAddr>) -> Option<VirtAddr> {
-        self.heap.brk(
-            addr,
-            &mut self.page_table.mapper(),
-            &mut *get_frame_alloc_for_sure(),
-        )
     }
 
     pub fn load_elf(&mut self, elf: &ElfFile) {
@@ -88,7 +75,6 @@ impl ProcessVm {
         Self {
             page_table: owned_page_table,
             stack: self.stack.fork(mapper, alloc, stack_offset_count),
-            heap: self.heap.fork(),
 
             // do not share code info
             code: Vec::new(),
@@ -104,7 +90,7 @@ impl ProcessVm {
     }
 
     pub(super) fn memory_usage(&self) -> u64 {
-        self.stack.memory_usage() + self.heap.memory_usage() + self.code_usage
+        self.stack.memory_usage() + self.code_usage
     }
 
     pub(super) fn clean_up(&mut self) -> Result<(), UnmapError> {
@@ -114,9 +100,6 @@ impl ProcessVm {
         self.stack.clean_up(mapper, dealloc)?;
 
         if self.page_table.using_count() == 1 {
-            // free heap
-            self.heap.clean_up(mapper, dealloc)?;
-
             // free code
             for page_range in self.code.iter() {
                 elf::unmap_range(*page_range, mapper, dealloc, true)?;
@@ -141,7 +124,6 @@ impl core::fmt::Debug for ProcessVm {
 
         f.debug_struct("ProcessVm")
             .field("stack", &self.stack)
-            .field("heap", &self.heap)
             .field("memory_usage", &format!("{} {}", size, unit))
             .field("page_table", &self.page_table)
             .finish()

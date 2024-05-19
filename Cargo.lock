@@ -480,7 +480,6 @@ name = "yslib"
 version = "0.6.0"
 dependencies = [
  "chrono",
- "linked_list_allocator",
  "ysos_syscall",
 ]
 
@@ -494,13 +493,6 @@ dependencies = [
  "x86_64",
  "xmas-elf",
  "ysos_elf",
-]
-
-[[package]]
-name = "ysos_brk"
-version = "0.0.1"
-dependencies = [
- "yslib",
 ]
 
 [[package]]

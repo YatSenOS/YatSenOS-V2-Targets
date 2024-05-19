@@ -47,8 +47,6 @@ pub fn dispatcher(context: &mut ProcessContext) {
         Syscall::Open => context.set_rax(sys_open(&args)),
         // fd: arg0 as u8 -> success: bool
         Syscall::Close => context.set_rax(sys_close(&args)),
-        // addr: usize -> success: bool
-        Syscall::Brk => context.set_rax(sys_brk(&args)),
         // None -> pid: u16
         Syscall::GetPid => context.set_rax(sys_get_pid() as usize),
         // None -> pid: u16 (diff from parent and child)
