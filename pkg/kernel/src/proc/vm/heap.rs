@@ -2,7 +2,7 @@ use core::sync::atomic::{AtomicU64, Ordering};
 
 use alloc::sync::Arc;
 use x86_64::{
-    structures::paging::{mapper::UnmapError, FrameDeallocator, Mapper, Page},
+    structures::paging::{mapper::UnmapError, Page},
     VirtAddr,
 };
 
@@ -60,16 +60,16 @@ impl Heap {
 
         let start_page = Page::containing_address(self.base);
         let end_page = Page::containing_address(VirtAddr::new(end_addr));
+        let range = Page::range_inclusive(start_page, end_page);
 
-        for page in Page::range_inclusive(start_page, end_page) {
-            let (frame, flush) = mapper.unmap(page)?;
-            trace!("Unmap heap page: {:#x}", page.start_address());
+        trace!(
+            "Unmap heap range : {:#x} - {:#x} ({})",
+            start_page.start_address(),
+            end_page.start_address(),
+            range.count()
+        );
 
-            unsafe {
-                dealloc.deallocate_frame(frame);
-            }
-            flush.flush();
-        }
+        elf::unmap_range(range, mapper, dealloc, true)?;
 
         Ok(())
     }
@@ -78,8 +78,11 @@ impl Heap {
 impl core::fmt::Debug for Heap {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Heap")
-            .field("base", &self.base)
-            .field("end", &self.end.load(Ordering::Relaxed))
+            .field("base", &format_args!("{:#x}", self.base.as_u64()))
+            .field(
+                "end",
+                &format_args!("{:#x}", self.end.load(Ordering::Relaxed)),
+            )
             .finish()
     }
 }

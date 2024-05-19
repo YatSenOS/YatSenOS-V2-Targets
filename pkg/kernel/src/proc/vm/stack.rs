@@ -93,7 +93,7 @@ impl Stack {
         let cur_stack_base = self.range.start.start_address().as_u64();
         let mut new_stack_base = cur_stack_base - stack_offset_count * STACK_MAX_SIZE;
 
-        while elf::map_range(new_stack_base, self.usage as u64, mapper, alloc, true).is_err() {
+        while elf::map_range(new_stack_base, self.usage, mapper, alloc, true).is_err() {
             trace!("Map thread stack to {:#x} failed.", new_stack_base);
             new_stack_base -= STACK_MAX_SIZE; // stack grow down
         }
@@ -200,13 +200,9 @@ impl Stack {
             return Ok(());
         }
 
-        elf::unmap_range(
-            self.range.start.start_address().as_u64(),
-            self.usage,
-            mapper,
-            dealloc,
-            true,
-        )?;
+        let start = self.range.start.start_address().as_u64();
+
+        elf::unmap_pages(start, self.usage, mapper, dealloc, true)?;
 
         self.usage = 0;
 
@@ -220,6 +216,15 @@ impl Stack {
 
 impl core::fmt::Debug for Stack {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("Stack").field("range", &self.range).finish()
+        f.debug_struct("Stack")
+            .field(
+                "top",
+                &format_args!("{:#x}", self.range.end.start_address().as_u64()),
+            )
+            .field(
+                "bot",
+                &format_args!("{:#x}", self.range.start.start_address().as_u64()),
+            )
+            .finish()
     }
 }

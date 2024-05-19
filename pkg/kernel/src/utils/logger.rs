@@ -27,7 +27,7 @@ impl log::Log for Logger {
     fn log(&self, record: &Record) {
         match record.level() {
             log::Level::Error => println_warn!(
-                "[E] {}@{}:{}",
+                "[E] {}@{}: {}",
                 record.file_static().unwrap_or(""),
                 record.line().unwrap_or(0),
                 record.args()

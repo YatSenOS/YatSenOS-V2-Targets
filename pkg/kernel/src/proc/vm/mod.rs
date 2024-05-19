@@ -10,10 +10,7 @@ use x86_64::{
 };
 use xmas_elf::ElfFile;
 
-use crate::{
-    humanized_size,
-    memory::*,
-};
+use crate::{humanized_size, memory::*};
 
 pub mod heap;
 pub mod stack;
@@ -111,7 +108,7 @@ impl ProcessVm {
     }
 
     pub(super) fn memory_usage(&self) -> u64 {
-        (self.stack.memory_usage() + self.heap.memory_usage() + self.code_usage) as u64
+        (self.stack.memory_usage() + self.heap.memory_usage() + self.code_usage)
             * crate::memory::PAGE_SIZE
     }
 
@@ -124,20 +121,15 @@ impl ProcessVm {
         self.stack.clean_up(mapper, dealloc)?;
 
         if self.page_table.using_count() == 1 {
+            // free heap
+            self.heap.clean_up(mapper, dealloc)?;
+
+            // free code
+            for page_range in self.code.iter() {
+                elf::unmap_range(*page_range, mapper, dealloc, true)?;
+            }
+
             unsafe {
-                // free heap
-                self.heap.clean_up(mapper, dealloc)?;
-
-                // free code
-                for range in self.code.iter() {
-                    for page in *range {
-                        let (frame, flush) = mapper.unmap(page)?;
-                        trace!("Unmap code page: {:#x}", page.start_address());
-                        dealloc.deallocate_frame(frame);
-                        flush.flush();
-                    }
-                }
-
                 // free P1-P3
                 mapper.clean_up(dealloc);
 
@@ -149,7 +141,7 @@ impl ProcessVm {
         let end_count = dealloc.recycled_count();
 
         debug!(
-            "Recycled {}({:.3}MiB) frames, {}({:.3}MiB) frames in total.",
+            "Recycled {}({:.3} MiB) frames, {}({:.3} MiB) frames in total.",
             end_count - start_count,
             ((end_count - start_count) * 4) as f32 / 1024.0,
             end_count,

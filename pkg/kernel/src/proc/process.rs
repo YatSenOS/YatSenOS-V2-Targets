@@ -149,7 +149,7 @@ impl ProcessInner {
     }
 
     pub fn vm(&self) -> &ProcessVm {
-        &self.proc_vm.as_ref().unwrap()
+        self.proc_vm.as_ref().unwrap()
     }
 
     pub fn vm_mut(&mut self) -> &mut ProcessVm {
@@ -253,12 +253,11 @@ impl ProcessInner {
 
         if let Some(mut vm) = self.proc_vm.take() {
             if let Err(e) = vm.clean_up() {
-                error!("Failed to clean up vm: {:?}", e);
+                error!("Failed to clean up vm for #{}: {:?}", pid, e);
             }
         }
 
         self.proc_data.take();
-        self.proc_vm.take();
         self.exit_code = Some(ret);
         self.status = ProgramStatus::Dead;
     }
