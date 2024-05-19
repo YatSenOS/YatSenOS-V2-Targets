@@ -59,7 +59,7 @@ impl ProcessVm {
             })
             .collect();
         self.code = owned_pages;
-        self.code_usage = size as u64;
+        self.code_usage = size as u64 * crate::memory::PAGE_SIZE;
 
         self.stack = Stack::kstack();
 
@@ -88,7 +88,7 @@ impl ProcessVm {
             elf::load_elf(elf, *PHYSICAL_OFFSET.get().unwrap(), mapper, alloc, true).unwrap();
 
         let usage: usize = self.code.iter().map(|page| page.count()).sum();
-        self.code_usage = usage as u64;
+        self.code_usage = usage as u64 * crate::memory::PAGE_SIZE
     }
 
     pub fn fork(&self, stack_offset_count: u64) -> Self {
@@ -116,9 +116,7 @@ impl ProcessVm {
     }
 
     pub(super) fn memory_usage(&self) -> u64 {
-        self.stack.memory_usage()
-            + self.heap.memory_usage()
-            + self.code_usage * crate::memory::PAGE_SIZE
+        self.stack.memory_usage() + self.heap.memory_usage() + self.code_usage
     }
 
     pub(super) fn clean_up(&mut self) -> Result<(), UnmapError> {
