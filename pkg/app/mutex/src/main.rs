@@ -10,7 +10,7 @@ static LOCK: SpinLock = SpinLock::new();
 static mut BURGER: isize = 0;
 static mut BURGER_SEM: isize = 0;
 
-fn main() -> usize {
+fn main() -> isize {
     let pid = sys_fork();
 
     if pid == 0 {
