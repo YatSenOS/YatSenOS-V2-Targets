@@ -8,7 +8,7 @@ use lib::*;
 
 extern crate lib;
 
-fn main() -> usize {
+fn main() -> isize {
     println!("Welcome to Brk Test!");
     loop {
         print!("$ ");

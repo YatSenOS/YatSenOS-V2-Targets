@@ -12,7 +12,7 @@ static IS_NOT_FULL: Semaphore = Semaphore::new(0x1000);
 static IS_NOT_EMPTY: Semaphore = Semaphore::new(0x2000);
 static MUTEX: Semaphore = Semaphore::new(0x6666);
 
-fn main() -> usize {
+fn main() -> isize {
     IS_NOT_EMPTY.init(0);
     IS_NOT_FULL.init(QUEUE_COUNT);
     MUTEX.init(1);
