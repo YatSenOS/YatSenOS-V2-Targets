@@ -8,7 +8,7 @@ macro_rules! entry {
         pub extern "C" fn __impl_start() {
             lib::init();
             let ret = $fn();
-            lib::sys_exit(ret as usize);
+            lib::sys_exit(ret);
         }
     };
 }

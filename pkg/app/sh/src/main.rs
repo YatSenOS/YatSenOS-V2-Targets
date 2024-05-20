@@ -12,7 +12,7 @@ use lib::*;
 
 extern crate lib;
 
-fn main() -> usize {
+fn main() -> isize {
     println!("            <<< Welcome to YatSenOS shell >>>            ");
     println!("                                 type `help` for help");
     loop {

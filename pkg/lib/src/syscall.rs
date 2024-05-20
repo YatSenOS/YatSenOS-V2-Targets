@@ -47,8 +47,8 @@ pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) -> usize {
 }
 
 #[inline(always)]
-pub fn sys_exit(code: usize) -> ! {
-    syscall!(Syscall::Exit, code);
+pub fn sys_exit(code: isize) -> ! {
+    syscall!(Syscall::Exit, code as u64);
     unreachable!();
 }
 
