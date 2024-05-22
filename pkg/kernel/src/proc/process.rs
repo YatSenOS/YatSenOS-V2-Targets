@@ -136,6 +136,10 @@ impl ProcessInner {
         self.vm_mut().load_elf(elf)
     }
 
+    pub fn set_return(&mut self, ret: usize) {
+        self.context.set_rax(ret);
+    }
+
     /// Save the process's context
     /// mark the process as ready
     pub(super) fn save(&mut self, context: &ProcessContext) {

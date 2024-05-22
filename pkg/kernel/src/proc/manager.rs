@@ -190,9 +190,13 @@ impl ProcessManager {
     //     pid
     // }
 
-    pub fn wake_up(&self, pid: ProcessId) {
+    pub fn wake_up(&self, pid: ProcessId, ret: Option<isize>) {
         if let Some(proc) = self.get_proc(&pid) {
-            proc.write().pause();
+            let mut inner = proc.write();
+            if let Some(ret) = ret {
+                inner.set_return(ret as usize);
+            }
+            inner.pause();
             self.push_ready(pid);
         }
     }
@@ -232,7 +236,7 @@ impl ProcessManager {
 
         if let Some(pids) = self.wait_queue.lock().remove(&pid) {
             for p in pids {
-                self.wake_up(p);
+                self.wake_up(p, Some(ret));
             }
         }
     }
