@@ -148,7 +148,7 @@ pub fn sem_signal(key: u32, context: &mut ProcessContext) {
         match ret {
             SemaphoreResult::Ok => context.set_rax(0),
             SemaphoreResult::NotExist => context.set_rax(1),
-            SemaphoreResult::WakeUp(pid) => manager.wake_up(pid),
+            SemaphoreResult::WakeUp(pid) => manager.wake_up(pid, None),
             _ => unreachable!(),
         }
     })
