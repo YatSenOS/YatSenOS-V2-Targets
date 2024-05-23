@@ -104,10 +104,6 @@ impl ProcessInner {
         self.status = ProgramStatus::Running;
     }
 
-    pub fn block(&mut self) {
-        self.status = ProgramStatus::Blocked;
-    }
-
     pub fn is_ready(&self) -> bool {
         self.status == ProgramStatus::Ready
     }
@@ -134,10 +130,6 @@ impl ProcessInner {
 
     pub fn load_elf(&mut self, elf: &ElfFile) {
         self.vm_mut().load_elf(elf)
-    }
-
-    pub fn set_return(&mut self, ret: usize) {
-        self.context.set_rax(ret);
     }
 
     /// Save the process's context

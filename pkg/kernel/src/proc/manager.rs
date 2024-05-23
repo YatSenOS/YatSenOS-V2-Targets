@@ -1,5 +1,3 @@
-use alloc::collections::BTreeSet;
-
 use super::*;
 use crate::{
     memory::{
@@ -30,7 +28,6 @@ pub struct ProcessManager {
     processes: RwLock<BTreeMap<ProcessId, Arc<Process>>>,
     ready_queue: Mutex<VecDeque<ProcessId>>,
     app_list: boot::AppListRef,
-    wait_queue: Mutex<BTreeMap<ProcessId, BTreeSet<ProcessId>>>,
 }
 
 impl ProcessManager {
@@ -42,7 +39,6 @@ impl ProcessManager {
             processes: RwLock::new(processes),
             app_list,
             ready_queue: Mutex::new(VecDeque::new()),
-            wait_queue: Mutex::new(BTreeMap::new()),
         }
     }
 
@@ -68,13 +64,6 @@ impl ProcessManager {
     pub fn current(&self) -> Arc<Process> {
         self.get_proc(&processor::current_pid())
             .expect("No current process")
-    }
-
-    pub fn wait_pid(&self, pid: ProcessId) {
-        // push the current process to the wait queue
-        let mut wait_queue = self.wait_queue.lock();
-        let entry = wait_queue.entry(pid).or_default();
-        entry.insert(processor::current_pid());
     }
 
     pub(super) fn get_exit_code(&self, pid: ProcessId) -> Option<isize> {
@@ -184,17 +173,6 @@ impl ProcessManager {
     //     pid
     // }
 
-    pub fn wake_up(&self, pid: ProcessId, ret: Option<isize>) {
-        if let Some(proc) = self.get_proc(&pid) {
-            let mut inner = proc.write();
-            if let Some(ret) = ret {
-                inner.set_return(ret as usize);
-            }
-            inner.pause();
-            self.push_ready(pid);
-        }
-    }
-
     pub fn kill_self(&self, ret: isize) {
         self.kill(processor::current_pid(), ret);
     }
@@ -227,12 +205,6 @@ impl ProcessManager {
         trace!("Kill {:#?}", &proc);
 
         proc.kill(ret);
-
-        if let Some(pids) = self.wait_queue.lock().remove(&pid) {
-            for p in pids {
-                self.wake_up(p, Some(ret));
-            }
-        }
     }
 
     pub fn print_process_list(&self) {

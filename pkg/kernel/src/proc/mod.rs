@@ -84,16 +84,17 @@ pub fn wait_pid(pid: ProcessId, context: &mut ProcessContext) {
         if let Some(ret) = manager.get_exit_code(pid) {
             context.set_rax(ret as usize);
         } else {
-            manager.wait_pid(pid);
-            manager.save_current(context);
-            manager.current().write().block();
-            manager.switch_next(context);
+            // FIXME: return a special value to indicate
+            //        the process is still running
+            context.set_rax(0xbee);
         }
     })
 }
 
 pub(crate) fn wait_no_block(pid: ProcessId) -> Option<isize> {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().get_exit_code(pid))
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager().get_exit_code(pid)
+    })
 }
 
 pub fn read(fd: u8, buf: &mut [u8]) -> isize {
