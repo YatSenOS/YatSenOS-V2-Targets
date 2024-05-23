@@ -65,20 +65,14 @@ impl ProcessManager {
             .expect("No current process")
     }
 
-    pub fn wait_pid(&self, pid: ProcessId) -> Option<isize> {
-        if let Some(ret) = self.get_ret(pid) {
-            return Some(ret);
-        };
-
+    pub fn wait_pid(&self, pid: ProcessId) {
         // push the current process to the wait queue
         let mut wait_queue = self.wait_queue.lock();
         let entry = wait_queue.entry(pid).or_default();
         entry.insert(processor::current_pid());
-
-        None
     }
 
-    pub(super) fn get_ret(&self, pid: ProcessId) -> Option<isize> {
+    pub(super) fn get_exit_code(&self, pid: ProcessId) -> Option<isize> {
         self.get_proc(&pid).and_then(|p| p.read().exit_code())
     }
 
