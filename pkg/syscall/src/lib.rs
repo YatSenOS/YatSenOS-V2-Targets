@@ -1,11 +1,11 @@
 #![no_std]
 
-use num_enum::FromPrimitive;
+use num_enum::TryFromPrimitive;
 
 pub mod macros;
 
-#[repr(usize)]
-#[derive(Clone, Debug, FromPrimitive)]
+#[repr(u16)]
+#[derive(Clone, Debug, TryFromPrimitive, PartialEq, Eq)]
 pub enum Syscall {
     Read = 0,
     Write = 1,
