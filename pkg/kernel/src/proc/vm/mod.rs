@@ -70,7 +70,7 @@ impl ProcessVm {
         self.heap.brk(
             addr,
             &mut self.page_table.mapper(),
-            &mut *get_frame_alloc_for_sure(),
+            &mut get_frame_alloc_for_sure(),
         )
     }
 

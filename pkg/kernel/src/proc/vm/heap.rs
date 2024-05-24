@@ -77,14 +77,18 @@ impl Heap {
             new_end_page.start_address().as_u64()
         );
 
-        if new_end_page > cur_end_page {
-            // heap: [base, cur_end, new_end) -> map [cur_end, new_end - 1]
-            let range = Page::range_inclusive(cur_end_page, new_end_page - 1);
-            elf::map_range(range, mapper, alloc, true).ok()?;
-        } else if new_end_page < cur_end_page {
-            // heap: [base, new_end, cur_end) -> unmap [new_end, cur_end - 1]
-            let range = Page::range_inclusive(new_end_page, cur_end_page - 1);
-            elf::unmap_range(range, mapper, alloc, true).ok()?;
+        match new_end_page.cmp(&cur_end_page) {
+            core::cmp::Ordering::Greater => {
+                // heap: [base, cur_end, new_end) -> map [cur_end, new_end - 1]
+                let range = Page::range_inclusive(cur_end_page, new_end_page - 1);
+                elf::map_range(range, mapper, alloc, true).ok()?;
+            }
+            core::cmp::Ordering::Less => {
+                // heap: [base, new_end, cur_end) -> unmap [new_end, cur_end - 1]
+                let range = Page::range_inclusive(new_end_page, cur_end_page - 1);
+                elf::unmap_range(range, mapper, alloc, true).ok()?;
+            }
+            core::cmp::Ordering::Equal => {}
         }
 
         self.end.store(new_end.as_u64(), Ordering::Release);

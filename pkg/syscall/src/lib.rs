@@ -5,7 +5,7 @@ use num_enum::TryFromPrimitive;
 pub mod macros;
 
 #[repr(u16)]
-#[derive(Clone, Debug, TryFromPrimitive)]
+#[derive(Clone, Debug, TryFromPrimitive, PartialEq, Eq)]
 pub enum Syscall {
     Read = 0,
     Write = 1,
