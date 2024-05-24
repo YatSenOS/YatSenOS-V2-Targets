@@ -1,5 +1,4 @@
 use crate::{memory::gdt, proc::*};
-use alloc::format;
 use syscall_def::Syscall;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
@@ -89,7 +88,7 @@ impl core::fmt::Display for SyscallArgs {
         write!(
             f,
             "SYSCALL: {:<10} (0x{:016x}, 0x{:016x}, 0x{:016x})",
-            format!("{:?}", self.syscall),
+            alloc::format!("{:?}", self.syscall),
             self.arg0,
             self.arg1,
             self.arg2
