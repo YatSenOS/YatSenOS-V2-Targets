@@ -45,7 +45,7 @@ pub fn sys_deallocate(args: &SyscallArgs) {
     }
 }
 
-pub fn spawn_process(args: &SyscallArgs) -> usize {
+pub fn spawn_process(args: &SyscallArgs) -> u16 {
     let path = unsafe {
         core::str::from_utf8_unchecked(core::slice::from_raw_parts(
             args.arg0 as *const u8,
@@ -54,7 +54,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
     };
 
     match fs_spawn(path) {
-        Some(pid) => pid.0 as usize,
+        Some(pid) => pid.0,
         None => {
             warn!("spawn_process: failed to spawn: {}", path);
             0

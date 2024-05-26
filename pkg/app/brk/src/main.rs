@@ -25,7 +25,7 @@ fn main() -> isize {
                 let addr = if line[1].starts_with("0x") {
                     usize::from_str_radix(&line[1][2..], 16)
                 } else {
-                    usize::from_str_radix(line[1], 10)
+                    line[1].parse::<usize>()
                 };
 
                 let addr = match addr {
