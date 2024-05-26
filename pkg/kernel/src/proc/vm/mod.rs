@@ -123,7 +123,7 @@ impl ProcessVm {
         let mapper = &mut self.page_table.mapper();
         let dealloc = &mut *get_frame_alloc_for_sure();
 
-        let start_count = dealloc.recycled_count();
+        let start_count = dealloc.frames_recycled();
 
         self.stack.clean_up(mapper, dealloc)?;
 
@@ -145,7 +145,7 @@ impl ProcessVm {
             }
         }
 
-        let end_count = dealloc.recycled_count();
+        let end_count = dealloc.frames_recycled();
 
         debug!(
             "Recycled {}({:.3} MiB) frames, {}({:.3} MiB) frames in total.",
