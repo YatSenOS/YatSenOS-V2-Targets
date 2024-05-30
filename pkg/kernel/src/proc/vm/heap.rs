@@ -6,7 +6,7 @@ use x86_64::{
     VirtAddr,
 };
 
-use super::{FrameAllocatorRef, MapperRef};
+use super::*;
 
 // user process runtime heap
 // 0x100000000 bytes -> 4GiB
@@ -25,13 +25,6 @@ pub struct Heap {
 }
 
 impl Heap {
-    pub fn empty() -> Self {
-        Self {
-            base: VirtAddr::new(HEAP_START),
-            end: Arc::new(AtomicU64::new(HEAP_START)),
-        }
-    }
-
     pub fn fork(&self) -> Self {
         Self {
             base: self.base,
@@ -94,9 +87,18 @@ impl Heap {
         self.end.store(new_end.as_u64(), Ordering::Release);
         Some(new_end)
     }
+}
 
-    pub(super) fn clean_up(
-        &self,
+impl VmPartExt for Heap {
+    fn empty() -> Self {
+        Self {
+            base: VirtAddr::new(HEAP_START),
+            end: Arc::new(AtomicU64::new(HEAP_START)),
+        }
+    }
+
+    fn clean_up(
+        &mut self,
         mapper: MapperRef,
         dealloc: FrameAllocatorRef,
     ) -> Result<(), UnmapError> {
@@ -116,8 +118,7 @@ impl Heap {
         Ok(())
     }
 
-    #[inline]
-    pub fn memory_usage(&self) -> u64 {
+    fn memory_usage(&self) -> u64 {
         self.end.load(Ordering::Relaxed) - self.base.as_u64()
     }
 }

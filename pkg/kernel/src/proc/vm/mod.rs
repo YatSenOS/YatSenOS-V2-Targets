@@ -38,6 +38,20 @@ pub struct ProcessVm {
     pub(super) code_usage: u64,
 }
 
+trait VmPartExt {
+    /// Clean up the part of the memory
+    ///
+    /// This function will free the memory used by the process
+    fn clean_up(&mut self, mapper: MapperRef, dealloc: FrameAllocatorRef)
+        -> Result<(), UnmapError>;
+
+    /// Create a new empty memory part
+    fn empty() -> Self;
+
+    /// Get the memory usage
+    fn memory_usage(&self) -> u64;
+}
+
 impl ProcessVm {
     pub fn new(page_table: PageTableContext) -> Self {
         Self {
@@ -156,6 +170,14 @@ impl ProcessVm {
         );
 
         Ok(())
+    }
+}
+
+impl Drop for ProcessVm {
+    fn drop(&mut self) {
+        if let Err(err) = self.clean_up() {
+            error!("Failed to clean up process memory: {:?}", err);
+        }
     }
 }
 

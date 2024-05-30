@@ -11,7 +11,7 @@ use x86_64::{
 
 use crate::proc::{processor, KERNEL_PID};
 
-use super::{FrameAllocatorRef, MapperRef};
+use super::*;
 
 // 0xffff_ff00_0000_0000 is the kernel's address space
 pub const STACK_MAX: u64 = 0x4000_0000_0000;
@@ -60,13 +60,6 @@ impl Stack {
         Self {
             range: Page::range(top - size + 1, top + 1),
             usage: size,
-        }
-    }
-
-    pub const fn empty() -> Self {
-        Self {
-            range: Page::range(STACK_INIT_TOP_PAGE, STACK_INIT_TOP_PAGE),
-            usage: 0,
         }
     }
 
@@ -189,8 +182,17 @@ impl Stack {
             );
         }
     }
+}
 
-    pub(super) fn clean_up(
+impl VmPartExt for Stack {
+    fn empty() -> Self {
+        Self {
+            range: Page::range(STACK_INIT_TOP_PAGE, STACK_INIT_TOP_PAGE),
+            usage: 0,
+        }
+    }
+
+    fn clean_up(
         &mut self,
         mapper: MapperRef,
         dealloc: FrameAllocatorRef,
@@ -209,7 +211,7 @@ impl Stack {
         Ok(())
     }
 
-    pub fn memory_usage(&self) -> u64 {
+    fn memory_usage(&self) -> u64 {
         self.usage * crate::memory::PAGE_SIZE
     }
 }

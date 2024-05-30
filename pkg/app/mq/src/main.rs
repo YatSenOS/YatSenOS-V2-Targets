@@ -54,6 +54,8 @@ fn producer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New producer #{}({})", id, pid);
     for _ in 0..10 {
+        delay();
+
         IS_NOT_FULL.wait();
         MUTEX.wait();
         unsafe {
@@ -72,6 +74,8 @@ fn consumer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New consumer #{}({})", id, pid);
     for _ in 0..10 {
+        delay();
+
         IS_NOT_EMPTY.wait();
         MUTEX.wait();
         unsafe {
@@ -84,6 +88,14 @@ fn consumer(id: usize) -> ! {
         IS_NOT_FULL.signal();
     }
     sys_exit(0);
+}
+
+#[inline(never)]
+#[no_mangle]
+fn delay() {
+    for _ in 0..0x100 {
+        core::hint::spin_loop();
+    }
 }
 
 entry!(main);
