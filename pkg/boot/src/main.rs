@@ -155,7 +155,7 @@ fn current_page_table() -> OffsetPageTable<'static> {
 
 pub fn get_page_usage(elf: &ElfFile) -> KernelPages {
     elf.program_iter()
-        .filter(|segment| segment.get_type().unwrap() == xmas_elf::program::Type::Load)
+        .filter(|segment| segment.get_type() == Ok(xmas_elf::program::Type::Load))
         .map(|segment| get_page_range(segment))
         .collect()
 }
