@@ -124,7 +124,7 @@ pub fn current_pid() -> ProcessId {
 
 pub fn brk(addr: Option<usize>) -> usize {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().write().brk(addr)
+        get_process_manager().current().read().brk(addr)
     })
 }
 
