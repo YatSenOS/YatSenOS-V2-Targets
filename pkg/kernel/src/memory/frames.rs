@@ -10,10 +10,12 @@ guard_access_fn! {
     pub get_frame_alloc(FRAME_ALLOCATOR: BootInfoFrameAllocator)
 }
 
+type BootInfoFrameIter = Box<dyn Iterator<Item = PhysFrame> + Send>;
+
 /// A FrameAllocator that returns usable frames from the bootloader's memory map.
 pub struct BootInfoFrameAllocator {
     size: usize,
-    frames: Box<dyn Iterator<Item = PhysFrame> + Send>,
+    frames: BootInfoFrameIter,
     used: usize,
     recycled: Vec<PhysFrame>,
 }
@@ -65,7 +67,7 @@ impl FrameDeallocator<Size4KiB> for BootInfoFrameAllocator {
     }
 }
 
-unsafe fn create_frame_iter(memory_map: &MemoryMap) -> Box<dyn Iterator<Item = PhysFrame> + Send> {
+unsafe fn create_frame_iter(memory_map: &MemoryMap) -> BootInfoFrameIter {
     let iter = memory_map
         .clone()
         .into_iter()
