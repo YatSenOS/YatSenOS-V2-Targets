@@ -252,12 +252,7 @@ impl ProcessInner {
             }
         }
 
-        if let Some(mut vm) = self.proc_vm.take() {
-            if let Err(e) = vm.clean_up() {
-                error!("Failed to clean up vm for #{}: {:?}", pid, e);
-            }
-        }
-
+        self.proc_vm.take();
         self.proc_data.take();
         self.exit_code = Some(ret);
         self.status = ProgramStatus::Dead;

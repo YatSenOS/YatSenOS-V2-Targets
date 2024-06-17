@@ -24,8 +24,8 @@ fn huge_stack() {
 
     let mut stack = [0u64; 0x1000];
 
-    for i in 0..stack.len() {
-        stack[i] = i as u64;
+    for (i, item) in stack.iter_mut().enumerate() {
+        *item = i as u64;
     }
 
     for i in 0..stack.len() / 256 {

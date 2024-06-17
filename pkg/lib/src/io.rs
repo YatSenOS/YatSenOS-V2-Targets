@@ -11,38 +11,60 @@ impl Stdin {
         Self
     }
 
+    pub fn read_char(&self) -> Option<char> {
+        let mut buf = vec![0; 4];
+        if let Some(bytes) = sys_read(0, &mut buf) {
+            if bytes > 0 {
+                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
+            }
+        }
+        None
+    }
+
+    pub fn read_char_with_buf(&self, buf: &mut [u8]) -> Option<char> {
+        if let Some(bytes) = sys_read(0, buf) {
+            if bytes > 0 {
+                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
+            }
+        }
+        None
+    }
+
     pub fn read_line(&self) -> String {
-        // allocate string
-        let mut line = String::new();
-
-        // read from input buffer char by char
+        let mut string = String::new();
+        let mut buf = [0; 4];
         loop {
-            let buf: &mut [u8] = &mut [0u8; 256];
-            let ret = sys_read(0, buf);
-
-            if ret.is_none() {
-                continue;
-            } else {
-                for i in 0..ret.unwrap() {
-                    let c = buf[i];
-                    // handle backspace / enter... and finally return the string
-                    match c {
-                        13 => {
-                            sys_write(1, "\n".as_bytes());
-                            return line;
+            if let Some(k) = self.read_char_with_buf(&mut buf[..4]) {
+                match k {
+                    '\n' => {
+                        stdout().write("\n");
+                        break;
+                    }
+                    '\x03' => {
+                        string.clear();
+                        break;
+                    }
+                    '\x04' => {
+                        string.clear();
+                        string.push('\x04');
+                        break;
+                    }
+                    '\x08' => {
+                        if !string.is_empty() {
+                            stdout().write("\x08");
+                            string.pop();
                         }
-                        0x08 | 0x7F => {
-                            line.pop();
-                            sys_write(1, "\x08\x20\x08".as_bytes());
-                        }
-                        _ => {
-                            line.push(c as char);
-                            sys_write(1, &mut [c]);
-                        }
-                    };
+                    }
+                    // ignore other control characters
+                    '\x00'..='\x1F' => {}
+                    c => {
+                        self::print!("{}", k);
+                        string.push(c);
+                    }
                 }
             }
         }
+        string
     }
 }
 

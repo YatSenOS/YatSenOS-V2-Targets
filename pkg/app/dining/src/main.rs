@@ -14,16 +14,16 @@ fn main() -> isize {
     // allow 4 philosophers to eat at the same time
     WAITER.init(4);
 
-    for i in 0..5 {
-        CHOPSTICK[i].init(1);
+    for chop in &CHOPSTICK {
+        chop.init(1);
     }
 
-    for i in 0..5 {
+    for (i, item) in pids.iter_mut().enumerate() {
         let pid = sys_fork();
         if pid == 0 {
             philosopher(i);
         } else {
-            pids[i] = pid;
+            *item = pid;
         }
     }
 
@@ -33,9 +33,9 @@ fn main() -> isize {
 
     sys_stat();
 
-    for i in 0..5 {
-        println!("#{} Waiting for #{}...", cpid, pids[i]);
-        sys_wait_pid(pids[i]);
+    for pid in pids {
+        println!("#{} Waiting for #{}...", cpid, pid);
+        sys_wait_pid(pid);
     }
 
     0

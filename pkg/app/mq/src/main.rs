@@ -19,7 +19,7 @@ fn main() -> isize {
 
     let mut pids = [0u16; QUEUE_COUNT];
 
-    for i in 0..QUEUE_COUNT {
+    for (i, item) in pids.iter_mut().enumerate() {
         let pid = sys_fork();
         if pid == 0 {
             if i % 2 == 0 {
@@ -28,7 +28,7 @@ fn main() -> isize {
                 consumer(i);
             }
         } else {
-            pids[i] = pid;
+            *item = pid;
         }
     }
 
@@ -38,9 +38,9 @@ fn main() -> isize {
 
     sys_stat();
 
-    for i in 0..QUEUE_COUNT {
-        println!("#{} Waiting for #{}...", cpid, pids[i]);
-        sys_wait_pid(pids[i]);
+    for pid in pids {
+        println!("#{} Waiting for #{}...", cpid, pid);
+        sys_wait_pid(pid);
     }
 
     MUTEX.free();
@@ -54,6 +54,8 @@ fn producer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New producer #{}({})", id, pid);
     for _ in 0..10 {
+        delay();
+
         IS_NOT_FULL.wait();
         MUTEX.wait();
         unsafe {
@@ -72,6 +74,8 @@ fn consumer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New consumer #{}({})", id, pid);
     for _ in 0..10 {
+        delay();
+
         IS_NOT_EMPTY.wait();
         MUTEX.wait();
         unsafe {
@@ -84,6 +88,14 @@ fn consumer(id: usize) -> ! {
         IS_NOT_FULL.signal();
     }
     sys_exit(0);
+}
+
+#[inline(never)]
+#[no_mangle]
+fn delay() {
+    for _ in 0..0x100 {
+        core::hint::spin_loop();
+    }
 }
 
 entry!(main);

@@ -9,6 +9,12 @@ pub struct SpinLock {
     bolt: AtomicBool,
 }
 
+impl Default for SpinLock {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SpinLock {
     pub const fn new() -> Self {
         Self {
