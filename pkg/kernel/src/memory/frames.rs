@@ -1,6 +1,4 @@
-// reference: https://github.com/phil-opp/blog_os/blob/post-09/src/memory.rs
-// reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/memory.rs
-
+use alloc::boxed::Box;
 use alloc::vec::Vec;
 use boot::{MemoryMap, MemoryType};
 use x86_64::structures::paging::{FrameAllocator, FrameDeallocator, PhysFrame, Size4KiB};
@@ -12,12 +10,10 @@ guard_access_fn! {
     pub get_frame_alloc(FRAME_ALLOCATOR: BootInfoFrameAllocator)
 }
 
-type BootInfoFrameIter = impl Iterator<Item = PhysFrame>;
-
 /// A FrameAllocator that returns usable frames from the bootloader's memory map.
 pub struct BootInfoFrameAllocator {
     size: usize,
-    frames: BootInfoFrameIter,
+    frames: Box<dyn Iterator<Item = PhysFrame> + Send>,
     used: usize,
     recycled: Vec<PhysFrame>,
 }
@@ -69,8 +65,8 @@ impl FrameDeallocator<Size4KiB> for BootInfoFrameAllocator {
     }
 }
 
-unsafe fn create_frame_iter(memory_map: &MemoryMap) -> BootInfoFrameIter {
-    memory_map
+unsafe fn create_frame_iter(memory_map: &MemoryMap) -> Box<dyn Iterator<Item = PhysFrame> + Send> {
+    let iter = memory_map
         .clone()
         .into_iter()
         // get usable regions from memory map
@@ -78,5 +74,7 @@ unsafe fn create_frame_iter(memory_map: &MemoryMap) -> BootInfoFrameIter {
         // align to page boundary
         .flat_map(|r| (0..r.page_count).map(move |v| (v * 4096 + r.phys_start)))
         // create `PhysFrame` types from the start addresses
-        .map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
+        .map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)));
+
+    Box::new(iter)
 }
