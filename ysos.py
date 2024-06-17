@@ -27,7 +27,7 @@ parser.add_argument('--debug-listen', type=str, default='0.0.0.0:1234',
                     help='Set listen address for gdbserver')
 
 parser.add_argument('task', type=str, choices=[
-                    'build', 'clean', 'launch', 'run'
+                    'build', 'clean', 'launch', 'run', 'clippy'
                     ], default='build', help='Task to execute')
 
 args = parser.parse_args()
@@ -164,6 +164,26 @@ def build():
         copy_to_esp(compile_output, os.path.join('APP', app))
 
 
+def clippy():
+    cargo_exe = shutil.which('cargo')
+
+    if cargo_exe is None:
+        raise Exception('cargo not found in PATH')
+
+    info('Running', 'cargo fmt on root...')
+    execute_command([cargo_exe, '+nightly', 'fmt', '--all'])
+
+    kernel = os.path.join(os.getcwd(), 'pkg', 'kernel')
+    info('Running', 'clippy on kernel...')
+    execute_command([cargo_exe, 'clippy'], kernel)
+
+    apps = get_apps()
+    for app in apps:
+        app_path = os.path.join(os.getcwd(), 'pkg', 'app', app)
+        info('Running', f'clippy on app {app}...')
+        execute_command([cargo_exe, 'clippy'], app_path)
+
+
 def clean():
     if os.path.exists(args.boot):
         shutil.rmtree(args.boot)
@@ -186,6 +206,8 @@ def main():
     elif args.task == 'run':
         build()
         qemu(args.output, args.memory, args.debug, args.intdbg)
+    elif args.task == 'clippy':
+        clippy()
 
 
 if __name__ == "__main__":

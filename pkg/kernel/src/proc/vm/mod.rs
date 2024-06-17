@@ -27,12 +27,6 @@ impl ProcessVm {
         }
     }
 
-    pub fn init_kernel_vm(mut self) -> Self {
-        // TODO: record kernel code usage
-        self.stack = Stack::kstack();
-        self
-    }
-
     pub fn init_proc_stack(&mut self, pid: ProcessId) -> VirtAddr {
         let offset = (pid.0 - 1) as u64 * STACK_MAX_SIZE;
         let stack_top = STACK_INIT_TOP - offset;

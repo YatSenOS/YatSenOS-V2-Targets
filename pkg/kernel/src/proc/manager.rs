@@ -64,7 +64,7 @@ impl ProcessManager {
             .expect("No current process")
     }
 
-    pub(super) fn get_ret(&self, pid: ProcessId) -> Option<isize> {
+    pub(super) fn get_exit_code(&self, pid: ProcessId) -> Option<isize> {
         self.get_proc(&pid).and_then(|p| p.read().exit_code())
     }
 
@@ -150,6 +150,10 @@ impl ProcessManager {
                 "Page Fault! Checking if {:#x} is on current process's stack",
                 addr
             );
+
+            if cur_proc.pid() == KERNEL_PID {
+                info!("Page Fault on Kernel at {:#x}", addr);
+            }
 
             let mut inner = cur_proc.write();
             inner.handle_page_fault(addr)

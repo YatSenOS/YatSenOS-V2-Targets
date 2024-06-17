@@ -3,8 +3,7 @@ use x86_64::{
     VirtAddr,
 };
 
-
-use super::{FrameAllocatorRef, MapperRef};
+use super::*;
 
 // 0xffff_ff00_0000_0000 is the kernel's address space
 pub const STACK_MAX: u64 = 0x4000_0000_0000;
@@ -29,20 +28,6 @@ pub const STACK_INIT_TOP: u64 = STACK_MAX - 8;
 
 const STACK_INIT_TOP_PAGE: Page<Size4KiB> = Page::containing_address(VirtAddr::new(STACK_INIT_TOP));
 
-// [bot..0xffffff0100000000..top..0xffffff01ffffffff]
-// kernel stack
-pub const KSTACK_MAX: u64 = 0xffff_ff02_0000_0000;
-pub const KSTACK_DEF_BOT: u64 = KSTACK_MAX - STACK_MAX_SIZE;
-pub const KSTACK_DEF_PAGE: u64 = 8;
-pub const KSTACK_DEF_SIZE: u64 = KSTACK_DEF_PAGE * crate::memory::PAGE_SIZE;
-
-pub const KSTACK_INIT_BOT: u64 = KSTACK_MAX - KSTACK_DEF_SIZE;
-pub const KSTACK_INIT_TOP: u64 = KSTACK_MAX - 8;
-
-const KSTACK_INIT_PAGE: Page<Size4KiB> = Page::containing_address(VirtAddr::new(KSTACK_INIT_BOT));
-const KSTACK_INIT_TOP_PAGE: Page<Size4KiB> =
-    Page::containing_address(VirtAddr::new(KSTACK_INIT_TOP));
-
 pub struct Stack {
     range: PageRange<Size4KiB>,
     usage: u64,
@@ -56,17 +41,10 @@ impl Stack {
         }
     }
 
-    pub const fn empty() -> Self {
+    pub fn empty() -> Self {
         Self {
             range: Page::range(STACK_INIT_TOP_PAGE, STACK_INIT_TOP_PAGE),
             usage: 0,
-        }
-    }
-
-    pub const fn kstack() -> Self {
-        Self {
-            range: Page::range(KSTACK_INIT_PAGE, KSTACK_INIT_TOP_PAGE),
-            usage: KSTACK_DEF_PAGE,
         }
     }
 
@@ -133,17 +111,13 @@ impl Stack {
             new_start_page.start_address().as_u64(),
             page_count,
             mapper,
-            alloc
+            alloc,
         )?;
 
         self.range = Page::range(new_start_page, self.range.end);
         self.usage = self.range.count() as u64;
 
         Ok(())
-    }
-
-    pub fn memory_usage(&self) -> u64 {
-        self.usage * crate::memory::PAGE_SIZE
     }
 }
 

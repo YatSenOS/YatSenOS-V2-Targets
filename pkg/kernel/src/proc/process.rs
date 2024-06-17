@@ -115,10 +115,6 @@ impl ProcessInner {
         self.exit_code
     }
 
-    pub fn clone_page_table(&self) -> PageTableContext {
-        self.vm().page_table.clone_level_4()
-    }
-
     pub fn is_ready(&self) -> bool {
         self.status == ProgramStatus::Ready
     }
@@ -133,6 +129,10 @@ impl ProcessInner {
 
     pub fn handle_page_fault(&mut self, addr: VirtAddr) -> bool {
         self.vm_mut().handle_page_fault(addr)
+    }
+
+    pub fn clone_page_table(&self) -> PageTableContext {
+        self.vm().page_table.clone_level_4()
     }
 
     /// Save the process's context

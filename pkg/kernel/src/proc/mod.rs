@@ -32,7 +32,7 @@ pub enum ProgramStatus {
 
 /// init process manager
 pub fn init() {
-    let proc_vm = ProcessVm::new(PageTableContext::new()).init_kernel_vm();
+    let proc_vm = ProcessVm::new(PageTableContext::new());
 
     trace!("Init kernel vm: {:#?}", proc_vm);
 
@@ -85,7 +85,9 @@ pub fn env(key: &str) -> Option<String> {
 }
 
 pub(crate) fn wait_no_block(pid: ProcessId) -> Option<isize> {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().get_ret(pid))
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager().get_exit_code(pid)
+    })
 }
 
 pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
