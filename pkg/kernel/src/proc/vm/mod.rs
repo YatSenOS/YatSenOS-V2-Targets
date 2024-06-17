@@ -28,12 +28,6 @@ impl ProcessVm {
         }
     }
 
-    pub fn init_kernel_vm(mut self) -> Self {
-        // TODO: record kernel code usage
-        self.stack = Stack::kstack();
-        self
-    }
-
     pub fn load_elf(&mut self, elf: &ElfFile) {
         let mapper = &mut self.page_table.mapper();
 

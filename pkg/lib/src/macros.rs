@@ -6,7 +6,6 @@ macro_rules! entry {
     ($fn:ident) => {
         #[export_name = "_start"]
         pub extern "C" fn __impl_start() {
-            lib::init();
             let ret = $fn();
             lib::sys_exit(ret);
         }
@@ -25,12 +24,12 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     } else {
         "Unknown location".to_string()
     };
-    let msg = if let Some(msg) = info.message() {
-        alloc::format!("{}", msg)
-    } else {
-        "No more message...".to_string()
-    };
-    errln!("\n\n\rERROR: panicked at {}\n\n\r{}", location, msg);
+
+    errln!(
+        "\n\n\rERROR: panicked at {}\n\n\r{}",
+        location,
+        info.message()
+    );
 
     crate::sys_exit(1);
 }
