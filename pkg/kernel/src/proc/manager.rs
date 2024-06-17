@@ -211,6 +211,10 @@ impl ProcessManager {
                 addr
             );
 
+            if cur_proc.pid() == KERNEL_PID {
+                info!("Page Fault on Kernel at {:#x}", addr);
+            }
+
             let mut inner = cur_proc.write();
             inner.handle_page_fault(addr)
         } else {

@@ -14,13 +14,13 @@ fn main() -> isize {
     MUTEX.init(1);
     let mut pids = [0u16; THREAD_COUNT];
 
-    for i in 0..THREAD_COUNT {
+    for item in pids.iter_mut() {
         let pid = sys_fork();
         if pid == 0 {
             do_counter_inc();
             sys_exit(0);
         } else {
-            pids[i] = pid; // only parent knows child's pid
+            *item = pid; // only parent knows child's pid
         }
     }
 
@@ -28,9 +28,9 @@ fn main() -> isize {
     println!("process #{} holds threads: {:?}", cpid, &pids);
     sys_stat();
 
-    for i in 0..THREAD_COUNT {
-        println!("#{} waiting for #{}...", cpid, pids[i]);
-        sys_wait_pid(pids[i]);
+    for pid in pids {
+        println!("#{} Waiting for #{}...", cpid, pid);
+        sys_wait_pid(pid);
     }
 
     println!("COUNTER result: {}", unsafe { COUNTER });

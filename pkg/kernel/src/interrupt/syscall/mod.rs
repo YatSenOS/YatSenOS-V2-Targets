@@ -51,7 +51,7 @@ pub fn dispatcher(context: &mut ProcessContext) {
         // None -> pid: u16 (diff from parent and child)
         Syscall::VFork => sys_fork(context),
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
-        Syscall::Spawn => context.set_rax(spawn_process(&args)),
+        Syscall::Spawn => context.set_rax(spawn_process(&args) as usize),
         // pid: arg0 as u16
         Syscall::Exit => exit_process(&args, context),
         // pid: arg0 as u16 -> status: isize
