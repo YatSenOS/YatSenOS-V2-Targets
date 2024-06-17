@@ -12,7 +12,11 @@ pub fn init() {
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
     let heap_start = VirtAddr::from_ptr(unsafe { HEAP.as_ptr() });
-    let heap_end = heap_start + HEAP_SIZE;
+    let heap_end = heap_start + HEAP_SIZE as u64;
+
+    unsafe {
+        ALLOCATOR.lock().init(HEAP.as_mut_ptr(), HEAP_SIZE);
+    }
 
     unsafe {
         ALLOCATOR.lock().init(HEAP.as_mut_ptr(), HEAP_SIZE);
@@ -24,7 +28,7 @@ pub fn init() {
         heap_end.as_u64()
     );
 
-    let (size, unit) = super::humanized_size(HEAP_SIZE as u64);
+    let (size, unit) = crate::humanized_size(HEAP_SIZE as u64);
     info!("Kernel Heap Size : {:>7.*} {}", 3, size, unit);
 
     info!("Kernel Heap Initialized.");

@@ -11,7 +11,6 @@ use alloc::vec;
 use core::arch::asm;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
-use x86_64::registers::model_specific::EferFlags;
 use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
@@ -26,7 +25,7 @@ const CONFIG_PATH: &str = "\\EFI\\BOOT\\boot.conf";
 
 #[entry]
 fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
-    uefi_services::init(&mut system_table).expect("Failed to initialize utilities");
+    uefi::helpers::init(&mut system_table).expect("Failed to initialize utilities");
 
     log::set_max_level(log::LevelFilter::Info);
     info!("Running UEFI bootloader...");
@@ -106,12 +105,11 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         stack_start + stack_size * 0x1000
     );
 
-    elf::map_range(
+    elf::map_pages(
         stack_start,
         stack_size,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
-        false,
     )
     .expect("Failed to map stack");
 
@@ -133,6 +131,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         memory_map: mmap.entries().copied().collect(),
         physical_memory_offset: config.physical_memory_offset,
         system_table: runtime,
+        log_level: config.log_level,
     };
 
     // align stack to 8 bytes

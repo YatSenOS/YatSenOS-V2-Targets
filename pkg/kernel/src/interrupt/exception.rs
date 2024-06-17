@@ -33,10 +33,6 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.machine_check.set_handler_fn(machine_check_handler);
     idt.simd_floating_point
         .set_handler_fn(simd_floating_point_handler);
-
-    idt[(super::consts::Interrupts::Irq0 as u8 + super::consts::Irq::Timer as u8) as usize]
-        .set_handler_fn(clock_handler)
-        .set_stack_index(gdt::CONTEXT_SWITCH_IST_INDEX);
 }
 
 pub extern "x86-interrupt" fn divide_error_handler(stack_frame: InterruptStackFrame) {
@@ -139,19 +135,18 @@ pub extern "x86-interrupt" fn simd_floating_point_handler(stack_frame: Interrupt
     panic!("EXCEPTION: SIMD FLOATING POINT\n\n{:#?}", stack_frame);
 }
 
-pub extern "x86-interrupt" fn clock_handler(_sf: InterruptStackFrame) {
-    super::ack(super::consts::Interrupts::Irq0 as u8);
-    super::inc_counter();
-}
-
 pub extern "x86-interrupt" fn page_fault_handler(
     stack_frame: InterruptStackFrame,
     err_code: PageFaultErrorCode,
 ) {
+    let cr2 = if let Ok(val) = Cr2::read() {
+        val.as_u64()
+    } else {
+        0
+    };
+
     panic!(
         "EXCEPTION: PAGE FAULT, ERROR_CODE: {:?}\n\nTrying to access: {:#x}\n{:#?}",
-        err_code,
-        Cr2::read(),
-        stack_frame
+        err_code, cr2, stack_frame
     );
 }

@@ -12,7 +12,7 @@ lazy_static = { version = "1.4", features = ["spin_no_std"] }
 paste = "1.0"
 spin = "0.9"
 x86 = "0.52"
-x86_64 = "0.14"
+x86_64 = "0.15"
 log = "0.4"
 bit_field = "0.10"
 micromath = { version = "2.0", features = ["num-traits"] }
@@ -20,7 +20,7 @@ bitflags = "2.3"
 chrono = { version = "0.4", default-features = false }
 libm = "0.2"
 linked_list_allocator = "0.10"
-pc-keyboard = "0.7"
 crossbeam-queue = { version = "0.3", default-features = false, features = ["alloc"] }
 volatile = "0.5"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+lru = "0.12"

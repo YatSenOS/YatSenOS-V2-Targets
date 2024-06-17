@@ -5,9 +5,6 @@
 #![feature(alloc_error_handler)]
 #![feature(type_alias_impl_trait)]
 #![feature(panic_info_message)]
-#![feature(map_try_insert)]
-#![allow(clippy::missing_safety_doc)]
-#![allow(clippy::result_unit_err)]
 
 extern crate alloc;
 #[macro_use]
@@ -47,6 +44,33 @@ pub fn init(boot_info: &'static BootInfo) {
     info!("Interrupts Enabled.");
 
     info!("YatSenOS initialized.");
+
+    info!("Test stack grow.");
+
+    grow_stack();
+
+    info!("Stack grow test done.");
+}
+
+#[no_mangle]
+#[inline(never)]
+pub fn grow_stack() {
+    const STACK_SIZE: usize = 1024 * 4;
+    const STEP: usize = 64;
+
+    let mut array = [0u64; STACK_SIZE];
+    let ptr = array.as_ptr();
+    info!("Stack: {:?}", ptr);
+
+    // test write
+    for i in (0..STACK_SIZE).step_by(STEP) {
+        array[i] = i as u64;
+    }
+
+    // test read
+    for i in (0..STACK_SIZE).step_by(STEP) {
+        assert_eq!(array[i], i as u64);
+    }
 }
 
 pub fn shutdown(boot_info: &'static BootInfo) -> ! {

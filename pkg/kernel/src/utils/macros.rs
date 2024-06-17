@@ -1,4 +1,4 @@
-use crate::serial::get_serial;
+use crate::serial::{get_serial, SERIAL};
 use alloc::string::ToString;
 use core::fmt::*;
 use x86_64::instructions::interrupts;
@@ -37,6 +37,20 @@ macro_rules! once_mutex {
             #[allow(non_snake_case)]
             $i fn [<init_ $v>]([<val_ $v>]: $t) {
                 $v.call_once(|| spin::Mutex::new([<val_ $v>]));
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! once_rwlock {
+    ($i:vis $v:ident: $t:ty) => {
+        $i static $v: spin::Once<spin::RwLock<$t>> = spin::Once::new();
+
+        paste::item! {
+            #[allow(non_snake_case)]
+            $i fn [<init_ $v>]([<val_ $v>]: $t) {
+                $v.call_once(|| spin::RwLock::new([<val_ $v>]));
             }
         }
     };
@@ -106,9 +120,11 @@ pub fn print_serial_internal(args: Arguments) {
 
 #[cfg_attr(not(test), panic_handler)]
 fn panic(info: &core::panic::PanicInfo) -> ! {
+    unsafe { SERIAL.get().unwrap().force_unlock() };
+
     let location = if let Some(location) = info.location() {
         alloc::format!(
-            "{}@{}:{}",
+            "{} @ {}:{}",
             location.file(),
             location.line(),
             location.column()
@@ -116,11 +132,10 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     } else {
         "Unknown location".to_string()
     };
-    let msg = if let Some(msg) = info.message() {
-        alloc::format!("{}", msg)
-    } else {
-        "No more message...".to_string()
-    };
-    error!("\n\n\rERROR: panicked at {}\n\n\r{}", location, msg);
+    error!(
+        "\n\n\rERROR: panicked at {}\n\n\r{}",
+        location,
+        info.message()
+    );
     loop {}
 }
