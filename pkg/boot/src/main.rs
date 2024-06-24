@@ -19,7 +19,7 @@ const CONFIG_PATH: &str = "\\EFI\\BOOT\\boot.conf";
 
 #[entry]
 fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
-    uefi_services::init(&mut system_table).expect("Failed to initialize utilities");
+    uefi::helpers::init(&mut system_table).expect("Failed to initialize utilities");
 
     log::set_max_level(log::LevelFilter::Info);
     info!("Running UEFI bootloader...");
@@ -99,7 +99,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         stack_start + stack_size * 0x1000
     );
 
-    elf::map_range(
+    elf::map_pages(
         stack_start,
         stack_size,
         &mut page_table,
@@ -124,7 +124,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     let bootinfo = BootInfo {
         memory_map: mmap.entries().copied().collect(),
         physical_memory_offset: config.physical_memory_offset,
-        system_table: runtime,
+        system_table: runtime
     };
 
     // align stack to 8 bytes

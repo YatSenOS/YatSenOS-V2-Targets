@@ -3,7 +3,7 @@ use log::{LevelFilter, Metadata, Record};
 pub fn init() {
     static LOGGER: Logger = Logger;
     log::set_logger(&LOGGER).unwrap();
-    log::set_max_level(LevelFilter::Debug);
+    log::set_max_level(LevelFilter::Info);
 
     info!("Current log level: {}", log::max_level());
 
@@ -18,19 +18,17 @@ impl log::Log for Logger {
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            match record.level() {
-                log::Level::Error => println_warn!(
-                    "[E] {}:{}: {}",
-                    record.file_static().unwrap_or(""),
-                    record.line().unwrap_or(0),
-                    record.args()
-                ),
-                log::Level::Warn => println_warn!("[!] {}", record.args()),
-                log::Level::Info => println!("[+] {}", record.args()),
-                log::Level::Debug => println_serial!("[D] {}", record.args()),
-                log::Level::Trace => println_serial!("[T] {}", record.args()),
-            }
+        match record.level() {
+            log::Level::Error => println_warn!(
+                "[E] {}@{}: {}",
+                record.file_static().unwrap_or(""),
+                record.line().unwrap_or(0),
+                record.args()
+            ),
+            log::Level::Warn => println_warn!("[!] {}", record.args()),
+            log::Level::Info => println!("[+] {}", record.args()),
+            log::Level::Debug => println_serial!("[D] {}", record.args()),
+            log::Level::Trace => println_serial!("[T] {}", record.args()),
         }
     }
 

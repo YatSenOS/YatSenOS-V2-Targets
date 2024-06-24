@@ -42,6 +42,20 @@ macro_rules! once_mutex {
 }
 
 #[macro_export]
+macro_rules! once_rwlock {
+    ($i:vis $v:ident: $t:ty) => {
+        $i static $v: spin::Once<spin::RwLock<$t>> = spin::Once::new();
+
+        paste::item! {
+            #[allow(non_snake_case)]
+            $i fn [<init_ $v>]([<val_ $v>]: $t) {
+                $v.call_once(|| spin::RwLock::new([<val_ $v>]));
+            }
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => (
         $crate::utils::print_internal(format_args!($($arg)*))

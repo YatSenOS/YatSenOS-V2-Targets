@@ -1,120 +1,58 @@
-/// reference: https://docs.rs/uart_16550
-/// reference: http://byterunner.com/16550.html
-/// reference: http://www.larvierinehart.com/serial/serialadc/serial.htm
-/// reference: https://wiki.osdev.org/Serial_Ports
 use core::fmt;
-use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
+use x86_64::instructions::port::Port;
 
-macro_rules! wait_for {
-    ($cond:expr) => {
-        while !$cond {
-            core::hint::spin_loop()
-        }
-    };
+/// A port-mapped UART 16550 serial interface.
+pub struct SerialPort {
+    data: Port<u8>,
+    interrupt_enable: Port<u8>,
+    interrupt_identification_fifo_control: Port<u8>,
+    line_control: Port<u8>,
+    line_status: Port<u8>,
+    scratch: Port<u8>,
 }
 
 bitflags! {
-    /// Line status flags
-    struct LineStsFlags: u8 {
-        const INPUT_FULL = 1;
-        // 1 to 4 unknown
-        const OUTPUT_EMPTY = 1 << 5;
-        // 6 and 7 unknown
+    struct LineControl:u8{
+        const DLAB = 0b10000000;
+        const OneStopBit = 0b00000000;
+        const NoneParity = 0b00000000;
+        const EightCharLength = 0b00000011;
     }
 }
 
-/// A port-mapped UART.
-pub struct SerialPort {
-    /// - ransmit Holding Register (write)
-    /// - receive Holding Register (read)
-    data: Port<u8>,
-    /// Interrupt Enable Register
-    /// - bit 0: receive holding register interrupt
-    /// - bit 1: transmit holding register interrupt
-    /// - bit 2: receive line status interrupt
-    /// - bit 3: modem status interrupt
-    int_en: PortWriteOnly<u8>,
-    /// FIFO Control Register
-    fifo_ctrl: PortWriteOnly<u8>,
-    /// Line Control Register
-    line_ctrl: PortWriteOnly<u8>,
-    /// Modem Control Register
-    modem_ctrl: PortWriteOnly<u8>,
-    /// Line Status Register
-    line_sts: PortReadOnly<u8>,
-}
-
 impl SerialPort {
-    /// Creates a new serial port interface on the given I/O port.
-    ///
-    /// This function is unsafe because the caller must ensure that the given base address
-    /// really points to a serial port device.
-    pub const unsafe fn new(base: u16) -> Self {
+    pub const fn new(port: u16) -> Self {
         Self {
-            data: Port::new(base),
-            int_en: PortWriteOnly::new(base + 1),
-            fifo_ctrl: PortWriteOnly::new(base + 2),
-            line_ctrl: PortWriteOnly::new(base + 3),
-            modem_ctrl: PortWriteOnly::new(base + 4),
-            line_sts: PortReadOnly::new(base + 5),
+            data: Port::new(port),
+            interrupt_enable: Port::new(port + 1),
+            interrupt_identification_fifo_control: Port::new(port + 2),
+            line_control: Port::new(port + 3),
+            line_status: Port::new(port + 5),
+            scratch: Port::new(port + 7),
         }
     }
 
     /// Initializes the serial port.
-    ///
-    /// The default configuration of [38400/8-N-1](https://en.wikipedia.org/wiki/8-N-1) is used.
     pub fn init(&mut self) {
         unsafe {
-            // Disable interrupts
-            self.int_en.write(0x00);
-
-            // Enable DLAB
-            self.line_ctrl.write(0x80);
-
-            // Set maximum speed to 38400 bps by configuring DLL and DLM
-            // > LSB of Divisor Latch when Enabled
-            self.data.write(0b00000011);
-            // > MSB of Divisor Latch when Enabled
-            self.int_en.write(0b00000000);
-
-            // Disable DLAB and set data word length to 8 bits
-            self.line_ctrl.write(0b00000011);
-
-            // Enable FIFO, clear TX/RX queues and
-            // set interrupt watermark at 1 bytes
-            self.fifo_ctrl.write(0b00000111);
-
-            // Mark data terminal ready, signal request to send
-            // and enable auxiliary output #2 (used as interrupt line for CPU)
-            self.modem_ctrl.write(0b00001011);
-
-            // Enable interrupts
-            self.int_en.write(0b00000001);
+            self.interrupt_enable.write(0x00); // Disable all interrupts
+            self.line_control.write(LineControl::DLAB.bits()); // Enable DLAB (set baud rate divisor)
+            self.data.write(0x03); // Set divisor to 3 (lo byte) 38400 baud
+            self.interrupt_enable.write(0x00); // Set divisor to 3 (hi byte) 38400 baud
+            self.line_control.write(
+                (LineControl::EightCharLength | LineControl::NoneParity | LineControl::OneStopBit)
+                    .bits(),
+            ); // 8 bits, no parity, one stop bit
+            self.interrupt_identification_fifo_control.write(0xC7); // Enable FIFO, clear them, with 14-byte threshold
+            self.scratch.write(0xAE);
+            self.interrupt_enable.write(0x01);
         }
-    }
-
-    fn line_sts(&mut self) -> LineStsFlags {
-        unsafe { LineStsFlags::from_bits_truncate(self.line_sts.read()) }
     }
 
     /// Sends a byte on the serial port.
     pub fn send(&mut self, data: u8) {
-        match data {
-            8 | 0x7F => {
-                self.send_raw(0x08);
-                self.send_raw(0x20);
-                self.send_raw(0x08);
-            }
-            _ => {
-                self.send_raw(data);
-            }
-        }
-    }
-
-    /// Sends a raw byte on the serial port, intended for binary data.
-    pub fn send_raw(&mut self, data: u8) {
         unsafe {
-            wait_for!(self.line_sts().contains(LineStsFlags::OUTPUT_EMPTY));
+            while self.line_status.read() & 0x20 == 0 {}
             self.data.write(data);
         }
     }
@@ -122,7 +60,7 @@ impl SerialPort {
     /// Receives a byte on the serial port no wait.
     pub fn receive(&mut self) -> Option<u8> {
         unsafe {
-            if self.line_sts().contains(LineStsFlags::INPUT_FULL) {
+            if self.line_status.read() & 1 != 0 {
                 Some(self.data.read())
             } else {
                 None
