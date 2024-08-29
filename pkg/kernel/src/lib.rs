@@ -3,7 +3,6 @@
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
 #![feature(type_alias_impl_trait)]
-#![feature(panic_info_message)]
 
 #[macro_use]
 extern crate alloc;

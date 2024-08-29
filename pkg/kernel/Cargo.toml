@@ -22,7 +22,7 @@ chrono = { version = "0.4", default-features = false }
 libm = "0.2"
 linked_list_allocator = "0.10"
 crossbeam-queue = { version = "0.3", default-features = false, features = ["alloc"] }
-volatile = "0.5"
+volatile = "0.6"
 xmas-elf = "0.9"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
 lru = "0.12"
