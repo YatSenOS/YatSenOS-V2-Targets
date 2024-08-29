@@ -88,20 +88,21 @@ dependencies = [
 
 [[package]]
 name = "ucs2"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bad643914094137d475641b6bab89462505316ec2ce70907ad20102d28a79ab8"
+checksum = "df79298e11f316400c57ec268f3c2c29ac3c4d4777687955cd3d4f3a35ce7eba"
 dependencies = [
  "bit_field",
 ]
 
 [[package]]
 name = "uefi"
-version = "0.26.0"
+version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07ead9f748a4646479b850add36b527113a80e80a7e0f44d7b0334291850dcc5"
+checksum = "920793ff1148ab68a07ab0b2b866870886cd1e5c0b1b94f451d66158d0ff1a77"
 dependencies = [
  "bitflags",
+ "cfg-if",
  "log",
  "ptr_meta",
  "ucs2",
@@ -112,9 +113,9 @@ dependencies = [
 
 [[package]]
 name = "uefi-macros"
-version = "0.13.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26a7b1c2c808c3db854a54d5215e3f7e7aaf5dcfbce095598cba6af29895695d"
+checksum = "b0732e421268a2d6d53c95c3c0f4496ccc5c08aa7381458c677153d5d77ce39e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -123,24 +124,13 @@ dependencies = [
 
 [[package]]
 name = "uefi-raw"
-version = "0.5.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "864ac69eadd877bfb34e7814be1928122ed0057d9f975169a56ee496aa7bdfd7"
+checksum = "7e537b93f83150df09588ca6658e881b2784e8b5f9588f1c7b72a85b72ea71ce"
 dependencies = [
  "bitflags",
  "ptr_meta",
  "uguid",
-]
-
-[[package]]
-name = "uefi-services"
-version = "0.23.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a79fcb420624743c895bad0f9480fbc2f64e7c8d8611fb1ada6bdd799942feb4"
-dependencies = [
- "cfg-if",
- "log",
- "uefi",
 ]
 
 [[package]]
@@ -161,5 +151,4 @@ version = "0.0.1"
 dependencies = [
  "log",
  "uefi",
- "uefi-services",
 ]

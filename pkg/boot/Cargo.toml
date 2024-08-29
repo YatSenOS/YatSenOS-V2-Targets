@@ -6,6 +6,5 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uefi = "0.26"
-uefi-services = { version = "0.23" }
+uefi = { version = "0.31", features = ["global_allocator", "panic_handler", "logger"] }
 log = "0.4"
