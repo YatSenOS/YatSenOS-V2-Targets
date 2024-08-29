@@ -6,9 +6,8 @@
 extern crate log;
 extern crate alloc;
 
-use alloc::boxed::Box;
-use alloc::vec;
 use core::arch::asm;
+use uefi::mem::memory_map::MemoryMap;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
 use x86_64::structures::paging::*;
@@ -24,8 +23,8 @@ mod config;
 const CONFIG_PATH: &str = "\\EFI\\BOOT\\boot.conf";
 
 #[entry]
-fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
-    uefi::helpers::init(&mut system_table).expect("Failed to initialize utilities");
+fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
+    uefi::helpers::init().expect("Failed to initialize utilities");
 
     log::set_max_level(log::LevelFilter::Info);
     info!("Running UEFI bootloader...");
@@ -59,13 +58,9 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     };
 
     // 3. Load MemoryMap
-    let max_mmap_size = system_table.boot_services().memory_map_size();
-    let mmap_storage = Box::leak(
-        vec![0; max_mmap_size.map_size + 10 * max_mmap_size.entry_size].into_boxed_slice(),
-    );
     let mmap = system_table
         .boot_services()
-        .memory_map(mmap_storage)
+        .memory_map(MemoryType::LOADER_DATA)
         .expect("Failed to get memory map");
 
     let max_phys_addr = mmap
@@ -133,7 +128,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     // 5. Exit boot and jump to ELF entry
     info!("Exiting boot services...");
 
-    let (runtime, mmap) = system_table.exit_boot_services(MemoryType::LOADER_DATA);
+    let (runtime, mmap) = unsafe { system_table.exit_boot_services(MemoryType::LOADER_DATA) };
     // NOTE: alloc & log can no longer be used
 
     // construct BootInfo
