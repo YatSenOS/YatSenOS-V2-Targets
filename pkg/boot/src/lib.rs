@@ -3,14 +3,12 @@ use core::arch::asm;
 
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
-pub use uefi::prelude::SystemTable;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
 pub use uefi::table::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
-pub use uefi::table::runtime::*;
-pub use uefi::table::Runtime;
-pub use uefi::Status as UefiStatus;
+pub use uefi::Status;
 
 use arrayvec::ArrayVec;
+use core::ptr::NonNull;
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::{OffsetPageTable, PageTable};
 use x86_64::VirtAddr;
@@ -35,8 +33,8 @@ pub struct BootInfo {
     /// The offset into the virtual address space where the physical memory is mapped.
     pub physical_memory_offset: u64,
 
-    /// UEFI SystemTable
-    pub system_table: SystemTable<Runtime>,
+    /// The system table virtual address
+    pub system_table: NonNull<core::ffi::c_void>,
 }
 
 /// Get current page table from CR3

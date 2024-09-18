@@ -7,6 +7,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 boot = { package = "ysos_boot", path = "../boot", default-features = false }
+uefi = { version = "0.32", default-features = false }
 lazy_static = { version = "1.4", features = ["spin_no_std"] }
 paste = "1.0"
 spin = "0.9"

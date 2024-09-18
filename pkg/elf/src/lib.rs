@@ -291,15 +291,7 @@ pub fn load_elf(
     trace!("Loading ELF file...{:?}", elf.input.as_ptr());
     elf.program_iter()
         .filter(|segment| segment.get_type().unwrap() == program::Type::Load)
-        .map(|segment| {
-            load_segment(
-                elf,
-                physical_offset,
-                &segment,
-                page_table,
-                frame_allocator,
-            )
-        })
+        .map(|segment| load_segment(elf, physical_offset, &segment, page_table, frame_allocator))
         .collect()
 }
 

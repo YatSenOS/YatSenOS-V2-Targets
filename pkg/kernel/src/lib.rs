@@ -18,6 +18,7 @@ pub mod drivers;
 pub use drivers::*;
 
 use boot::BootInfo;
+use uefi::{runtime::ResetType, Status};
 
 pub fn init(_boot_info: &'static BootInfo) {
     serial::init(); // init serial output
@@ -53,13 +54,7 @@ pub fn grow_stack() {
     }
 }
 
-pub fn shutdown(boot_info: &'static BootInfo) -> ! {
+pub fn shutdown() -> ! {
     info!("YatSenOS shutting down.");
-    unsafe {
-        boot_info.system_table.runtime_services().reset(
-            boot::ResetType::SHUTDOWN,
-            boot::UefiStatus::SUCCESS,
-            None,
-        );
-    }
+    uefi::runtime::reset(ResetType::SHUTDOWN, Status::SUCCESS, None);
 }
