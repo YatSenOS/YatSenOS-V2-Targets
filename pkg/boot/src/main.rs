@@ -6,10 +6,11 @@ extern crate log;
 extern crate alloc;
 
 use core::arch::asm;
-use uefi::prelude::*;
+
+use uefi::{Status, entry};
 
 #[entry]
-fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
+fn efi_main() -> Status {
     uefi::helpers::init().expect("Failed to initialize utilities");
     log::set_max_level(log::LevelFilter::Info);
 
