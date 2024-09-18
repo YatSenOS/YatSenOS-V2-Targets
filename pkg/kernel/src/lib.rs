@@ -27,16 +27,22 @@ pub mod interrupt;
 pub mod proc;
 
 pub use alloc::format;
+
 use boot::BootInfo;
+use uefi::{runtime::ResetType, Status};
 
 pub fn init(boot_info: &'static BootInfo) {
+    unsafe {
+        // set uefi system table
+        uefi::table::set_system_table(boot_info.system_table.cast().as_ptr());
+    }
+
     serial::init(); // init serial output
     logger::init(boot_info); // init logger system
     memory::address::init(boot_info);
     memory::gdt::init(); // init gdt
     memory::allocator::init(); // init kernel heap allocator
     interrupt::init(); // init interrupts
-    clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
     proc::init(); // init process manager
 
@@ -93,15 +99,9 @@ pub fn wait(pid: proc::ProcessId) {
     }
 }
 
-pub fn shutdown(boot_info: &'static BootInfo) -> ! {
+pub fn shutdown() -> ! {
     info!("YatSenOS shutting down.");
-    unsafe {
-        boot_info.system_table.runtime_services().reset(
-            boot::ResetType::SHUTDOWN,
-            boot::UefiStatus::SUCCESS,
-            None,
-        );
-    }
+    uefi::runtime::reset(ResetType::SHUTDOWN, Status::SUCCESS, None);
 }
 
 pub fn new_test_thread(id: &str) -> proc::ProcessId {
