@@ -1,14 +1,12 @@
 #![no_std]
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
-pub use uefi::prelude::SystemTable;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
 pub use uefi::table::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
-pub use uefi::table::runtime::*;
-pub use uefi::table::Runtime;
-pub use uefi::Status as UefiStatus;
+pub use uefi::Status;
 
 use arrayvec::{ArrayString, ArrayVec};
+use core::ptr::NonNull;
 use xmas_elf::ElfFile;
 
 pub mod allocator;
@@ -30,8 +28,8 @@ pub struct BootInfo {
     /// The offset into the virtual address space where the physical memory is mapped.
     pub physical_memory_offset: u64,
 
-    /// UEFI SystemTable
-    pub system_table: SystemTable<Runtime>,
+    /// The system table virtual address
+    pub system_table: NonNull<core::ffi::c_void>,
 
     // Loaded apps
     pub loaded_apps: Option<ArrayVec<App<'static>, 16>>,
