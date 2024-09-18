@@ -1,14 +1,12 @@
 #![no_std]
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
-pub use uefi::prelude::SystemTable;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
 pub use uefi::table::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
-pub use uefi::table::runtime::*;
-pub use uefi::table::Runtime;
-pub use uefi::Status as UefiStatus;
+pub use uefi::Status;
 
 use arrayvec::ArrayVec;
+use core::ptr::NonNull;
 
 pub mod allocator;
 pub mod config;
@@ -27,8 +25,8 @@ pub struct BootInfo {
     /// The offset into the virtual address space where the physical memory is mapped.
     pub physical_memory_offset: u64,
 
-    /// UEFI SystemTable
-    pub system_table: SystemTable<Runtime>,
+    /// The system table virtual address
+    pub system_table: NonNull<core::ffi::c_void>,
 }
 
 /// This is copied from https://docs.rs/bootloader/0.10.12/src/bootloader/lib.rs.html

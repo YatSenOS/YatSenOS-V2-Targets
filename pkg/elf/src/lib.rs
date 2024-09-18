@@ -69,7 +69,6 @@ pub fn map_pages(
     pages: u64,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-    user_access: bool,
 ) -> Result<PageRange, MapToError<Size4KiB>> {
     debug_assert!(pages > 0, "pages must be greater than 0");
     let range_start = Page::containing_address(VirtAddr::new(addr));
@@ -79,7 +78,6 @@ pub fn map_pages(
         Page::range_inclusive(range_start, range_end - 1),
         page_table,
         frame_allocator,
-        user_access,
     )?;
 
     trace!(
@@ -98,7 +96,6 @@ pub fn map_range(
     page_range: PageRangeInclusive,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-    user_access: bool,
 ) -> Result<(), MapToError<Size4KiB>> {
     trace!(
         "Map Range: {:#x} - {:#x} ({})",
@@ -107,11 +104,7 @@ pub fn map_range(
         page_range.count()
     );
 
-    let mut flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-
-    if user_access {
-        flags |= PageTableFlags::USER_ACCESSIBLE;
-    }
+    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
 
     trace!("Flags: {:?}", flags);
 
@@ -294,21 +287,11 @@ pub fn load_elf(
     physical_offset: u64,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-    user_access: bool,
 ) -> Result<Vec<PageRangeInclusive>, MapToError<Size4KiB>> {
     trace!("Loading ELF file...{:?}", elf.input.as_ptr());
     elf.program_iter()
         .filter(|segment| segment.get_type().unwrap() == program::Type::Load)
-        .map(|segment| {
-            load_segment(
-                elf,
-                physical_offset,
-                &segment,
-                page_table,
-                frame_allocator,
-                user_access,
-            )
-        })
+        .map(|segment| load_segment(elf, physical_offset, &segment, page_table, frame_allocator))
         .collect()
 }
 
@@ -319,7 +302,6 @@ fn load_segment(
     segment: &program::ProgramHeader,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-    user_access: bool,
 ) -> Result<PageRangeInclusive, MapToError<Size4KiB>> {
     trace!("Loading & mapping segment: {:#x?}", segment);
     let mem_size = segment.mem_size();
@@ -336,10 +318,6 @@ fn load_segment(
 
     if flags.is_write() {
         page_table_flags |= PageTableFlags::WRITABLE;
-    }
-
-    if user_access {
-        page_table_flags |= PageTableFlags::USER_ACCESSIBLE;
     }
 
     trace!("Segment page table flag: {:?}", page_table_flags);
