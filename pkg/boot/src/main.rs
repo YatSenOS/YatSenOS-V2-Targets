@@ -8,7 +8,7 @@ extern crate alloc;
 
 use core::arch::asm;
 use uefi::mem::memory_map::MemoryMap;
-use uefi::prelude::*;
+use uefi::{entry, Status};
 use x86_64::registers::control::*;
 use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
@@ -23,17 +23,16 @@ mod config;
 const CONFIG_PATH: &str = "\\EFI\\BOOT\\boot.conf";
 
 #[entry]
-fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
+fn efi_main() -> Status {
     uefi::helpers::init().expect("Failed to initialize utilities");
 
     log::set_max_level(log::LevelFilter::Info);
     info!("Running UEFI bootloader...");
 
     // 1. Load config
-    let bs = system_table.boot_services();
     let config = {
-        let mut file = open_file(bs, CONFIG_PATH);
-        let buf = load_file(bs, &mut file);
+        let mut file = open_file(CONFIG_PATH);
+        let buf = load_file(&mut file);
         config::Config::parse(buf)
     };
 
@@ -41,8 +40,8 @@ fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
 
     // 2. Load ELF files
     let elf = {
-        let mut file = open_file(bs, config.kernel_path);
-        let buf = load_file(bs, &mut file);
+        let mut file = open_file(config.kernel_path);
+        let buf = load_file(&mut file);
         ElfFile::new(buf).expect("failed to parse ELF")
     };
     unsafe {
@@ -51,17 +50,14 @@ fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
 
     let apps = if config.load_apps {
         info!("Loading apps...");
-        Some(load_apps(system_table.boot_services()))
+        Some(load_apps())
     } else {
         info!("Skip loading apps");
         None
     };
 
-    // 3. Load MemoryMap
-    let mmap = system_table
-        .boot_services()
-        .memory_map(MemoryType::LOADER_DATA)
-        .expect("Failed to get memory map");
+    // 3. Calculate max physical address
+    let mmap = uefi::boot::memory_map(MemoryType::LOADER_DATA).expect("Failed to get memory map");
 
     let max_phys_addr = mmap
         .entries()
@@ -83,14 +79,14 @@ fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
         config.physical_memory_offset,
         max_phys_addr,
         &mut page_table,
-        &mut UEFIFrameAllocator(bs),
+        &mut UEFIFrameAllocator,
     );
 
     elf::load_elf(
         &elf,
         config.physical_memory_offset,
         &mut page_table,
-        &mut UEFIFrameAllocator(bs),
+        &mut UEFIFrameAllocator,
         false,
     )
     .expect("Failed to load ELF");
@@ -113,7 +109,7 @@ fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
         stack_start,
         stack_size,
         &mut page_table,
-        &mut UEFIFrameAllocator(bs),
+        &mut UEFIFrameAllocator,
         false,
     )
     .expect("Failed to map stack");
@@ -123,21 +119,25 @@ fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
         Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));
     }
 
-    free_elf(bs, elf);
+    free_elf(elf);
 
-    // 5. Exit boot and jump to ELF entry
+    // 5. Pass system table to kernel
+    let ptr = uefi::table::system_table_raw().expect("Failed to get system table");
+    let system_table = ptr.cast::<core::ffi::c_void>();
+
+    // 6. Exit boot and jump to ELF entry
     info!("Exiting boot services...");
 
-    let (runtime, mmap) = unsafe { system_table.exit_boot_services(MemoryType::LOADER_DATA) };
+    let mmap = unsafe { uefi::boot::exit_boot_services(MemoryType::LOADER_DATA) };
     // NOTE: alloc & log can no longer be used
 
-    // construct BootInfo
+    // 7. Construct BootInfo
     let bootinfo = BootInfo {
         memory_map: mmap.entries().copied().collect(),
         physical_memory_offset: config.physical_memory_offset,
-        system_table: runtime,
         loaded_apps: apps,
         log_level: config.log_level,
+        system_table,
     };
 
     // align stack to 8 bytes

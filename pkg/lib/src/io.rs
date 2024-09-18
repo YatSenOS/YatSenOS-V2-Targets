@@ -11,60 +11,81 @@ impl Stdin {
         Self
     }
 
-    pub fn read_char(&self) -> Option<char> {
-        let mut buf = vec![0; 4];
-        if let Some(bytes) = sys_read(0, &mut buf) {
-            if bytes > 0 {
-                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
+    fn try_read_key_with_buf(&self, buf: &mut [u8]) -> Option<u8> {
+        if let Some(bytes) = sys_read(0, buf) {
+            if bytes == 1 {
+                return Some(buf[0]);
             }
         }
         None
     }
 
-    pub fn read_char_with_buf(&self, buf: &mut [u8]) -> Option<char> {
-        if let Some(bytes) = sys_read(0, buf) {
-            if bytes > 0 {
-                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
+    fn pop_key(&self) -> u8 {
+        let mut buf = [0];
+        loop {
+            if let Some(key) = self.try_read_key_with_buf(&mut buf) {
+                return key;
             }
         }
-        None
     }
 
     pub fn read_line(&self) -> String {
         let mut string = String::new();
-        let mut buf = [0; 4];
         loop {
-            if let Some(k) = self.read_char_with_buf(&mut buf[..4]) {
-                match k {
-                    '\n' => {
-                        stdout().write("\n");
-                        break;
-                    }
-                    '\x03' => {
-                        string.clear();
-                        break;
-                    }
-                    '\x04' => {
-                        string.clear();
-                        string.push('\x04');
-                        break;
-                    }
-                    '\x08' => {
-                        if !string.is_empty() {
-                            stdout().write("\x08");
-                            string.pop();
-                        }
-                    }
-                    // ignore other control characters
-                    '\x00'..='\x1F' => {}
-                    c => {
-                        self::print!("{}", k);
-                        string.push(c);
+            let ch = self.pop_key();
+
+            match ch {
+                0x0d => {
+                    stdout().write("\n");
+                    break;
+                }
+                0x03 => {
+                    string.clear();
+                    break;
+                }
+                0x08 | 0x7F if !string.is_empty() => {
+                    stdout().write("\x08 \x08");
+                    string.pop();
+                }
+                _ => {
+                    if Self::is_utf8(ch) {
+                        let utf_char = char::from_u32(self.to_utf8(ch)).unwrap();
+                        string.push(utf_char);
+                        print! {"{}", utf_char};
+                    } else {
+                        string.push(ch as char);
+                        print!("{}", ch as char);
                     }
                 }
             }
         }
         string
+    }
+
+    fn is_utf8(ch: u8) -> bool {
+        ch & 0x80 == 0 || ch & 0xE0 == 0xC0 || ch & 0xF0 == 0xE0 || ch & 0xF8 == 0xF0
+    }
+
+    fn to_utf8(&self, ch: u8) -> u32 {
+        let mut codepoint = 0;
+
+        if ch & 0x80 == 0 {
+            codepoint = ch as u32;
+        } else if ch & 0xE0 == 0xC0 {
+            codepoint = ((ch & 0x1F) as u32) << 6;
+            codepoint |= (self.pop_key() & 0x3F) as u32;
+        } else if ch & 0xF0 == 0xE0 {
+            codepoint = ((ch & 0x0F) as u32) << 12;
+            codepoint |= ((self.pop_key() & 0x3F) as u32) << 6;
+            codepoint |= (self.pop_key() & 0x3F) as u32;
+        } else if ch & 0xF8 == 0xF0 {
+            codepoint = ((ch & 0x07) as u32) << 18;
+            codepoint |= ((self.pop_key() & 0x3F) as u32) << 12;
+            codepoint |= ((self.pop_key() & 0x3F) as u32) << 6;
+            codepoint |= (self.pop_key() & 0x3F) as u32;
+        }
+
+        codepoint
     }
 }
 
