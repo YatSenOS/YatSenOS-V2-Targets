@@ -4,7 +4,7 @@ use crate::App;
 use arrayvec::{ArrayString, ArrayVec};
 use uefi::proto::media::file::*;
 use uefi::proto::media::fs::SimpleFileSystem;
-use uefi::table::boot::*;
+use uefi::boot::*;
 use uefi::Char16;
 use xmas_elf::ElfFile;
 

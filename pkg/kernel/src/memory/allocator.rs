@@ -1,5 +1,7 @@
 // reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/allocator.rs
 
+use core::ptr::addr_of_mut;
+
 use linked_list_allocator::LockedHeap;
 use x86_64::VirtAddr;
 
@@ -11,11 +13,11 @@ pub static ALLOCATOR: LockedHeap = LockedHeap::empty();
 pub fn init() {
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
-    let heap_start = VirtAddr::from_ptr(unsafe { HEAP.as_ptr() });
+    let heap_start = VirtAddr::from_ptr(addr_of_mut!(HEAP));
     let heap_end = heap_start + HEAP_SIZE as u64;
 
     unsafe {
-        ALLOCATOR.lock().init(HEAP.as_mut_ptr(), HEAP_SIZE);
+        ALLOCATOR.lock().init(addr_of_mut!(HEAP) as *mut u8, HEAP_SIZE);
     }
 
     debug!(
