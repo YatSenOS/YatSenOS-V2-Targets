@@ -20,10 +20,6 @@ pub fn init() {
         ALLOCATOR.lock().init(addr_of_mut!(HEAP) as *mut u8, HEAP_SIZE);
     }
 
-    unsafe {
-        ALLOCATOR.lock().init(HEAP.as_mut_ptr(), HEAP_SIZE);
-    }
-
     debug!(
         "Kernel Heap      : 0x{:016x}-0x{:016x}",
         heap_start.as_u64(),
