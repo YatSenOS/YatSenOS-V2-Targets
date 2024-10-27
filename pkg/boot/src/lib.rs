@@ -2,7 +2,7 @@
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
-pub use uefi::table::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
+pub use uefi::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
 pub use uefi::Status;
 
 use arrayvec::{ArrayString, ArrayVec};
