@@ -17,7 +17,9 @@ pub fn init() {
     let heap_end = heap_start + HEAP_SIZE as u64;
 
     unsafe {
-        ALLOCATOR.lock().init(addr_of_mut!(HEAP) as *mut u8, HEAP_SIZE);
+        ALLOCATOR
+            .lock()
+            .init(addr_of_mut!(HEAP) as *mut u8, HEAP_SIZE);
     }
 
     debug!(
