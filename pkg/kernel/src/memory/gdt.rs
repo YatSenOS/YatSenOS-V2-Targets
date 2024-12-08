@@ -1,5 +1,5 @@
-use lazy_static::lazy_static;
 use core::ptr::addr_of_mut;
+use lazy_static::lazy_static;
 use x86_64::registers::segmentation::Segment;
 use x86_64::structures::gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector};
 use x86_64::structures::tss::TaskStateSegment;
