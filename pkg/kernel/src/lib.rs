@@ -56,5 +56,5 @@ pub fn grow_stack() {
 
 pub fn shutdown() -> ! {
     info!("YatSenOS shutting down.");
-    uefi::runtime::reset(ResetType::SHUTDOWN, Status::SUCCESS, None);
+    uefi::runtime::reset(ResetType::SHUTDOWN, Status::SUCCESS, None)
 }

@@ -4,8 +4,10 @@
 
 #[macro_use]
 extern crate log;
+
 extern crate alloc;
 
+use uefi::boot::MemoryType;
 use uefi::mem::memory_map::MemoryMap;
 use uefi::{entry, Status};
 use x86_64::registers::control::*;

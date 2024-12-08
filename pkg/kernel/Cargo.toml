@@ -6,13 +6,23 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-boot = { package = "ysos_boot", path = "../boot", default-features = false }
-uefi = { version = "0.33", default-features = false }
-lazy_static = { version = "1.4", features = ["spin_no_std"] }
-paste = "1.0"
-spin = "0.9"
-x86 = "0.52"
-x86_64 = "0.15"
-log = "0.4"
-bitflags = "2.3"
-libm = "0.2"
+boot = { workspace = true }
+uefi = { workspace = true }
+lazy_static = { workspace = true }
+paste ={ workspace = true }
+spin = { workspace = true }
+x86 = { workspace = true }
+x86_64 = { workspace = true }
+log = { workspace = true }
+bit_field ={ workspace = true }
+micromath = { workspace = true }
+bitflags = { workspace = true }
+chrono = { workspace = true }
+libm = { workspace = true }
+linked_list_allocator = { workspace = true }
+pc-keyboard = { workspace = true }
+crossbeam-queue = { workspace = true }
+volatile = { workspace = true }
+xmas-elf = { workspace = true }
+futures-util = { workspace = true }
+lru = { workspace = true }
