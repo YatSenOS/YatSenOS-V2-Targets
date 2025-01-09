@@ -205,8 +205,14 @@ checksum = "af1844ef2428cc3e1cb900be36181049ef3d3193c63e43026cfe202983b27a56"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.94",
+ "syn 2.0.95",
 ]
+
+[[package]]
+name = "owo-colors"
+version = "4.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb37767f6569cd834a413442455e0f066d0d522de8630436e2a1761d9726ba56"
 
 [[package]]
 name = "paste"
@@ -222,9 +228,9 @@ checksum = "f0ca629cbb3f0d5b699c338f0129ff78c9bfd7ea8b1258ad529bff490dc8ed5a"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.15"
+version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "915a1e146535de9163f3987b8944ed8cf49a18bb0056bcebcdcece385cece4ff"
+checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
 
 [[package]]
 name = "pin-utils"
@@ -346,9 +352,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.94"
+version = "2.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "987bc0be1cdea8b10216bd06e2ca407d40b9543468fafd3ddfb02f36e77f71f3"
+checksum = "46f71c0377baf4ef1cc3e3402ded576dccc315800fbc62dfc7fe04b009773b4a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -388,7 +394,7 @@ checksum = "9b24e77d3fc1e617051e630f99da24bcae6328abab37b8f9216bb68d06804f9a"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.94",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -545,6 +551,7 @@ dependencies = [
  "log",
  "lru",
  "micromath",
+ "owo-colors",
  "paste",
  "pc-keyboard",
  "spin",
@@ -575,8 +582,9 @@ dependencies = [
 
 [[package]]
 name = "ysos_sh"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
+ "owo-colors",
  "yslib",
 ]
 
