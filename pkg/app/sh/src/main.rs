@@ -77,6 +77,15 @@ fn main() -> isize {
 
                 services::kill(pid.unwrap());
             }
+            "rand" => {
+                let len = if line.len() < 2 {
+                    16
+                } else {
+                    line[1].parse::<usize>().unwrap_or(16)
+                };
+
+                services::gen_random_bytes(len);
+            }
             "help" => utils::show_help_text(),
             "clear" => print!("\x1b[1;1H\x1b[2J"),
             _ => {
