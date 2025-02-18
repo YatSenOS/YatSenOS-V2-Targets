@@ -1,6 +1,6 @@
 [package]
 name = "ysos_sh"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 authors = ["GZTime <Time.GZ@outlook.com>"]
 
@@ -8,3 +8,4 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 lib = { workspace = true }
+owo-colors = { workspace = true }

@@ -3,20 +3,20 @@
 
 extern crate alloc;
 
-mod consts;
 mod services;
+mod utils;
 
 use alloc::string::ToString;
 use alloc::vec::Vec;
 use lib::*;
+use owo_colors::OwoColorize;
 
 extern crate lib;
 
 fn main() -> isize {
-    println!("            <<< Welcome to YatSenOS shell >>>            ");
-    println!("                                 type `help` for help");
+    utils::show_welcome_text();
     loop {
-        print!("$ ");
+        print!("{} ", "$".cyan().bold());
         let input = stdin().read_line();
         let line: Vec<&str> = input.trim().split(' ').collect();
         match line[0] {
@@ -48,7 +48,7 @@ fn main() -> isize {
 
                 services::kill(pid.unwrap());
             }
-            "help" => print!("{}", consts::help_text()),
+            "help" => utils::show_help_text(),
             "clear" => print!("\x1b[1;1H\x1b[2J"),
             _ => {
                 if line[0].is_empty() {
