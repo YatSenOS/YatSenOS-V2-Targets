@@ -141,6 +141,40 @@ pub fn kill(pid: u16) {
     sys_kill(pid);
 }
 
+pub fn gen_random_bytes(len: usize) {
+    if len == 0 {
+        return;
+    }
+
+    fn to_hex(b: u8) -> char {
+        match b {
+            0..=9 => (b + b'0') as char,
+            10..=15 => (b - 10 + b'a') as char,
+            _ => unreachable!(),
+        }
+    }
+
+    let rng = lib::io::Random::new();
+    let mut bs = [0; 64];
+    let mut string = String::with_capacity(64 * 2 + 1);
+    let mut count = 0;
+
+    while count < len {
+        rng.fill_bytes(&mut bs);
+        string.clear();
+        for b in bs.iter() {
+            string.push(to_hex(b >> 4));
+            string.push(to_hex(b & 0xf));
+            count += 1;
+            if count >= len {
+                string.push('\n');
+                break;
+            }
+        }
+        stdout().write(&string);
+    }
+}
+
 pub fn canonicalize(path: &mut String) {
     // If the path is not absolute, return an error
     if !path.starts_with('/') {

@@ -3,21 +3,25 @@
 
 extern crate alloc;
 
-mod consts;
 mod services;
+mod utils;
 
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use lib::*;
+use owo_colors::OwoColorize;
 
 extern crate lib;
 
 fn main() -> isize {
     let mut root_dir = String::from("/APP/");
-    println!("            <<< Welcome to YatSenOS shell >>>            ");
-    println!("                                 type `help` for help");
+    utils::show_welcome_text();
     loop {
-        print!("[{}] $ ", root_dir);
+        print!(
+            "{} {} ",
+            format_args!("[{}]", root_dir).bright_yellow().bold(),
+            "$".cyan().bold()
+        );
         let input = stdin().read_line();
         let line: Vec<&str> = input.trim().split(' ').collect();
         match line[0] {
@@ -73,7 +77,16 @@ fn main() -> isize {
 
                 services::kill(pid.unwrap());
             }
-            "help" => print!("{}", consts::help_text()),
+            "rand" => {
+                let len = if line.len() < 2 {
+                    16
+                } else {
+                    line[1].parse::<usize>().unwrap_or(16)
+                };
+
+                services::gen_random_bytes(len);
+            }
+            "help" => utils::show_help_text(),
             "clear" => print!("\x1b[1;1H\x1b[2J"),
             _ => {
                 if line[0].is_empty() {
