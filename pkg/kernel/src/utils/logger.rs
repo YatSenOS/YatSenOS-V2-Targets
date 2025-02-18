@@ -1,4 +1,5 @@
 use log::{LevelFilter, Metadata, Record};
+use owo_colors::OwoColorize;
 
 pub fn init() {
     static LOGGER: Logger = Logger;
@@ -20,15 +21,22 @@ impl log::Log for Logger {
     fn log(&self, record: &Record) {
         match record.level() {
             log::Level::Error => println_warn!(
-                "[E] {}@{}: {}",
-                record.file_static().unwrap_or(""),
+                "{} {}@{}:{}",
+                "[E]".red().bold(),
+                record.file_static().unwrap_or("").bold(),
                 record.line().unwrap_or(0),
                 record.args()
             ),
-            log::Level::Warn => println_warn!("[!] {}", record.args()),
-            log::Level::Info => println!("[+] {}", record.args()),
-            log::Level::Debug => println_serial!("[D] {}", record.args()),
-            log::Level::Trace => println_serial!("[T] {}", record.args()),
+            log::Level::Warn => {
+                println_warn!("{} {}", "[!]".yellow().bold(), record.args().yellow())
+            }
+            log::Level::Info => println!("{} {}", "[+]".green().bold(), record.args().green()),
+            log::Level::Debug => {
+                println_serial!("{} {}", "[D]".blue().bold(), record.args().blue())
+            }
+            log::Level::Trace => {
+                println_serial!("{} {}", "[T]".dimmed().bold(), record.args().dimmed())
+            }
         }
     }
 
