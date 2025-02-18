@@ -26,3 +26,4 @@ volatile = { workspace = true }
 xmas-elf = { workspace = true }
 futures-util = { workspace = true }
 lru = { workspace = true }
+owo-colors = { workspace = true }
