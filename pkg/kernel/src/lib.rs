@@ -18,7 +18,7 @@ pub mod drivers;
 pub use drivers::*;
 
 use boot::BootInfo;
-use uefi::{runtime::ResetType, Status};
+use uefi::{Status, runtime::ResetType};
 
 pub fn init(_boot_info: &'static BootInfo) {
     serial::init(); // init serial output
@@ -33,7 +33,7 @@ pub fn init(_boot_info: &'static BootInfo) {
     info!("Stack grow test done.");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub fn grow_stack() {
     const STACK_SIZE: usize = 1024 * 4;

@@ -1,11 +1,11 @@
-use volatile::{access::ReadOnly, VolatileRef};
+use volatile::{VolatileRef, access::ReadOnly};
 use x86_64::{
+    VirtAddr,
     registers::rflags::RFlags,
     structures::{gdt::SegmentSelector, idt::InterruptStackFrameValue},
-    VirtAddr,
 };
 
-use crate::{memory::gdt::get_selector, RegistersValue};
+use crate::{RegistersValue, memory::gdt::get_selector};
 
 #[repr(C)]
 #[derive(Clone, Copy)]

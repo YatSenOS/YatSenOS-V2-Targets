@@ -9,7 +9,8 @@ extern crate alloc;
 
 use uefi::boot::MemoryType;
 use uefi::mem::memory_map::MemoryMap;
-use uefi::{entry, Status};
+use uefi::{Status, entry};
+use x86_64::VirtAddr;
 use x86_64::registers::control::*;
 use xmas_elf::ElfFile;
 use ysos_boot::*;
@@ -127,7 +128,5 @@ fn efi_main() -> Status {
     // align stack to 8 bytes
     let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000 - 8;
 
-    unsafe {
-        jump_to_entry(&bootinfo, stacktop);
-    }
+    jump_to_entry(&bootinfo, stacktop);
 }

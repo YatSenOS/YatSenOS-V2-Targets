@@ -5,13 +5,12 @@ pub use uefi::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
-pub use uefi::Status;
 
 use arrayvec::ArrayVec;
 use core::ptr::NonNull;
+use x86_64::VirtAddr;
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::{OffsetPageTable, PageTable};
-use x86_64::VirtAddr;
 
 pub mod allocator;
 pub mod config;
@@ -53,8 +52,10 @@ static mut ENTRY: usize = 0;
 ///
 /// This function is unsafe because the caller must ensure that the kernel entry point is valid.
 pub unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
-    assert!(ENTRY != 0, "ENTRY is not set");
-    asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
+    unsafe {
+        assert!(ENTRY != 0, "ENTRY is not set");
+        asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
+    }
     unreachable!()
 }
 
@@ -65,7 +66,9 @@ pub unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
 /// This function is unsafe because the caller must ensure that the kernel entry point is valid.
 #[inline(always)]
 pub unsafe fn set_entry(entry: usize) {
-    ENTRY = entry;
+    unsafe {
+        ENTRY = entry;
+    }
 }
 
 /// This is copied from https://docs.rs/bootloader/0.10.12/src/bootloader/lib.rs.html
@@ -79,7 +82,7 @@ pub unsafe fn set_entry(entry: usize) {
 #[macro_export]
 macro_rules! entry_point {
     ($path:path) => {
-        #[export_name = "_start"]
+        #[unsafe(export_name = "_start")]
         pub extern "C" fn __impl_start(boot_info: &'static $crate::BootInfo) -> ! {
             // validate the signature of the program entry point
             let f: fn(&'static $crate::BootInfo) -> ! = $path;
