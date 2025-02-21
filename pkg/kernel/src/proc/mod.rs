@@ -17,8 +17,8 @@ pub use paging::PageTableContext;
 pub use pid::ProcessId;
 pub use vm::*;
 
-use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::VirtAddr;
+use x86_64::structures::idt::PageFaultErrorCode;
 
 pub const KERNEL_PID: ProcessId = ProcessId(1);
 

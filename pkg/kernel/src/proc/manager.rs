@@ -2,8 +2,9 @@ use super::*;
 use crate::{
     humanized_size,
     memory::{
+        PAGE_SIZE,
         allocator::{ALLOCATOR, HEAP_SIZE},
-        get_frame_alloc_for_sure, PAGE_SIZE,
+        get_frame_alloc_for_sure,
     },
 };
 use alloc::collections::BTreeMap;

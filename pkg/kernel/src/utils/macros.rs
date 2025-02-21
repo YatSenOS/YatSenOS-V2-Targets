@@ -1,4 +1,4 @@
-use crate::serial::{get_serial, SERIAL};
+use crate::serial::{SERIAL, get_serial};
 use alloc::string::ToString;
 use core::fmt::*;
 use x86_64::instructions::interrupts;
