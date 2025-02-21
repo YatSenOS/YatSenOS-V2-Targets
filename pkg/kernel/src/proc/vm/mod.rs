@@ -1,4 +1,4 @@
-use x86_64::{structures::paging::*, VirtAddr};
+use x86_64::{VirtAddr, structures::paging::*};
 use xmas_elf::ElfFile;
 
 use crate::memory::*;

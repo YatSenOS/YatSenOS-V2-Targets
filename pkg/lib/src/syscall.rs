@@ -1,4 +1,4 @@
-use chrono::{naive::*, DateTime, Utc};
+use chrono::{DateTime, Utc, naive::*};
 use syscall_def::Syscall;
 
 #[inline(always)]

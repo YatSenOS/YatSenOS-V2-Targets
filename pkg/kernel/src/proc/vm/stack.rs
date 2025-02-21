@@ -1,9 +1,9 @@
 use x86_64::{
-    structures::paging::{mapper::MapToError, page::*, Page},
     VirtAddr,
+    structures::paging::{Page, mapper::MapToError, page::*},
 };
 
-use crate::proc::{processor, KERNEL_PID};
+use crate::proc::{KERNEL_PID, processor};
 
 use super::*;
 

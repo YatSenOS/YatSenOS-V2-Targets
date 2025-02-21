@@ -2,10 +2,10 @@ use core::ptr::NonNull;
 
 use crate::App;
 use arrayvec::{ArrayString, ArrayVec};
+use uefi::Char16;
 use uefi::boot::*;
 use uefi::proto::media::file::*;
 use uefi::proto::media::fs::SimpleFileSystem;
-use uefi::Char16;
 use xmas_elf::ElfFile;
 
 /// Open root directory
