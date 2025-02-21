@@ -22,8 +22,8 @@ pub use vm::*;
 use xmas_elf::ElfFile;
 
 use alloc::string::{String, ToString};
-use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::VirtAddr;
+use x86_64::structures::idt::PageFaultErrorCode;
 
 pub const KERNEL_PID: ProcessId = ProcessId(1);
 
