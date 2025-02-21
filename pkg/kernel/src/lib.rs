@@ -29,7 +29,7 @@ pub mod interrupt;
 pub use alloc::format;
 
 use boot::BootInfo;
-use uefi::{runtime::ResetType, Status};
+use uefi::{Status, runtime::ResetType};
 
 pub fn init(boot_info: &'static BootInfo) {
     unsafe {
@@ -57,7 +57,7 @@ pub fn init(boot_info: &'static BootInfo) {
     info!("Stack grow test done.");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub fn grow_stack() {
     const STACK_SIZE: usize = 1024 * 4;
