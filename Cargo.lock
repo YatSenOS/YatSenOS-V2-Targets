@@ -479,28 +479,28 @@ dependencies = [
 
 [[package]]
 name = "ysos_brk"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
 
 [[package]]
 name = "ysos_counter"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
 
 [[package]]
 name = "ysos_dining"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
 
 [[package]]
 name = "ysos_elf"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "log",
  "x86_64",
@@ -509,21 +509,21 @@ dependencies = [
 
 [[package]]
 name = "ysos_fact"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
 
 [[package]]
 name = "ysos_fork"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
 
 [[package]]
 name = "ysos_hello"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
@@ -560,21 +560,21 @@ dependencies = [
 
 [[package]]
 name = "ysos_mq"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
 
 [[package]]
 name = "ysos_mutex"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "yslib",
 ]
 
 [[package]]
 name = "ysos_sh"
-version = "0.6.0"
+version = "1.0.0"
 dependencies = [
  "owo-colors",
  "yslib",

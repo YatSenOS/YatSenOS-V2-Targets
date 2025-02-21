@@ -11,6 +11,11 @@ members = [
 ]
 exclude = ["pkg/app/config", "pkg/app/.cargo"]
 
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+authors = ["GZTime <Time.GZ@outlook.com>"]
+
 [profile.release-with-debug]
 inherits = "release"
 debug = true

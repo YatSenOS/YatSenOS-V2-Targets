@@ -1,8 +1,8 @@
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use boot::{MemoryMap, MemoryType};
-use x86_64::structures::paging::{FrameAllocator, FrameDeallocator, PhysFrame, Size4KiB};
 use x86_64::PhysAddr;
+use x86_64::structures::paging::{FrameAllocator, FrameDeallocator, PhysFrame, Size4KiB};
 
 once_mutex!(pub FRAME_ALLOCATOR: BootInfoFrameAllocator);
 
@@ -29,11 +29,13 @@ impl BootInfoFrameAllocator {
     /// memory map is valid. The main requirement is that all frames that are marked
     /// as `USABLE` in it are really unused.
     pub unsafe fn init(memory_map: &MemoryMap, used: usize, size: usize) -> Self {
-        BootInfoFrameAllocator {
-            size,
-            frames: create_frame_iter(memory_map),
-            used,
-            recycled: Vec::new(),
+        unsafe {
+            BootInfoFrameAllocator {
+                size,
+                frames: create_frame_iter(memory_map),
+                used,
+                recycled: Vec::new(),
+            }
         }
     }
 
