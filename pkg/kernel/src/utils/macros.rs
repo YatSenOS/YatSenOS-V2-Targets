@@ -116,7 +116,8 @@ pub fn print_serial_internal(args: Arguments) {
     });
 }
 
-#[cfg_attr(not(test), panic_handler)]
+#[allow(dead_code)]
+#[cfg_attr(target_os = "none", panic_handler)]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     unsafe { SERIAL.get().unwrap().force_unlock() };
 
