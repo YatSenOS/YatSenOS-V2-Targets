@@ -10,7 +10,6 @@ extern crate alloc;
 use uefi::boot::MemoryType;
 use uefi::mem::memory_map::MemoryMap;
 use uefi::{Status, entry};
-use x86_64::VirtAddr;
 use x86_64::registers::control::*;
 use xmas_elf::ElfFile;
 use ysos_boot::*;
@@ -41,9 +40,8 @@ fn efi_main() -> Status {
         let buf = load_file(&mut file);
         ElfFile::new(buf).expect("failed to parse ELF")
     };
-    unsafe {
-        set_entry(elf.header.pt2.entry_point() as usize);
-    }
+
+    set_entry(elf.header.pt2.entry_point() as usize);
 
     // 3. Load MemoryMap
     let mmap = uefi::boot::memory_map(MemoryType::LOADER_DATA).expect("Failed to get memory map");

@@ -1,5 +1,4 @@
 #![no_std]
-use core::arch::asm;
 
 pub use uefi::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
 pub use uefi::data_types::chars::*;
@@ -44,6 +43,7 @@ pub fn current_page_table() -> OffsetPageTable<'static> {
 }
 
 /// The entry point of kernel, set by BSP.
+#[cfg(feature = "boot")]
 static mut ENTRY: usize = 0;
 
 /// Jump to ELF entry according to global variable `ENTRY`
@@ -51,7 +51,8 @@ static mut ENTRY: usize = 0;
 /// # Safety
 ///
 /// This function is unsafe because the caller must ensure that the kernel entry point is valid.
-pub unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
+#[cfg(feature = "boot")]
+pub fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
     unsafe {
         assert!(ENTRY != 0, "ENTRY is not set");
         asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
@@ -65,7 +66,8 @@ pub unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
 ///
 /// This function is unsafe because the caller must ensure that the kernel entry point is valid.
 #[inline(always)]
-pub unsafe fn set_entry(entry: usize) {
+#[cfg(feature = "boot")]
+pub fn set_entry(entry: usize) {
     unsafe {
         ENTRY = entry;
     }

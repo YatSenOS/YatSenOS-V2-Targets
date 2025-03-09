@@ -118,7 +118,7 @@ pub fn print_serial_internal(args: Arguments) {
 }
 
 #[allow(dead_code)]
-#[cfg_attr(not(test), panic_handler)]
+#[cfg_attr(target_os = "none", panic_handler)]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     error!("ERROR: panick!");
     loop {}
