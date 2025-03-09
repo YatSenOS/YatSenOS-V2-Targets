@@ -6,18 +6,16 @@
 extern crate log;
 extern crate alloc;
 
-use core::arch::asm;
 use uefi::mem::memory_map::MemoryMap;
 use uefi::{Status, entry};
 use x86_64::VirtAddr;
 use x86_64::registers::control::*;
 use x86_64::structures::paging::*;
 use xmas_elf::ElfFile;
-use xmas_elf::program::ProgramHeader;
-use ysos_boot::MemoryType;
+use ysos_boot::BootInfo;
 use ysos_boot::allocator::*;
 use ysos_boot::fs::*;
-use ysos_boot::{BootInfo, KernelPages};
+use ysos_boot::{MemoryType, jump_to_entry, set_entry};
 
 mod config;
 
@@ -45,9 +43,8 @@ fn efi_main() -> Status {
         let buf = load_file(&mut file);
         ElfFile::new(buf).expect("failed to parse ELF")
     };
-    unsafe {
-        ENTRY = elf.header.pt2.entry_point() as usize;
-    }
+
+    set_entry(elf.header.pt2.entry_point() as usize);
 
     let apps = if config.load_apps {
         info!("Loading apps...");
@@ -152,16 +149,4 @@ fn current_page_table() -> OffsetPageTable<'static> {
     let p4_table_addr = Cr3::read().0.start_address().as_u64();
     let p4_table = unsafe { &mut *(p4_table_addr as *mut PageTable) };
     unsafe { OffsetPageTable::new(p4_table, VirtAddr::new(0)) }
-}
-
-/// The entry point of kernel, set by BSP.
-static mut ENTRY: usize = 0;
-
-/// Jump to ELF entry according to global variable `ENTRY`
-#[allow(clippy::empty_loop)]
-fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
-    unsafe {
-        asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
-    }
-    loop {}
 }
