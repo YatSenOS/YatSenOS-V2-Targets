@@ -52,3 +52,34 @@ macro_rules! entry_point {
         }
     };
 }
+
+/// The entry point of kernel, set by BSP.
+#[cfg(feature = "boot")]
+static mut ENTRY: usize = 0;
+
+/// Jump to ELF entry according to global variable `ENTRY`
+///
+/// # Safety
+///
+/// This function is unsafe because the caller must ensure that the kernel entry point is valid.
+#[cfg(feature = "boot")]
+pub fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
+    unsafe {
+        assert!(ENTRY != 0, "ENTRY is not set");
+        core::arch::asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
+    }
+    unreachable!()
+}
+
+/// Set the entry point of kernel
+///
+/// # Safety
+///
+/// This function is unsafe because the caller must ensure that the kernel entry point is valid.
+#[inline(always)]
+#[cfg(feature = "boot")]
+pub fn set_entry(entry: usize) {
+    unsafe {
+        ENTRY = entry;
+    }
+}
