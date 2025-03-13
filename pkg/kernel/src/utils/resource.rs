@@ -1,4 +1,4 @@
-use alloc::{collections::BTreeMap, string::String};
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
 use storage::{Device, FileHandle, random::Random};
@@ -15,12 +15,14 @@ pub enum StdIO {
 #[derive(Debug)]
 pub struct ResourceSet {
     pub handles: BTreeMap<u8, Mutex<Resource>>,
+    recycled: Vec<u8>,
 }
 
 impl Default for ResourceSet {
     fn default() -> Self {
         let mut res = Self {
             handles: BTreeMap::new(),
+            recycled: Vec::new(),
         };
 
         res.open(Resource::Console(StdIO::Stdin));
@@ -33,28 +35,35 @@ impl Default for ResourceSet {
 
 impl ResourceSet {
     pub fn open(&mut self, res: Resource) -> u8 {
-        let fd = self.handles.len() as u8;
+        let fd = match self.recycled.pop() {
+            Some(fd) => fd,
+            None => self.handles.len() as u8,
+        };
         self.handles.insert(fd, Mutex::new(res));
         fd
     }
 
     pub fn close(&mut self, fd: u8) -> bool {
-        self.handles.remove(&fd).is_some()
+        match self.handles.remove(&fd) {
+            Some(_) => {
+                self.recycled.push(fd);
+                true
+            }
+            None => false,
+        }
     }
 
     pub fn read(&self, fd: u8, buf: &mut [u8]) -> isize {
-        if let Some(count) = self.handles.get(&fd).and_then(|h| h.lock().read(buf)) {
-            count as isize
-        } else {
-            -1
+        match self.handles.get(&fd).and_then(|h| h.lock().read(buf)) {
+            Some(count) => count as isize,
+            None => -1,
         }
     }
 
     pub fn write(&self, fd: u8, buf: &[u8]) -> isize {
-        if let Some(count) = self.handles.get(&fd).and_then(|h| h.lock().write(buf)) {
-            count as isize
-        } else {
-            -1
+        match self.handles.get(&fd).and_then(|h| h.lock().write(buf)) {
+            Some(count) => count as isize,
+            None => -1,
         }
     }
 }
