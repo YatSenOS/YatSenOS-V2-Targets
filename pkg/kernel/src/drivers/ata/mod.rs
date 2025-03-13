@@ -77,17 +77,17 @@ impl core::fmt::Display for AtaDrive {
 use storage::{Block512, BlockDevice};
 
 impl BlockDevice<Block512> for AtaDrive {
-    fn block_count(&self) -> storage::Result<usize> {
+    fn block_count(&self) -> storage::FsResult<usize> {
         Ok(self.blocks as usize)
     }
 
-    fn read_block(&self, offset: usize, block: &mut Block512) -> storage::Result<()> {
+    fn read_block(&self, offset: usize, block: &mut Block512) -> storage::FsResult {
         BUSES[self.bus as usize]
             .lock()
             .read_pio(self.drive, offset as u32, block.as_mut())
     }
 
-    fn write_block(&self, offset: usize, block: &Block512) -> storage::Result<()> {
+    fn write_block(&self, offset: usize, block: &Block512) -> storage::FsResult {
         BUSES[self.bus as usize]
             .lock()
             .write_pio(self.drive, offset as u32, block.as_ref())

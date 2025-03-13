@@ -14,10 +14,10 @@ use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
 use xmas_elf::ElfFile;
 use xmas_elf::program::ProgramHeader;
-use ysos_boot::{jump_to_entry, set_entry, MemoryType};
 use ysos_boot::allocator::*;
 use ysos_boot::fs::*;
 use ysos_boot::{BootInfo, KernelPages};
+use ysos_boot::{MemoryType, jump_to_entry, set_entry};
 
 mod config;
 

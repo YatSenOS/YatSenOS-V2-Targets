@@ -12,10 +12,10 @@ where
     Self: Sized,
 {
     /// Parse the partition table
-    fn parse(inner: T) -> Result<Self>;
+    fn parse(inner: T) -> FsResult<Self>;
 
     /// Returns the partitions
-    fn partitions(&self) -> Result<Vec<Partition<T, B>>>;
+    fn partitions(&self) -> FsResult<Vec<Partition<T, B>>>;
 }
 
 /// Identifies a partition on the disk.
@@ -63,11 +63,11 @@ where
     T: BlockDevice<B>,
     B: BlockTrait,
 {
-    fn block_count(&self) -> Result<usize> {
+    fn block_count(&self) -> FsResult<usize> {
         self.inner.block_count()
     }
 
-    fn read_block(&self, offset: usize, block: &mut B) -> Result<()> {
+    fn read_block(&self, offset: usize, block: &mut B) -> FsResult {
         if offset >= self.size {
             return Err(FsError::InvalidOffset);
         }
@@ -76,7 +76,7 @@ where
         self.inner.read_block(offset, block)
     }
 
-    fn write_block(&self, offset: usize, block: &B) -> Result<()> {
+    fn write_block(&self, offset: usize, block: &B) -> FsResult {
         if offset >= self.size {
             return Err(FsError::InvalidOffset);
         }

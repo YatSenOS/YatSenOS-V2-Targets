@@ -25,7 +25,7 @@ where
     T: BlockDevice<B> + Clone,
     B: BlockTrait,
 {
-    fn parse(inner: T) -> Result<Self> {
+    fn parse(inner: T) -> FsResult<Self> {
         let mut block = B::default();
         inner.read_block(0, &mut block)?;
 
@@ -51,7 +51,7 @@ where
         })
     }
 
-    fn partitions(&self) -> Result<Vec<Partition<T, B>>> {
+    fn partitions(&self) -> FsResult<Vec<Partition<T, B>>> {
         let mut parts = Vec::new();
 
         for part in self.partitions {

@@ -132,7 +132,7 @@ impl AtaBus {
     /// Writes the given command
     ///
     /// reference: https://wiki.osdev.org/ATA_PIO_Mode#28_bit_PIO
-    fn write_command(&mut self, drive: u8, block: u32, cmd: AtaCommand) -> storage::Result<()> {
+    fn write_command(&mut self, drive: u8, block: u32, cmd: AtaCommand) -> storage::FsResult {
         let bytes = block.to_le_bytes();
 
         unsafe {
@@ -167,7 +167,7 @@ impl AtaBus {
     /// Identifies the drive at the given `drive` number (0 or 1).
     ///
     /// reference: <https://wiki.osdev.org/ATA_PIO_Mode#IDENTIFY_command>
-    pub(super) fn identify_drive(&mut self, drive: u8) -> storage::Result<AtaDeviceType> {
+    pub(super) fn identify_drive(&mut self, drive: u8) -> storage::FsResult<AtaDeviceType> {
         info!("Identifying drive {}", drive);
 
         if self
@@ -196,12 +196,7 @@ impl AtaBus {
     ///
     /// reference: https://wiki.osdev.org/ATA_PIO_Mode#28_bit_PIO
     /// reference: https://wiki.osdev.org/IDE#Read.2FWrite_From_ATA_Drive
-    pub(super) fn read_pio(
-        &mut self,
-        drive: u8,
-        block: u32,
-        buf: &mut [u8],
-    ) -> storage::Result<()> {
+    pub(super) fn read_pio(&mut self, drive: u8, block: u32, buf: &mut [u8]) -> storage::FsResult {
         self.write_command(drive, block, AtaCommand::ReadPio)?;
 
         for chunk in buf.chunks_mut(2) {
@@ -222,7 +217,7 @@ impl AtaBus {
     ///
     /// reference: https://wiki.osdev.org/ATA_PIO_Mode#28_bit_PIO
     /// reference: https://wiki.osdev.org/IDE#Read.2FWrite_From_ATA_Drive
-    pub(super) fn write_pio(&mut self, drive: u8, block: u32, buf: &[u8]) -> storage::Result<()> {
+    pub(super) fn write_pio(&mut self, drive: u8, block: u32, buf: &[u8]) -> storage::FsResult {
         self.write_command(drive, block, AtaCommand::WritePio)?;
 
         for chunk in buf.chunks(2) {

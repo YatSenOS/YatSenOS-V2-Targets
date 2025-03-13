@@ -36,7 +36,7 @@ impl File {
 }
 
 impl Read for File {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> FsResult<usize> {
         let length = self.length();
 
         if self.offset >= length {
@@ -87,17 +87,17 @@ impl Read for File {
 }
 
 impl Seek for File {
-    fn seek(&mut self, _pos: SeekFrom) -> Result<usize> {
+    fn seek(&mut self, _pos: SeekFrom) -> FsResult<usize> {
         unimplemented!()
     }
 }
 
 impl Write for File {
-    fn write(&mut self, _buf: &[u8]) -> Result<usize> {
+    fn write(&mut self, _buf: &[u8]) -> FsResult<usize> {
         unimplemented!()
     }
 
-    fn flush(&mut self) -> Result<()> {
+    fn flush(&mut self) -> FsResult {
         unimplemented!()
     }
 }
