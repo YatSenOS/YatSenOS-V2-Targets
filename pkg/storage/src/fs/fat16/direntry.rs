@@ -92,7 +92,7 @@ impl DirEntry {
     }
 
     /// For Standard 8.3 format
-    pub fn parse(data: &[u8]) -> Result<DirEntry> {
+    pub fn parse(data: &[u8]) -> FsResult<DirEntry> {
         // trace!(
         //     "Parsing file...\n    {:016x} {:016x} {:016x} {:016x}",
         //     u64::from_be_bytes(data[0..8].try_into().unwrap()),
@@ -194,7 +194,7 @@ impl ShortFileName {
         self.name == sfn.name && self.ext == sfn.ext
     }
 
-    pub fn parse(name: &str) -> Result<ShortFileName> {
+    pub fn parse(name: &str) -> FsResult<ShortFileName> {
         let mut sfn = ShortFileName {
             name: [0x20; 8],
             ext: [0x20; 3],

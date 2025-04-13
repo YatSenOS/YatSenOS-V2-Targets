@@ -10,7 +10,7 @@ pub static GLOBAL_RNG: spin::Once<spin::Mutex<Hc128Rng>> = spin::Once::new();
 pub struct Random;
 
 impl Device<u8> for Random {
-    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize> {
+    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> FsResult<usize> {
         if let Some(rng) = RdRand::new() {
             for i in (0..size).step_by(8) {
                 if let Some(num) = rng.get_u64() {
@@ -30,7 +30,7 @@ impl Device<u8> for Random {
         }
     }
 
-    fn write(&mut self, _: &[u8], _: usize, _: usize) -> Result<usize> {
+    fn write(&mut self, _: &[u8], _: usize, _: usize) -> FsResult<usize> {
         Ok(0)
     }
 }

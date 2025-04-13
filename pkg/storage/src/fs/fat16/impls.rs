@@ -40,7 +40,11 @@ impl Fat16Impl {
     }
 
     /// Finds an entry in a given sector
-    fn find_entry_in_sector(&self, match_name: &ShortFileName, sector: usize) -> Result<DirEntry> {
+    fn find_entry_in_sector(
+        &self,
+        match_name: &ShortFileName,
+        sector: usize,
+    ) -> FsResult<DirEntry> {
         let mut block = Block::default();
         let block_size = Block512::size();
         self.inner.read_block(sector, &mut block).unwrap();
@@ -63,7 +67,7 @@ impl Fat16Impl {
     }
 
     /// look for next cluster in FAT
-    pub fn next_cluster(&self, cluster: &Cluster) -> Result<Cluster> {
+    pub fn next_cluster(&self, cluster: &Cluster) -> FsResult<Cluster> {
         let fat_offset = (cluster.0 * 2) as usize;
         let mut block = Block::default();
         let block_size = Block512::size();
@@ -80,7 +84,7 @@ impl Fat16Impl {
         }
     }
 
-    pub fn iterate_dir<F>(&self, dir: &directory::Directory, mut func: F) -> Result<()>
+    pub fn iterate_dir<F>(&self, dir: &directory::Directory, mut func: F) -> FsResult
     where
         F: FnMut(&DirEntry),
     {
@@ -130,7 +134,7 @@ impl Fat16Impl {
     }
 
     /// Get an entry from the given directory
-    fn find_directory_entry(&self, dir: &Directory, name: &str) -> Result<DirEntry> {
+    fn find_directory_entry(&self, dir: &Directory, name: &str) -> FsResult<DirEntry> {
         let match_name = ShortFileName::parse(name)?;
 
         let mut current_cluster = Some(dir.cluster);
@@ -161,7 +165,7 @@ impl Fat16Impl {
         Err(FsError::FileNotFound)
     }
 
-    fn get_parent_dir(&self, path: &str) -> Result<Directory> {
+    fn get_parent_dir(&self, path: &str) -> FsResult<Directory> {
         let mut path = path.split(PATH_SEPARATOR);
         let mut current = Directory::root();
 
@@ -184,7 +188,7 @@ impl Fat16Impl {
         Ok(current)
     }
 
-    fn get_dir_entry(&self, path: &str) -> Result<DirEntry> {
+    fn get_dir_entry(&self, path: &str) -> FsResult<DirEntry> {
         let parent = self.get_parent_dir(path)?;
         let name = path.rsplit(PATH_SEPARATOR).next().unwrap_or("");
 
@@ -193,7 +197,7 @@ impl Fat16Impl {
 }
 
 impl FileSystem for Fat16 {
-    fn read_dir(&self, path: &str) -> Result<Box<dyn Iterator<Item = Metadata> + Send>> {
+    fn read_dir(&self, path: &str) -> FsResult<Box<dyn Iterator<Item = Metadata> + Send>> {
         let dir = self.handle.get_parent_dir(path)?;
         let mut entries = Vec::new();
 
@@ -204,7 +208,7 @@ impl FileSystem for Fat16 {
         Ok(Box::new(entries.into_iter()))
     }
 
-    fn open_file(&self, path: &str) -> Result<FileHandle> {
+    fn open_file(&self, path: &str) -> FsResult<FileHandle> {
         let entry = self.handle.get_dir_entry(path)?;
 
         if entry.is_directory() {
@@ -220,11 +224,11 @@ impl FileSystem for Fat16 {
         Ok(file_handle)
     }
 
-    fn metadata(&self, path: &str) -> Result<Metadata> {
+    fn metadata(&self, path: &str) -> FsResult<Metadata> {
         Ok(self.handle.get_dir_entry(path)?.as_meta())
     }
 
-    fn exists(&self, path: &str) -> Result<bool> {
+    fn exists(&self, path: &str) -> FsResult<bool> {
         Ok(self.handle.get_dir_entry(path).is_ok())
     }
 }

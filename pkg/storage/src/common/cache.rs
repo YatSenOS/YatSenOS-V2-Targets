@@ -28,14 +28,14 @@ impl<B: BlockTrait> BlockCache<B> {
     }
 
     #[inline]
-    pub fn save(&mut self, data: &B) -> Result<()> {
+    pub fn save(&mut self, data: &B) -> FsResult {
         self.inner.as_mut().copy_from_slice(data.as_ref());
         self.modified = true;
         Ok(())
     }
 
     #[inline]
-    pub fn load(&self, data: &mut B) -> Result<()> {
+    pub fn load(&self, data: &mut B) -> FsResult {
         data.as_mut().copy_from_slice(self.inner.as_ref());
         Ok(())
     }
@@ -98,11 +98,11 @@ where
     B: BlockTrait,
     C: CacheManager<B>,
 {
-    fn block_count(&self) -> Result<usize> {
+    fn block_count(&self) -> FsResult<usize> {
         self.device.block_count()
     }
 
-    fn read_block(&self, offset: usize, block: &mut B) -> Result<()> {
+    fn read_block(&self, offset: usize, block: &mut B) -> FsResult {
         match self.cache.get(&offset) {
             Some(cache) => {
                 // log::trace!("Cache hit for block {}", offset);
@@ -118,7 +118,7 @@ where
         Ok(())
     }
 
-    fn write_block(&self, offset: usize, block: &B) -> Result<()> {
+    fn write_block(&self, offset: usize, block: &B) -> FsResult {
         match self.cache.get(&offset) {
             Some(cache) => {
                 cache.write().save(block)?;
