@@ -55,7 +55,7 @@ static mut ENTRY: usize = 0;
 pub fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
     unsafe {
         assert!(ENTRY != 0, "ENTRY is not set");
-        asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
+        core::arch::asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
     }
     unreachable!()
 }
