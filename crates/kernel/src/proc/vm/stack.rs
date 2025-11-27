@@ -106,8 +106,11 @@ impl Stack {
     pub fn stack_offset(&self, old_stack: &Stack) -> u64 {
         let cur_stack_base = self.range.start.start_address().as_u64();
         let old_stack_base = old_stack.range.start.start_address().as_u64();
-        let offset = cur_stack_base - old_stack_base;
-        debug_assert!(offset % STACK_MAX_SIZE != 0, "Invalid stack offset.");
+        let offset = old_stack_base - cur_stack_base;
+        debug_assert!(
+            !offset.is_multiple_of(STACK_MAX_SIZE),
+            "Invalid stack offset."
+        );
         offset
     }
 

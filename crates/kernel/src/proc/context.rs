@@ -38,7 +38,7 @@ impl ProcessContext {
 
     #[inline]
     pub fn set_stack_offset(&mut self, offset: u64) {
-        self.value.stack_frame.stack_pointer += offset;
+        self.value.stack_frame.stack_pointer -= offset;
     }
 
     #[inline]

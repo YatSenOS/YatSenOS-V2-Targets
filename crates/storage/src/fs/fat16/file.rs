@@ -73,7 +73,7 @@ impl Read for File {
                 break;
             }
 
-            if self.offset % cluster_size == 0 {
+            if self.offset.is_multiple_of(cluster_size) {
                 if let Ok(next_cluster) = self.handle.next_cluster(&self.current_cluster) {
                     self.current_cluster = next_cluster;
                 } else {

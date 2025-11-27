@@ -15,21 +15,23 @@ impl Stdin {
 
     pub fn read_char(&self) -> Option<char> {
         let mut buf = vec![0; 4];
-        if let Some(bytes) = sys_read(0, &mut buf) {
-            if bytes > 0 {
-                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
-            }
+        if let Some(bytes) = sys_read(0, &mut buf)
+            && bytes > 0
+        {
+            String::from_utf8_lossy(&buf[..bytes]).chars().next()
+        } else {
+            None
         }
-        None
     }
 
     pub fn read_char_with_buf(&self, buf: &mut [u8]) -> Option<char> {
-        if let Some(bytes) = sys_read(0, buf) {
-            if bytes > 0 {
-                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
-            }
+        if let Some(bytes) = sys_read(0, buf)
+            && bytes > 0
+        {
+            String::from_utf8_lossy(&buf[..bytes]).chars().next()
+        } else {
+            None
         }
-        None
     }
 
     pub fn read_line(&self) -> String {
@@ -97,22 +99,24 @@ impl Random {
 
     pub fn next_u32(&self) -> u32 {
         let mut buf = vec![0; 4];
-        if let Some(bytes) = sys_read(self.0, &mut buf) {
-            if bytes > 0 {
-                return u32::from_le_bytes(buf[..bytes].try_into().unwrap());
-            }
+        if let Some(bytes) = sys_read(self.0, &mut buf)
+            && bytes > 0
+        {
+            u32::from_le_bytes(buf[..bytes].try_into().unwrap())
+        } else {
+            0
         }
-        0
     }
 
     pub fn next_u64(&self) -> u64 {
         let mut buf = vec![0; 8];
-        if let Some(bytes) = sys_read(self.0, &mut buf) {
-            if bytes > 0 {
-                return u64::from_le_bytes(buf[..bytes].try_into().unwrap());
-            }
+        if let Some(bytes) = sys_read(self.0, &mut buf)
+            && bytes > 0
+        {
+            u64::from_le_bytes(buf[..bytes].try_into().unwrap())
+        } else {
+            0
         }
-        0
     }
 
     pub fn fill_bytes(&self, buf: &mut [u8]) {
