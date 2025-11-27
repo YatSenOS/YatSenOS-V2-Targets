@@ -1,0 +1,37 @@
+#![cfg_attr(not(test), no_std)]
+#![allow(dead_code, unused_imports)]
+#![feature(trait_alias)]
+
+#[macro_use]
+extern crate alloc;
+#[macro_use]
+extern crate log;
+
+#[macro_use]
+pub mod common;
+mod fs;
+mod partition;
+
+use alloc::{borrow::ToOwned, boxed::Box, string::String, sync::Arc, vec::Vec};
+
+pub use common::*;
+pub use fs::*;
+pub use partition::*;
+
+// 1. The disk structure
+// How to read a file from disk
+//
+//   - The disk is a collection of partitions. MBR (Master Boot Record) is the
+//     first sector of the disk. The MBR contains information about the
+//     partitions.
+//
+//     [ MBR | Partitions ] [ Partition 1 ] [ Partition 2 ] [ Partition 3 ] [
+// Partition 4 ]
+//
+// 2. The partition structure (in Fat16)
+//
+//    - The partition is a collection of clusters.
+//     BPB (Boot Parameter Block) is the first sector of the partition.
+//     The BPB contains information about the filesystem.
+//
+//     [ Fat16 BPB ] [ Data ]

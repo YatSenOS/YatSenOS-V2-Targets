@@ -1,0 +1,8 @@
+[package]
+authors = { workspace = true }
+edition = { workspace = true }
+name    = "ysos_counter"
+version = { workspace = true }
+
+[dependencies]
+lib = { workspace = true }

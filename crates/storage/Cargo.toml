@@ -1,0 +1,18 @@
+[package]
+authors = { workspace = true }
+edition = { workspace = true }
+name    = "ysos_storage"
+version = { workspace = true }
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bitflags    = { workspace = true }
+chrono      = { workspace = true, features = ["alloc"] }
+hex-literal = { workspace = true }
+log         = { workspace = true }
+num_enum    = { workspace = true }
+paste       = { workspace = true }
+rand        = { workspace = true }
+rand_hc     = { workspace = true }
+spin        = { workspace = true }
+x86_64      = { workspace = true }
