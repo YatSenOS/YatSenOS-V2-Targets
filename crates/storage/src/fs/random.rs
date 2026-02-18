@@ -1,6 +1,6 @@
 use core::cmp::min;
 
-use rand::{Rng, RngCore, SeedableRng};
+use rand::{Rng, RngExt, SeedableRng};
 use rand_hc::Hc128Rng;
 use x86_64::instructions::random::RdRand;
 

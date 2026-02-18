@@ -181,7 +181,7 @@ def build():
     profile = (
         "--release" if args.profile == "release" else "--profile=release-with-debug"
     )
-    execute_command([cargo_exe, "build", profile], kernel)
+    execute_command([cargo_exe, "build", profile, "-Zjson-target-spec"], kernel)
     profile_dir = "release" if args.profile == "release" else "release-with-debug"
     compile_output = os.path.join(
         os.getcwd(), "target", "x86_64-unknown-none", profile_dir, "ysos_kernel"
@@ -205,7 +205,7 @@ def build():
             raise Exception(f"Failed to get app name for {app}")
 
         info("Building", f"app {app}...")
-        execute_command([cargo_exe, "build", profile], app_path)
+        execute_command([cargo_exe, "build", profile, "-Zjson-target-spec"], app_path)
         compile_output = os.path.join(
             os.getcwd(), "target", "x86_64-unknown-ysos", profile_dir, app_name
         )
@@ -223,13 +223,13 @@ def clippy():
 
     kernel = os.path.join(os.getcwd(), "crates", "kernel")
     info("Running", "clippy on kernel...")
-    execute_command([cargo_exe, "clippy"], kernel)
+    execute_command([cargo_exe, "clippy", "-Zjson-target-spec"], kernel)
 
     apps = get_apps()
     for app in apps:
         app_path = os.path.join(os.getcwd(), "crates", "app", app)
         info("Running", f"clippy on app {app}...")
-        execute_command([cargo_exe, "clippy"], app_path)
+        execute_command([cargo_exe, "clippy", "-Zjson-target-spec"], app_path)
 
 
 def clean():
