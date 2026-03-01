@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import argparse
+import glob
 
 
 parser = argparse.ArgumentParser(description="Build script for YSOS")
@@ -49,6 +50,12 @@ parser.add_argument(
     choices=["build", "clean", "launch", "run", "clippy"],
     default="build",
     help="Task to execute",
+)
+
+parser.add_argument(
+    "--vvfat_disabled",
+    action="store_true",
+    help="QEMU doesn't support vvfat",
 )
 
 args = parser.parse_args()
@@ -103,6 +110,7 @@ def qemu(
     memory: str = "96M",
     debug: bool = False,
     intdbg: bool = False,
+    vvfat_disabled: bool = False,
 ):
     qemu_exe = shutil.which("qemu-system-x86_64")
 
@@ -112,6 +120,29 @@ def qemu(
 
     if qemu_exe is None:
         raise Exception("qemu-system-x86_64 not found in PATH")
+
+    if vvfat_disabled:
+        esp = 'esp.img'
+
+        execute_command([
+            shutil.which("dd"),
+            "if=/dev/zero", f"of={esp}", "bs=1M", "count=64"
+        ])
+
+        execute_command([
+            shutil.which("mformat"),
+            "-i", esp,
+            "-t", "64", "-h", "32", "-s", "64", "::"
+        ])
+
+        execute_command([
+            shutil.which("mcopy"),
+            "-i", esp,
+            "-s", *glob.glob(os.path.join('esp', "*")),
+            "::/"
+        ])
+    else:
+        esp = 'fat:esp'
 
     qemu_args = [
         qemu_exe,
@@ -123,7 +154,7 @@ def qemu(
         "-m",
         memory,
         "-drive",
-        "format=raw,file=fat:esp",
+        f"format=raw,file={esp}",
         "-snapshot",
     ]
 
@@ -181,7 +212,7 @@ def build():
     profile = (
         "--release" if args.profile == "release" else "--profile=release-with-debug"
     )
-    execute_command([cargo_exe, "build", profile], kernel)
+    execute_command([cargo_exe, "build", profile, "-Zjson-target-spec"], kernel)
     profile_dir = "release" if args.profile == "release" else "release-with-debug"
     compile_output = os.path.join(
         os.getcwd(), "target", "x86_64-unknown-none", profile_dir, "ysos_kernel"
@@ -205,7 +236,7 @@ def build():
             raise Exception(f"Failed to get app name for {app}")
 
         info("Building", f"app {app}...")
-        execute_command([cargo_exe, "build", profile], app_path)
+        execute_command([cargo_exe, "build", profile, "-Zjson-target-spec"], app_path)
         compile_output = os.path.join(
             os.getcwd(), "target", "x86_64-unknown-ysos", profile_dir, app_name
         )
@@ -223,13 +254,13 @@ def clippy():
 
     kernel = os.path.join(os.getcwd(), "crates", "kernel")
     info("Running", "clippy on kernel...")
-    execute_command([cargo_exe, "clippy"], kernel)
+    execute_command([cargo_exe, "clippy", "-Zjson-target-spec"], kernel)
 
     apps = get_apps()
     for app in apps:
         app_path = os.path.join(os.getcwd(), "crates", "app", app)
         info("Running", f"clippy on app {app}...")
-        execute_command([cargo_exe, "clippy"], app_path)
+        execute_command([cargo_exe, "clippy", "-Zjson-target-spec"], app_path)
 
 
 def clean():
@@ -250,10 +281,10 @@ def main():
     elif args.task == "clean":
         clean()
     elif args.task == "launch":
-        qemu(args.output, args.memory, args.debug, args.intdbg)
+        qemu(args.output, args.memory, args.debug, args.intdbg, args.vvfat_disabled)
     elif args.task == "run":
         build()
-        qemu(args.output, args.memory, args.debug, args.intdbg)
+        qemu(args.output, args.memory, args.debug, args.intdbg, args.vvfat_disabled)
     elif args.task == "clippy":
         clippy()
 
