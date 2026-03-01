@@ -73,7 +73,7 @@ def debug(step: str, content: str):
     if args.verbose or args.dry_run:
         print(f"\033[1;34m[?] {step}:\033[0m \033[1m{content}\033[0m")
 
-def get_exe( str):
+def get_exe(name: str):
     res = shutil.which(name)
     if res is None:
         raise Exception(f"{name} not found in PATH")
@@ -130,7 +130,7 @@ def qemu(
         esp = 'esp.img'
 
         execute_command([
-            get_exe("dd")
+            get_exe("dd"),
             "if=/dev/zero", f"of={esp}", "bs=1M", "count=64"
         ])
 
