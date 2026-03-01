@@ -73,6 +73,11 @@ def debug(step: str, content: str):
     if args.verbose or args.dry_run:
         print(f"\033[1;34m[?] {step}:\033[0m \033[1m{content}\033[0m")
 
+def get_exe( str):
+    res = shutil.which(name)
+    if res is None:
+        raise Exception(f"{name} not found in PATH")
+    return res
 
 def get_apps():
     app_path = os.path.join(os.getcwd(), "crates", "app")
@@ -125,18 +130,18 @@ def qemu(
         esp = 'esp.img'
 
         execute_command([
-            shutil.which("dd"),
+            get_exe("dd")
             "if=/dev/zero", f"of={esp}", "bs=1M", "count=64"
         ])
 
         execute_command([
-            shutil.which("mformat"),
+            get_exe("mformat"),
             "-i", esp,
             "-t", "64", "-h", "32", "-s", "64", "::"
         ])
 
         execute_command([
-            shutil.which("mcopy"),
+            get_exe("mcopy"),
             "-i", esp,
             "-s", *glob.glob(os.path.join('esp', "*")),
             "::/"
@@ -187,10 +192,7 @@ def copy_to_esp(src: str, dst: str):
 
 
 def build():
-    cargo_exe = shutil.which("cargo")
-
-    if cargo_exe is None:
-        raise Exception("cargo not found in PATH")
+    cargo_exe = get_exe("cargo")
 
     # build uefi boot loader
     bootloader = os.path.join(os.getcwd(), "crates", "boot")
@@ -244,10 +246,7 @@ def build():
 
 
 def clippy():
-    cargo_exe = shutil.which("cargo")
-
-    if cargo_exe is None:
-        raise Exception("cargo not found in PATH")
+    cargo_exe = get_exe("cargo")
 
     info("Running", "cargo fmt on root...")
     execute_command([cargo_exe, "+nightly", "fmt", "--all"])
@@ -267,12 +266,7 @@ def clean():
     if os.path.exists(args.boot):
         shutil.rmtree(args.boot)
 
-    cargo_exe = shutil.which("cargo")
-
-    if cargo_exe is None:
-        raise Exception("cargo not found in PATH")
-
-    execute_command([cargo_exe, "clean"])
+    execute_command([get_exe("cargo"), "clean"])
 
 
 def main():
