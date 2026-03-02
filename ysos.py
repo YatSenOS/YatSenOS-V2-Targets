@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import argparse
+import glob
 
 
 parser = argparse.ArgumentParser(description="Build script for YSOS")
@@ -51,6 +52,12 @@ parser.add_argument(
     help="Task to execute",
 )
 
+parser.add_argument(
+    "--vvfat_disabled",
+    action="store_true",
+    help="QEMU doesn't support vvfat",
+)
+
 args = parser.parse_args()
 
 
@@ -66,6 +73,11 @@ def debug(step: str, content: str):
     if args.verbose or args.dry_run:
         print(f"\033[1;34m[?] {step}:\033[0m \033[1m{content}\033[0m")
 
+def get_exe(name: str):
+    res = shutil.which(name)
+    if res is None:
+        raise Exception(f"{name} not found in PATH")
+    return res
 
 def get_apps():
     app_path = os.path.join(os.getcwd(), "crates", "app")
@@ -103,6 +115,7 @@ def qemu(
     memory: str = "96M",
     debug: bool = False,
     intdbg: bool = False,
+    vvfat_disabled: bool = False,
 ):
     qemu_exe = shutil.which("qemu-system-x86_64")
 
@@ -112,6 +125,29 @@ def qemu(
 
     if qemu_exe is None:
         raise Exception("qemu-system-x86_64 not found in PATH")
+
+    if vvfat_disabled:
+        esp = 'esp.img'
+
+        execute_command([
+            get_exe("dd"),
+            "if=/dev/zero", f"of={esp}", "bs=1M", "count=64"
+        ])
+
+        execute_command([
+            get_exe("mformat"),
+            "-i", esp,
+            "-t", "64", "-h", "32", "-s", "64", "::"
+        ])
+
+        execute_command([
+            get_exe("mcopy"),
+            "-i", esp,
+            "-s", *glob.glob(os.path.join('esp', "*")),
+            "::/"
+        ])
+    else:
+        esp = 'fat:esp'
 
     qemu_args = [
         qemu_exe,
@@ -123,7 +159,7 @@ def qemu(
         "-m",
         memory,
         "-drive",
-        "format=raw,file=fat:esp",
+        f"format=raw,file={esp}",
         "-snapshot",
     ]
 
@@ -156,10 +192,7 @@ def copy_to_esp(src: str, dst: str):
 
 
 def build():
-    cargo_exe = shutil.which("cargo")
-
-    if cargo_exe is None:
-        raise Exception("cargo not found in PATH")
+    cargo_exe = get_exe("cargo")
 
     # build uefi boot loader
     bootloader = os.path.join(os.getcwd(), "crates", "boot")
@@ -213,10 +246,7 @@ def build():
 
 
 def clippy():
-    cargo_exe = shutil.which("cargo")
-
-    if cargo_exe is None:
-        raise Exception("cargo not found in PATH")
+    cargo_exe = get_exe("cargo")
 
     info("Running", "cargo fmt on root...")
     execute_command([cargo_exe, "+nightly", "fmt", "--all"])
@@ -236,12 +266,7 @@ def clean():
     if os.path.exists(args.boot):
         shutil.rmtree(args.boot)
 
-    cargo_exe = shutil.which("cargo")
-
-    if cargo_exe is None:
-        raise Exception("cargo not found in PATH")
-
-    execute_command([cargo_exe, "clean"])
+    execute_command([get_exe("cargo"), "clean"])
 
 
 def main():
@@ -250,10 +275,10 @@ def main():
     elif args.task == "clean":
         clean()
     elif args.task == "launch":
-        qemu(args.output, args.memory, args.debug, args.intdbg)
+        qemu(args.output, args.memory, args.debug, args.intdbg, args.vvfat_disabled)
     elif args.task == "run":
         build()
-        qemu(args.output, args.memory, args.debug, args.intdbg)
+        qemu(args.output, args.memory, args.debug, args.intdbg, args.vvfat_disabled)
     elif args.task == "clippy":
         clippy()
 
