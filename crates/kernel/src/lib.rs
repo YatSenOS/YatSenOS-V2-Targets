@@ -1,7 +1,6 @@
 #![no_std]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
-#![feature(type_alias_impl_trait)]
 
 extern crate alloc;
 #[macro_use]
