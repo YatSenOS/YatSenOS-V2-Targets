@@ -1,5 +1,6 @@
-use alloc::{collections::BTreeMap, string::String, vec::Vec};
+use alloc::{string::String, vec::Vec};
 
+use hashbrown::HashMap;
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
 use storage::{Device, FileHandle, random::Random};
@@ -15,14 +16,14 @@ pub enum StdIO {
 
 #[derive(Debug)]
 pub struct ResourceSet {
-    pub handles: BTreeMap<u8, Mutex<Resource>>,
+    pub handles: HashMap<u8, Mutex<Resource>, ahash::RandomState>,
     recycled: Vec<u8>,
 }
 
 impl Default for ResourceSet {
     fn default() -> Self {
         let mut res = Self {
-            handles: BTreeMap::new(),
+            handles: HashMap::default(),
             recycled: Vec::new(),
         };
 

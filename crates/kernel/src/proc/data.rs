@@ -1,5 +1,4 @@
-use alloc::collections::BTreeMap;
-
+use hashbrown::HashMap;
 use spin::RwLock;
 
 use super::*;
@@ -7,7 +6,7 @@ use crate::resource::ResourceSet;
 
 #[derive(Debug, Clone)]
 pub struct ProcessData {
-    pub(super) env: Arc<RwLock<BTreeMap<String, String>>>,
+    pub(super) env: Arc<RwLock<HashMap<String, String, ahash::RandomState>>>,
     pub(super) resources: Arc<RwLock<ResourceSet>>,
     pub(super) semaphores: Arc<RwLock<SemaphoreSet>>,
 }
@@ -15,7 +14,7 @@ pub struct ProcessData {
 impl Default for ProcessData {
     fn default() -> Self {
         Self {
-            env: Arc::new(RwLock::new(BTreeMap::new())),
+            env: Arc::new(RwLock::new(HashMap::default())),
             semaphores: Arc::new(RwLock::new(SemaphoreSet::default())),
             resources: Arc::new(RwLock::new(ResourceSet::default())),
         }

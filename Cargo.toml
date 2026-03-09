@@ -1,5 +1,5 @@
 [workspace]
-exclude = ["crates/app/.cargo", "crates/app/config"]
+exclude = [ "crates/app/.cargo", "crates/app/config" ]
 members = [
   "crates/app/*",
   "crates/boot",
@@ -7,12 +7,12 @@ members = [
   "crates/kernel",
   "crates/lib",
   "crates/storage",
-  "crates/syscall",
+  "crates/syscall"
 ]
 resolver = "2"
 
 [workspace.package]
-authors      = ["GZTime <Time.GZ@outlook.com>"]
+authors      = [ "GZTime <Time.GZ@outlook.com>" ]
 edition      = "2024"
 rust-version = "1.91"
 version      = "1.0.0"
@@ -29,13 +29,14 @@ arrayvec              = { version = "0.7", default-features = false }
 bit_field             = "0.10"
 bitflags              = "2.11"
 chrono                = { version = "0.4", default-features = false }
-hex-literal           = "1.0"
-lazy_static           = { version = "1.4", features = ["spin_no_std"] }
+hashbrown             = "0.16"
+hex-literal           = "1.1"
+lazy_static           = { version = "1.5", features = [ "spin_no_std" ] }
 libm                  = "0.2"
 linked_list_allocator = "0.10"
 log                   = "0.4"
 lru                   = "0.16"
-micromath             = { version = "2.0", features = ["num-traits"] }
+micromath             = { version = "2.1", features = [ "num-traits" ] }
 num_enum              = { version = "0.7", default-features = false }
 owo-colors            = "4.3"
 paste                 = "1.0"
@@ -58,16 +59,23 @@ lib         = { path = "crates/lib", package = "yslib" }
 storage     = { path = "crates/storage", package = "ysos_storage" }
 syscall_def = { path = "crates/syscall", package = "ysos_syscall" }
 
+[workspace.dependencies.ahash]
+default-features = false
+features = [
+  "compile-time-rng"
+]
+version = "0.8"
+
 [workspace.dependencies.crossbeam-queue]
 default-features = false
 features = [
-  "alloc",
+  "alloc"
 ]
 version = "0.3"
 
 [workspace.dependencies.futures-util]
 default-features = false
 features = [
-  "alloc",
+  "alloc"
 ]
 version = "0.3"

@@ -1,9 +1,10 @@
 use alloc::{
-    collections::{BTreeMap, BTreeSet, VecDeque},
+    collections::{BTreeSet, VecDeque},
     format,
     sync::Weak,
 };
 
+use hashbrown::HashMap;
 use spin::{Mutex, RwLock};
 use storage::random::Random;
 
@@ -33,20 +34,20 @@ pub fn get_process_manager() -> &'static ProcessManager {
 }
 
 pub struct ProcessManager {
-    processes: RwLock<BTreeMap<ProcessId, Arc<Process>>>,
+    processes: RwLock<HashMap<ProcessId, Arc<Process>, ahash::RandomState>>,
     ready_queue: Mutex<VecDeque<ProcessId>>,
-    wait_queue: Mutex<BTreeMap<ProcessId, BTreeSet<ProcessId>>>,
+    wait_queue: Mutex<HashMap<ProcessId, BTreeSet<ProcessId>, ahash::RandomState>>,
 }
 
 impl ProcessManager {
     pub fn new(init: Arc<Process>) -> Self {
-        let mut processes = BTreeMap::new();
+        let mut processes = HashMap::default();
         let pid = init.pid();
         processes.insert(pid, init);
         Self {
             processes: RwLock::new(processes),
             ready_queue: Mutex::new(VecDeque::new()),
-            wait_queue: Mutex::new(BTreeMap::new()),
+            wait_queue: Mutex::new(HashMap::default()),
         }
     }
 
