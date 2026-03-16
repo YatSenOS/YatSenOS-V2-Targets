@@ -4,12 +4,17 @@
 extern crate log;
 extern crate alloc;
 
+use alloc::vec::Vec;
 use core::ptr::{copy_nonoverlapping, write_bytes};
 
-use alloc::vec::Vec;
-use x86_64::structures::paging::page::{PageRange, PageRangeInclusive};
-use x86_64::structures::paging::{mapper::*, *};
-use x86_64::{PhysAddr, VirtAddr, align_up};
+use x86_64::{
+    PhysAddr, VirtAddr, align_up,
+    structures::paging::{
+        mapper::*,
+        page::{PageRange, PageRangeInclusive},
+        *,
+    },
+};
 use xmas_elf::{ElfFile, program};
 
 /// Map physical memory [0, max_addr)

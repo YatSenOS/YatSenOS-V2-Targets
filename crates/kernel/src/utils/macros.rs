@@ -1,6 +1,8 @@
-use crate::serial::get_serial;
 use core::fmt::*;
+
 use x86_64::instructions::interrupts;
+
+use crate::serial::get_serial;
 
 /// Use spin mutex to control variable access
 #[macro_export]

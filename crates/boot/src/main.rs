@@ -7,9 +7,7 @@ extern crate log;
 
 extern crate alloc;
 
-use uefi::boot::MemoryType;
-use uefi::mem::memory_map::MemoryMap;
-use uefi::{Status, entry};
+use uefi::{Status, boot::MemoryType, entry, mem::memory_map::MemoryMap};
 use x86_64::registers::control::*;
 use xmas_elf::ElfFile;
 use ysos_boot::*;
@@ -113,7 +111,7 @@ fn efi_main() -> Status {
     // 6. Exit boot and jump to ELF entry
     info!("Exiting boot services...");
 
-    let mmap = unsafe { uefi::boot::exit_boot_services(MemoryType::LOADER_DATA) };
+    let mmap = unsafe { uefi::boot::exit_boot_services(None) };
     // NOTE: alloc & log can no longer be used
 
     // 7. Construct BootInfo

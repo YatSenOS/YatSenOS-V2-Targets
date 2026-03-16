@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(naked_functions)]
 #![feature(abi_x86_interrupt)]
 #![feature(type_alias_impl_trait)]
 
@@ -15,9 +14,8 @@ pub use utils::*;
 
 #[macro_use]
 pub mod drivers;
-pub use drivers::*;
-
 use boot::BootInfo;
+pub use drivers::*;
 use uefi::{Status, runtime::ResetType};
 
 pub fn init(_boot_info: &'static BootInfo) {

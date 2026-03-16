@@ -1,4 +1,5 @@
 use core::fmt;
+
 use x86_64::instructions::port::Port;
 
 /// A port-mapped UART 16550 serial interface.

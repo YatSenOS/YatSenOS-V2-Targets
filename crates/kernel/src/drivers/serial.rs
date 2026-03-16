@@ -1,5 +1,6 @@
-use super::uart16550::SerialPort;
 use owo_colors::OwoColorize;
+
+use super::uart16550::SerialPort;
 
 const SERIAL_IO_PORT: u16 = 0x3F8; // COM1
 
