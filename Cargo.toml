@@ -29,7 +29,7 @@ arrayvec              = { version = "0.7", default-features = false }
 bit_field             = "0.10"
 bitflags              = "2.11"
 chrono                = { version = "0.4", default-features = false }
-hashbrown             = "0.16"
+hashbrown             = "0.17"
 hex-literal           = "1.1"
 lazy_static           = { version = "1.5", features = [ "spin_no_std" ] }
 libm                  = "0.2"
