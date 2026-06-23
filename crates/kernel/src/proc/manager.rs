@@ -175,7 +175,7 @@ impl ProcessManager {
         );
         drop(inner);
 
-        trace!("New {:#?}", &proc);
+        trace!("New {:#?}", proc);
 
         let pid = proc.pid();
         self.add_proc(pid, proc);
@@ -242,7 +242,7 @@ impl ProcessManager {
 
         let proc = proc.unwrap();
 
-        trace!("Kill {:#?}", &proc);
+        trace!("Kill {:#?}", proc);
 
         proc.kill(ret);
 

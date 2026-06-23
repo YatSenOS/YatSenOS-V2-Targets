@@ -14,7 +14,7 @@ resolver = "2"
 [workspace.package]
 authors      = [ "GZTime <Time.GZ@outlook.com>" ]
 edition      = "2024"
-rust-version = "1.91"
+rust-version = "1.96"
 version      = "1.0.0"
 
 [profile.release-with-debug]
@@ -27,7 +27,7 @@ debug = false
 [workspace.dependencies]
 arrayvec              = { version = "0.7", default-features = false }
 bit_field             = "0.10"
-bitflags              = "2.11"
+bitflags              = "2.13"
 chrono                = { version = "0.4", default-features = false }
 hashbrown             = "0.17"
 hex-literal           = "1.1"
@@ -44,8 +44,8 @@ pc-keyboard           = "0.9"
 rand                  = { version = "0.10", default-features = false }
 rand_hc               = "0.5"
 roaring               = { version = "0.11", default-features = false }
-spin                  = "0.10"
-uefi                  = { version = "0.37", default-features = false }
+spin                  = "0.12"
+uefi                  = { version = "0.38", default-features = false }
 volatile              = "0.6"
 x86                   = "0.52"
 x86_64                = "0.15"

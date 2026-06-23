@@ -61,7 +61,7 @@ impl ProcessContext {
         self.value.stack_frame.code_segment = selector.user_code_selector;
         self.value.stack_frame.stack_segment = selector.user_data_selector;
 
-        trace!("Init stack frame: {:#?}", &self.stack_frame);
+        trace!("Init stack frame: {:#?}", self.stack_frame);
     }
 }
 
